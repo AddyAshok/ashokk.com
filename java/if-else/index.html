@@ -1,34 +1,378 @@
 <!DOCTYPE html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Java if-else Statement | Ashokka Tech</title><meta name="description" content="Java if-else Statement: clear explanation with examples in the Java tutorial by Ashokka Tech."><link rel="canonical" href="https://ashokka.com/java/if-else/">
-<meta property="og:title" content="Java if-else Statement | Ashokka Tech"><meta property="og:type" content="article"><style>:root{--brand:#0f9d58;--brandd:#0b7a44;--bg:#fff;--side:#eefaf2;--text:#222;--muted:#666;--line:#ddd;--code:#f3f3f3;box-sizing:border-box}
-@media(prefers-color-scheme:dark){:root{--bg:#121212;--side:#14231a;--text:#eee;--muted:#a8a8a8;--line:#333;--code:#262626;--brandd:#4cc38a}}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:17px/1.7 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif}
-a{color:var(--brandd);text-decoration:none}a:focus-visible,input:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
-header{display:flex;align-items:center;gap:24px;padding:14px 24px;flex-wrap:wrap}.logo{font:700 28px Georgia,serif;color:var(--text)}.logo b{color:var(--brand)}
-.search{flex:1 1 260px;max-width:600px;border:1px solid var(--line);border-radius:12px;padding:4px 16px}.search input{width:100%;border:0;background:none;color:var(--text);font:inherit;padding:8px 0}
-.menus{display:flex;gap:28px;margin-left:auto;font-weight:600}.menus a{color:var(--text)}
-.langs{background:var(--brand);display:flex;gap:26px;padding:12px 24px;overflow-x:auto;white-space:nowrap}.langs a{color:#fff;font-size:18px}.langs a[aria-current]{font-weight:700;text-decoration:underline;text-underline-offset:6px}
-.layout{display:grid;grid-template-columns:280px minmax(0,1fr) 260px;gap:28px;align-items:start}
-.toc{background:var(--side);padding:18px 16px;min-height:80vh;font-size:16px}.toc h2{font-size:19px;margin:0 0 6px}.toc h3{font-size:17px;margin:20px 0 4px}
-.toc ul{list-style:none;padding:0;margin:0}.toc li a{display:block;padding:4px 0;color:var(--text)}.toc li a[aria-current]{color:var(--brandd);font-weight:700}
-.crumbs{font-size:14px;margin:14px 0}.crumbs a{background:var(--side);padding:2px 8px;border-radius:4px}
-h1{font-size:34px;line-height:1.25;font-weight:500;margin:12px 0 4px}article h2{font-size:24px;font-weight:500;margin:28px 0 6px}.upd{color:var(--muted);font-size:15px;margin:0 0 20px}
-pre{background:var(--code);padding:14px 16px;border-radius:8px;overflow-x:auto;font-size:15px;line-height:1.5}code{font-family:ui-monospace,Consolas,monospace}
-.np{display:flex;justify-content:space-between;gap:12px;margin:40px 0}.np a{background:var(--brand);color:#fff;padding:8px 18px;border-radius:6px}
-.right{padding-right:16px}.box{border:1px solid var(--line);border-radius:10px;padding:16px;margin-bottom:16px}.box h2{font-size:18px;margin:0 0 6px}.box ul{margin:0;padding-left:18px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin:24px 0}.grid a{border:1px solid var(--line);border-radius:10px;padding:24px;font-size:22px;font-weight:600}
-footer{border-top:1px solid var(--line);padding:24px;color:var(--muted);text-align:center;margin-top:24px}
-main.wide{max-width:900px;margin:0 auto;padding:16px 24px}
-@media(max-width:1100px){.layout{grid-template-columns:240px minmax(0,1fr)}.right{display:none}}
-@media(max-width:760px){.layout{grid-template-columns:1fr}.toc{min-height:0}.menus{display:none}h1{font-size:28px}}</style></head><body>
-<header><a class="logo" href="/"><b>A</b>shokka Tech</a><form class="search" role="search" onsubmit="return false"><input type="search" placeholder="Search tutorials…" aria-label="Search"></form><nav class="menus"><a href="/">Tutorials</a></nav></header>
-<nav class="langs" aria-label="Languages"><a href="/java/" aria-current=page>Java</a><a href="/python/">Python</a></nav><div class="layout"><nav class="toc" aria-label="Java tutorial"><h2>Java Tutorial</h2><ul><li><a href="/java/">Java Tutorial</a></li><li><a href="/java/history/">History of Java</a></li><li><a href="/java/features/">Features of Java</a></li><li><a href="/java/hello-world/">Java Hello World Program</a></li><li><a href="/java/set-path/">How to Set Path in Java</a></li><li><a href="/java/jdk-jre-jvm/">JDK, JRE and JVM</a></li><li><a href="/java/variables/">Java Variables</a></li><li><a href="/java/data-types/">Data Types in Java</a></li><li><a href="/java/operators/">Java Operators</a></li><li><a href="/java/keywords/">Java Keywords</a></li></ul><h3>Control Statements</h3><ul><li><a href="/java/control-statements/">Control Statements in Java</a></li><li><a href="/java/if-else/" aria-current=page>Java if-else Statement</a></li><li><a href="/java/switch/">Java switch Statement</a></li><li><a href="/java/for-loop/">Java for Loop</a></li><li><a href="/java/while-loop/">Java while Loop</a></li></ul></nav><main><article><div class="crumbs"><a href="/">Home</a> › <a href="/java/">Java</a> › Java if-else Statement</div><h1>Java if-else Statement</h1><p class="upd">Last updated: 28 Sep 2026</p><p>Use <code>if</code> to run code only when a condition is true, and <code>else</code> for the other case.</p><pre><code>int marks = 72;
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Java if-else Statement | Ashokka Tech</title>
+    <meta name="description"
+        content="Java if-else Statement: clear explanation with examples in the Java tutorial by Ashokka Tech.">
+    <link rel="canonical" href="https://ashokka.com/java/if-else/">
+    <meta property="og:title" content="Java if-else Statement | Ashokka Tech">
+    <meta property="og:type" content="article">
+    <script src="/component/header.js" defer></script>
+    <style>
+        :root {
+            --brand: #0f9d58;
+            --brandd: #0b7a44;
+            --bg: #fff;
+            --side: #eefaf2;
+            --text: #222;
+            --muted: #666;
+            --line: #ddd;
+            --code: #f3f3f3;
+            box-sizing: border-box
+        }
+
+        @media(prefers-color-scheme:dark) {
+            :root {
+                --bg: #121212;
+                --side: #14231a;
+                --text: #eee;
+                --muted: #a8a8a8;
+                --line: #333;
+                --code: #262626;
+                --brandd: #4cc38a
+            }
+        }
+
+        * {
+            box-sizing: border-box
+        }
+
+        body {
+            margin: 0;
+            background: var(--bg);
+            color: var(--text);
+            font: 17px/1.7 system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif
+        }
+
+        a {
+            color: var(--brandd);
+            text-decoration: none
+        }
+
+        a:focus-visible,
+        input:focus-visible {
+            outline: 2px solid var(--brand);
+            outline-offset: 2px
+        }
+
+        header {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            padding: 14px 24px;
+            flex-wrap: wrap
+        }
+
+        .logo {
+            font: 700 28px Georgia, serif;
+            color: var(--text)
+        }
+
+        .logo b {
+            color: var(--brand)
+        }
+
+        .search {
+            flex: 1 1 260px;
+            max-width: 600px;
+            border: 1px solid var(--line);
+            border-radius: 12px;
+            padding: 4px 16px
+        }
+
+        .search input {
+            width: 100%;
+            border: 0;
+            background: none;
+            color: var(--text);
+            font: inherit;
+            padding: 8px 0
+        }
+
+        .menus {
+            display: flex;
+            gap: 28px;
+            margin-left: auto;
+            font-weight: 600
+        }
+
+        .menus a {
+            color: var(--text)
+        }
+
+        .langs {
+            background: var(--brand);
+            display: flex;
+            gap: 26px;
+            padding: 12px 24px;
+            overflow-x: auto;
+            white-space: nowrap
+        }
+
+        .langs a {
+            color: #fff;
+            font-size: 18px
+        }
+
+        .langs a[aria-current] {
+            font-weight: 700;
+            text-decoration: underline;
+            text-underline-offset: 6px
+        }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 280px minmax(0, 1fr) 260px;
+            gap: 28px;
+            align-items: start
+        }
+
+        .toc {
+            background: var(--side);
+            padding: 18px 16px;
+            min-height: 80vh;
+            font-size: 16px
+        }
+
+        .toc h2 {
+            font-size: 19px;
+            margin: 0 0 6px
+        }
+
+        .toc h3 {
+            font-size: 17px;
+            margin: 20px 0 4px
+        }
+
+        .toc ul {
+            list-style: none;
+            padding: 0;
+            margin: 0
+        }
+
+        .toc li a {
+            display: block;
+            padding: 4px 0;
+            color: var(--text)
+        }
+
+        .toc li a[aria-current] {
+            color: var(--brandd);
+            font-weight: 700
+        }
+
+        .crumbs {
+            font-size: 14px;
+            margin: 14px 0
+        }
+
+        .crumbs a {
+            background: var(--side);
+            padding: 2px 8px;
+            border-radius: 4px
+        }
+
+        h1 {
+            font-size: 34px;
+            line-height: 1.25;
+            font-weight: 500;
+            margin: 12px 0 4px
+        }
+
+        article h2 {
+            font-size: 24px;
+            font-weight: 500;
+            margin: 28px 0 6px
+        }
+
+        .upd {
+            color: var(--muted);
+            font-size: 15px;
+            margin: 0 0 20px
+        }
+
+        pre {
+            background: var(--code);
+            padding: 14px 16px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 15px;
+            line-height: 1.5
+        }
+
+        code {
+            font-family: ui-monospace, Consolas, monospace
+        }
+
+        .np {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin: 40px 0
+        }
+
+        .np a {
+            background: var(--brand);
+            color: #fff;
+            padding: 8px 18px;
+            border-radius: 6px
+        }
+
+        .right {
+            padding-right: 16px
+        }
+
+        .box {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 16px
+        }
+
+        .box h2 {
+            font-size: 18px;
+            margin: 0 0 6px
+        }
+
+        .box ul {
+            margin: 0;
+            padding-left: 18px
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 16px;
+            margin: 24px 0
+        }
+
+        .grid a {
+            border: 1px solid var(--line);
+            border-radius: 10px;
+            padding: 24px;
+            font-size: 22px;
+            font-weight: 600
+        }
+
+        footer {
+            border-top: 1px solid var(--line);
+            padding: 24px;
+            color: var(--muted);
+            text-align: center;
+            margin-top: 24px
+        }
+
+        main.wide {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 16px 24px
+        }
+
+        @media(max-width:1100px) {
+            .layout {
+                grid-template-columns: 240px minmax(0, 1fr)
+            }
+
+            .right {
+                display: none
+            }
+        }
+
+        @media(max-width:760px) {
+            .layout {
+                grid-template-columns: 1fr
+            }
+
+            .toc {
+                min-height: 0
+            }
+
+            .menus {
+                display: none
+            }
+
+            h1 {
+                font-size: 28px
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <header><a class="logo" href="/"><b>A</b>shokka Tech</a>
+        <form class="search" role="search" onsubmit="return false"><input type="search" placeholder="Search tutorials…"
+                aria-label="Search"></form>
+        <nav class="menus"><a href="/">Tutorials</a></nav>
+    </header>
+    <app-header></app-header>
+   
+    <div class="layout">
+        <nav class="toc" aria-label="Java tutorial">
+            <h2>Java Tutorial</h2>
+            <ul>
+                <li><a href="/java/">Java Tutorial</a></li>
+                <li><a href="/java/history/">History of Java</a></li>
+                <li><a href="/java/features/">Features of Java</a></li>
+                <li><a href="/java/hello-world/">Java Hello World Program</a></li>
+                <li><a href="/java/set-path/">How to Set Path in Java</a></li>
+                <li><a href="/java/jdk-jre-jvm/">JDK, JRE and JVM</a></li>
+                <li><a href="/java/variables/">Java Variables</a></li>
+                <li><a href="/java/data-types/">Data Types in Java</a></li>
+                <li><a href="/java/operators/">Java Operators</a></li>
+                <li><a href="/java/keywords/">Java Keywords</a></li>
+            </ul>
+            <h3>Control Statements</h3>
+            <ul>
+                <li><a href="/java/control-statements/">Control Statements in Java</a></li>
+                <li><a href="/java/if-else/" aria-current=page>Java if-else Statement</a></li>
+                <li><a href="/java/switch/">Java switch Statement</a></li>
+                <li><a href="/java/for-loop/">Java for Loop</a></li>
+                <li><a href="/java/while-loop/">Java while Loop</a></li>
+            </ul>
+        </nav>
+        <main>
+            <article>
+                <div class="crumbs"><a href="/">Home</a> › <a href="/java/">Java</a> › Java if-else Statement</div>
+                <h1>Java if-else Statement</h1>
+                <p class="upd">Last updated: 28 Sep 2026</p>
+                <p>Use <code>if</code> to run code only when a condition is true, and <code>else</code> for the other
+                    case.</p>
+                <pre><code>int marks = 72;
 if (marks &gt;= 80) {
     System.out.println(&quot;Grade A&quot;);
 } else if (marks &gt;= 60) {
     System.out.println(&quot;Grade B&quot;);
 } else {
     System.out.println(&quot;Grade C&quot;);
-}</code></pre><p>Output: <code>Grade B</code></p><div class="np"><a href="/java/control-statements/">← Control Statements in Java</a><a href="/java/switch/">Java switch Statement →</a></div></article></main><aside class="right"><div class="box"><h2>Control Statements</h2><ul><li><a href="/java/control-statements/">Control Statements in Java</a></li><li><a href="/java/if-else/">Java if-else Statement</a></li><li><a href="/java/switch/">Java switch Statement</a></li><li><a href="/java/for-loop/">Java for Loop</a></li><li><a href="/java/while-loop/">Java while Loop</a></li></ul></div><div class="box"><h2>Other tutorials</h2><ul><li><a href="/python/">Python Tutorial</a></li></ul></div></aside></div>
-<footer>© 2026 Ashokka Tech. All rights reserved.</footer></body></html>
+}</code></pre>
+                <p>Output: <code>Grade B</code></p>
+                <div class="np"><a href="/java/control-statements/">← Control Statements in Java</a><a
+                        href="/java/switch/">Java switch Statement →</a></div>
+            </article>
+        </main>
+        <aside class="right">
+            <div class="box">
+                <h2>Control Statements</h2>
+                <ul>
+                    <li><a href="/java/control-statements/">Control Statements in Java</a></li>
+                    <li><a href="/java/if-else/">Java if-else Statement</a></li>
+                    <li><a href="/java/switch/">Java switch Statement</a></li>
+                    <li><a href="/java/for-loop/">Java for Loop</a></li>
+                    <li><a href="/java/while-loop/">Java while Loop</a></li>
+                </ul>
+            </div>
+            <div class="box">
+                <h2>Other tutorials</h2>
+                <ul>
+                    <li><a href="/python/">Python Tutorial</a></li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+    <footer>© 2026 Ashokka Tech. All rights reserved.</footer>
+</body>
+
+</html>
