@@ -2,17 +2,19 @@ class CustomHeader extends HTMLElement {
     connectedCallback() {
         this.innerHTML = `
         <style>
-            /* Base Header Styling */
+            /* Base Header Styling - Full Width */
             .header-nav-container {
-                background: rgba(15, 23, 42, 0.95);
+                background: rgba(15, 23, 42, 0.98);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
-                padding: 14px 20px;
+                padding: 12px 24px;
                 position: relative;
                 z-index: 1000;
+                width: 100%;
+                box-sizing: border-box;
             }
 
-            /* Neon Glow Animated Border at Top */
+            /* Neon Glow Animated Top Border */
             .header-nav-container::before {
                 content: '';
                 position: absolute;
@@ -30,57 +32,135 @@ class CustomHeader extends HTMLElement {
                 100% { left: 100%; }
             }
 
+            /* Inner Wrapper - Max Laptop Screen Spacing */
             .header-inner {
-                max-width: 1200px;
+                max-width: 1400px;
                 margin: 0 auto;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
+                gap: 16px;
+                width: 100%;
             }
 
-            /* Brand Logo */
+            /* Logo & Technical Badge Group */
+            .logo-group {
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                flex-wrap: wrap;
+            }
+
             .brand-logo {
-                color: #f8fafc;
-                font-size: 18px;
-                font-weight: 800;
                 text-decoration: none;
+                font-weight: 800;
+                font-size: 20px;
+                color: #f8fafc;
                 letter-spacing: -0.5px;
             }
-            .brand-logo span {
+            .brand-logo b {
                 color: #38bdf8;
             }
 
-            /* Desktop Navigation */
+            .tech-badge {
+                font-size: 11.5px;
+                color: #38bdf8;
+                background: rgba(56, 189, 248, 0.1);
+                border: 1px solid rgba(56, 189, 248, 0.25);
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-weight: 600;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                white-space: nowrap;
+            }
+
+            .badge-dot {
+                height: 6px;
+                width: 6px;
+                background-color: #22c55e;
+                border-radius: 50%;
+                box-shadow: 0 0 6px #22c55e;
+            }
+
+            /* Desktop Navigation Bar */
             .langs {
                 display: flex;
                 flex-wrap: wrap;
                 gap: 8px;
                 align-items: center;
+                max-width: 1400px;
+                margin: 10px auto 0;
+                padding-top: 10px;
+                border-top: 1px solid rgba(255, 255, 255, 0.05);
             }
 
-            /* Typography & Links */
-            .langs a {
+            /* Main Links Styling */
+            .langs a, .dropdown-btn {
                 color: #cbd5e1;
                 text-decoration: none;
                 font-size: 13.5px;
-                font-weight: 700; /* BOLD TEXT */
-                padding: 7px 14px;
+                font-weight: 700;
+                padding: 7px 12px;
                 border-radius: 8px;
                 border: 1px solid transparent;
-                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-                position: relative;
+                transition: all 0.25s ease;
+                background: transparent;
+                cursor: pointer;
+                display: inline-flex;
+                align-items: center;
+                gap: 4px;
             }
 
-            /* Classy Hover Animation (Shine + Rise) */
-            .langs a:hover {
+            .langs a:hover, .dropdown-btn:hover {
                 color: #ffffff;
-                background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(99, 102, 241, 0.15) 100%);
-                border-color: rgba(56, 189, 248, 0.35);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 15px rgba(56, 189, 248, 0.2);
+                background: rgba(56, 189, 248, 0.12);
+                border-color: rgba(56, 189, 248, 0.3);
             }
 
-            /* Three Dots Toggle Button (Mobile Only) */
+            /* Sub-topics Dropdown Styling */
+            .dropdown-container {
+                position: relative;
+                display: inline-block;
+            }
+
+            .dropdown-menu {
+                display: none;
+                position: absolute;
+                top: 100%;
+                left: 0;
+                background: #0f172a;
+                border: 1px solid #334155;
+                border-radius: 8px;
+                min-width: 200px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+                z-index: 1001;
+                padding: 6px 0;
+                margin-top: 4px;
+            }
+
+            .dropdown-menu a {
+                display: block;
+                padding: 8px 16px;
+                font-size: 13px;
+                color: #94a3b8;
+                border-radius: 0;
+            }
+
+            .dropdown-menu a:hover {
+                color: #38bdf8;
+                background: #1e293b;
+            }
+
+            /* Show Dropdown on Desktop Hover */
+            @media (min-width: 869px) {
+                .dropdown-container:hover .dropdown-menu {
+                    display: block;
+                }
+            }
+
+            /* Three Dots Toggle Button (Right Aligned on Mobile) */
             .menu-toggle {
                 display: none;
                 background: #1e293b;
@@ -89,89 +169,125 @@ class CustomHeader extends HTMLElement {
                 border-radius: 8px;
                 padding: 6px 12px;
                 cursor: pointer;
-                font-size: 18px;
-                font-weight: bold;
+                font-size: 15px;
+                font-weight: 700;
                 transition: all 0.2s;
-            }
-            .menu-toggle:hover {
-                background: #334155;
-                color: #ffffff;
             }
 
             /* Responsive Mobile View (< 868px) */
             @media (max-width: 868px) {
                 .menu-toggle {
-                    display: block; /* Shows Three-Dots button */
+                    display: block; /* Visible on Right Side */
+                }
+
+                .tech-badge {
+                    display: none; /* Mobile view Cleanliness */
                 }
 
                 .langs {
-                    display: none; /* Hidden by default on mobile */
+                    display: none; /* Hidden by default */
                     flex-direction: column;
                     width: 100%;
-                    gap: 6px;
+                    gap: 4px;
                     padding-top: 15px;
                     border-top: 1px solid #1e293b;
                     margin-top: 12px;
-                    opacity: 0;
-                    transform: translateY(-10px);
-                    transition: opacity 0.3s ease, transform 0.3s ease;
                 }
 
-                /* Active Menu Toggle State */
                 .langs.active {
                     display: flex;
-                    opacity: 1;
-                    transform: translateY(0);
                 }
 
-                .langs a {
+                .langs a, .dropdown-container {
                     width: 100%;
-                    text-align: left;
-                    box-sizing: border-box;
-                    padding: 10px 16px;
+                }
+
+                .dropdown-btn {
+                    width: 100%;
+                    justify-content: space-between;
+                }
+
+                /* Mobile Nested Dropdown Accordion */
+                .dropdown-menu {
+                    position: static;
+                    box-shadow: none;
+                    background: #020617;
+                    border: none;
+                    border-left: 2px solid #38bdf8;
+                    margin-left: 12px;
+                    margin-top: 4px;
+                    padding-left: 8px;
+                }
+
+                .dropdown-container.open .dropdown-menu {
+                    display: block;
                 }
             }
         </style>
-         <header><div style="display: flex; align-items: center; gap: 12px;">
-    <a class="logo" href="/" style="text-decoration: none; font-weight: 800; font-size: 20px; color: #010912;">
-        <b style="color: #10f232;">A</b>shokka.com
-    </a>
-    
-    <!-- Right side Technical Sub-Line / Badge -->
-    <span style="font-size: 12px; color: #e410d3; background: #11e686; border: 1px solid #196bdf; padding: 3px 10px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
-        <span style="height: 6px; width: 6px; background-color: #38bdf8; border-radius: 50%; display: inline-block;"></span>
-        Java • Microservices • AWS • Kafka
-    </span>
-</div>
-        <div class="header-nav-container">
+
+        <header class="header-nav-container">
             <div class="header-inner">
-                <!-- Three Dots Menu Icon for Mobile -->
+                <!-- Left: Logo & Technical Badge -->
+                <div class="logo-group">
+                    <a class="brand-logo" href="/">
+                        <b>A</b>shokka.com
+                    </a>
+                    <span class="tech-badge">
+                        <span class="badge-dot"></span>
+                        Java • Microservices • AWS • Kafka
+                    </span>
+                </div>
+
+                <!-- Right: Mobile Menu Toggle Button -->
                 <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">⋮ Topic</button>
             </div>
 
-            <!-- Navigation Links -->
+            <!-- Navigation Bar with Nested Sub-Topics -->
             <nav class="langs" id="nav-links" aria-label="Languages">
-                <a href="/java/">Java</a>
-                <a href="/">Concurrency</a>
-                <a href="/python/">Python</a>
-                <a href="/">Spring Core</a>
-                <a href="/">Spring Boot</a>
-                <a href="/">Spring Security</a>
-                <a href="/">Spring JPA</a>
-                <a href="/">Microservices</a>
-                <a href="/">Kafka</a>
-                <a href="/">AWS</a>
+                
+                <!-- Java Dropdown with Sub-Topics -->
+                <div class="dropdown-container" id="java-dropdown">
+                    <button class="dropdown-btn">Java ▾</button>
+                    <div class="dropdown-menu">
+                        <a href="/java/">Java Overview</a>
+                        <a href="/java/oops/">OOPs Concepts</a>
+                        <a href="/java/exception-handling/">Exception Handling</a>
+                        <a href="/java/multithreading/">Multithreading & Concurrency</a>
+                        <a href="/java/collections/">Collections Framework</a>
+                        <a href="/java/memory-model/">JVM & Memory Management</a>
+                    </div>
+                </div>
+
+                <!-- Core Technical Topics -->
+                <a href="/spring-boot/">Spring Boot</a>
+                <a href="/spring-security/">Spring Security</a>
+                <a href="/spring-jpa/">Spring JPA</a>
+                <a href="/microservices/">Microservices</a>
+                <a href="/kafka/">Kafka</a>
+                <a href="/aws/">AWS Cloud</a>
                 <a href="/design-pattern/">Design Pattern</a>
+                <a href="/python/">Python</a>
             </nav>
-        </div></header>
+        </header>
         `;
 
-        // Mobile Menu Toggle Script
+        // Mobile Menu Toggle Logic
         const toggleBtn = this.querySelector('#mobile-menu-btn');
         const navLinks = this.querySelector('#nav-links');
 
         toggleBtn.addEventListener('click', () => {
             navLinks.classList.toggle('active');
+        });
+
+        // Mobile Accordion Toggle for Sub-Topics
+        const javaDropdown = this.querySelector('#java-dropdown');
+        const javaBtn = javaDropdown.querySelector('.dropdown-btn');
+
+        javaBtn.addEventListener('click', (e) => {
+            if (window.innerWidth <= 868) {
+                e.preventDefault();
+                javaDropdown.classList.toggle('open');
+            }
         });
     }
 }
