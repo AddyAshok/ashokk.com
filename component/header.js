@@ -133,14 +133,14 @@ class CustomHeader extends HTMLElement {
             }
         </style>
          <header><div style="display: flex; align-items: center; gap: 12px;">
-    <a class="logo" href="/" style="text-decoration: none; font-weight: 800; font-size: 20px; color: #f8fafc;">
-        <b style="color: #38bdf8;">A</b>shokka.com
+    <a class="logo" href="/" style="text-decoration: none; font-weight: 800; font-size: 20px; color: #010912;">
+        <b style="color: #10f232;">A</b>shokka.com
     </a>
     
     <!-- Right side Technical Sub-Line / Badge -->
-    <span style="font-size: 12px; color: #94a3b8; background: #1e293b; border: 1px solid #334155; padding: 3px 10px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
+    <span style="font-size: 12px; color: #e410d3; background: #11e686; border: 1px solid #196bdf; padding: 3px 10px; border-radius: 20px; font-weight: 600; display: inline-flex; align-items: center; gap: 6px;">
         <span style="height: 6px; width: 6px; background-color: #38bdf8; border-radius: 50%; display: inline-block;"></span>
-        Java • Microservices • AWS
+        Java • Microservices • AWS • Kafka
     </span>
 </div>
         <div class="header-nav-container">
