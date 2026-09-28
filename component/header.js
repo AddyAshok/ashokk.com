@@ -64,7 +64,7 @@ class CustomHeader extends HTMLElement {
 
             .tech-badge {
                 font-size: 11.5px;
-                color: #38bdf8;
+                color: #2517e9;
                 background: rgba(56, 189, 248, 0.1);
                 border: 1px solid rgba(56, 189, 248, 0.25);
                 padding: 4px 10px;
@@ -78,9 +78,9 @@ class CustomHeader extends HTMLElement {
             .badge-dot {
                 height: 6px;
                 width: 6px;
-                background-color: #22c55e;
+                background-color: #0e2ee2;
                 border-radius: 50%;
-                box-shadow: 0 0 6px #22c55e;
+                box-shadow: 0 0 6px #e7ede9;
             }
 
             /* Desktop Navigation Bar */
@@ -265,10 +265,9 @@ class CustomHeader extends HTMLElement {
                 <a href="/">SQL</a>
                 <a href="/">Interview Question</a>
                 <a href="/">java 8 Feature</a>
-                 <a href="/">/java 9 to 25 Features</a>
+                
                  <a href="/Coding Question/">Coding Question</a>
-                  <a href="/Coding Question/">Python</a>
-                   <a href="/Daily Blog/">Python</a>
+                 <a href="/">/Daily Blog</a>
             </nav>
         </header>
         `;
