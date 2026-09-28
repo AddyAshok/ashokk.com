@@ -4,10 +4,10 @@ class CustomHeader extends HTMLElement {
         <style>
             /* Base Header Styling - Full Width */
             .header-nav-container {
-                background: rgba(95, 158, 212, 0.98);
+                background: rgba(15, 23, 42, 0.98);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
-                padding: 5px 5px;
+                padding: 12px 24px;
                 position: relative;
                 z-index: 1000;
                 width: 100%;
@@ -39,7 +39,7 @@ class CustomHeader extends HTMLElement {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 10px;
+                gap: 16px;
                 width: 100%;
             }
 
@@ -55,7 +55,7 @@ class CustomHeader extends HTMLElement {
                 text-decoration: none;
                 font-weight: 800;
                 font-size: 20px;
-                color: #0e33eb;
+                color: #f8fafc;
                 letter-spacing: -0.5px;
             }
             .brand-logo b {
@@ -91,7 +91,7 @@ class CustomHeader extends HTMLElement {
                 gap: 8px;
                 align-items: center;
                 max-width: 1400px;
-                margin: 1px auto 0;
+                margin: 10px auto 0;
                 padding-top: 10px;
                 border-top: 1px solid rgba(255, 255, 255, 0.05);
             }
@@ -102,7 +102,7 @@ class CustomHeader extends HTMLElement {
                 text-decoration: none;
                 font-size: 13.5px;
                 font-weight: 700;
-                padding: 5px 5px;
+                padding: 7px 12px;
                 border-radius: 8px;
                 border: 1px solid transparent;
                 transition: all 0.25s ease;
@@ -130,7 +130,7 @@ class CustomHeader extends HTMLElement {
                 position: absolute;
                 top: 100%;
                 left: 0;
-                background: #3972f5;
+                background: #0f172a;
                 border: 1px solid #334155;
                 border-radius: 8px;
                 min-width: 220px;
@@ -249,25 +249,22 @@ class CustomHeader extends HTMLElement {
                     <button class="dropdown-btn" type="button">Java ▾</button>
                     <div class="dropdown-menu">
                         <a href="/java/">Java Overview</a>
-                        <a href="/">OOPs Concepts</a>
-                        <a href="/">Exception Handling</a>
-                        <a href="/">Multithreading & Concurrency</a>
-                        <a href="/">Collections Framework</a>
-                        <a href="/">JVM & Memory Management</a>
+                        <a href="/java/oops/">OOPs Concepts</a>
+                        <a href="/java/exception-handling/">Exception Handling</a>
+                        <a href="/java/multithreading/">Multithreading & Concurrency</a>
+                        <a href="/java/collections/">Collections Framework</a>
+                        <a href="/java/memory-model/">JVM & Memory Management</a>
                     </div>
                 </div>
 
                 <!-- Core Technical Topics -->
-                <a href="/">Spring Boot</a>
-                <a href="/">Spring Security</a>
-                <a href="/">Spring JPA</a>
-                <a href="/">Microservices</a>
-                <a href="/">Kafka</a>
-                <a href="/">AWS Cloud</a>
+                <a href="/spring-boot/">Spring Boot</a>
+                <a href="/spring-security/">Spring Security</a>
+                <a href="/spring-jpa/">Spring JPA</a>
+                <a href="/microservices/">Microservices</a>
+                <a href="/kafka/">Kafka</a>
+                <a href="/aws/">AWS Cloud</a>
                 <a href="/design-pattern/">Design Pattern</a>
-                <a href="/">System Design</a>
-                <a href="/">SQL</a>
-                <a href="/">Interview Question</a>
                 <a href="/python/">Python</a>
             </nav>
         </header>
