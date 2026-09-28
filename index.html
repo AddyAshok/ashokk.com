@@ -10,7 +10,7 @@
     <meta property="og:title" content="Ashokka Tech – Free Programming Tutorials">
     <meta property="og:type" content="article">
     <script src="/component/header.js" defer></script>
-     <script src="/component/components.js" defer></script>
+    <script src="/component/components.js" defer></script>
     <style>
         :root {
             --brand: #0f9d58;
@@ -298,18 +298,242 @@
                 font-size: 28px
             }
         }
+
+        /* HIGH VISIBILITY OVERLAY (Light Dark Tint + Soft Blur) */
+        #splash-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(15, 23, 42, 0.45); /* Light Tint for High Page Visibility */
+            backdrop-filter: blur(3px);          /* Subtle Blur */
+            -webkit-backdrop-filter: blur(3px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.8s ease;
+        }
+
+        #splash-overlay.fade-out {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+        }
+
+        /* Glassmorphism Card Wrapper */
+        .glass-card {
+            background: rgba(15, 23, 42, 0.82);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            padding: 32px 28px;
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4), 0 0 25px rgba(56, 189, 248, 0.2);
+            text-align: center;
+            max-width: 550px;
+            width: 90%;
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* Scanning Neon Border Glow for Card */
+        .glass-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent);
+            animation: card-scan 2.5s linear infinite;
+        }
+
+        @keyframes card-scan {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        /* Tech Tags Floating Animations */
+        .tech-tags {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            justify-content: center;
+            opacity: 0;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .tech-tags.show {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .tag-pill {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid #38bdf8;
+            color: #e0f2fe;
+            padding: 8px 16px;
+            border-radius: 30px;
+            font-weight: 700;
+            font-size: 14.5px;
+            letter-spacing: 0.5px;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.2);
+            animation: float-pulse 3s ease-in-out infinite alternate;
+        }
+
+        .tag-pill:nth-child(2) { animation-delay: 0.3s; }
+        .tag-pill:nth-child(3) { animation-delay: 0.6s; }
+        .tag-pill:nth-child(4) { animation-delay: 0.9s; }
+
+        @keyframes float-pulse {
+            0% { transform: translateY(0); box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
+            100% { transform: translateY(-5px); box-shadow: 0 6px 18px rgba(56, 189, 248, 0.5); }
+        }
+
+        /* BUBBLE ANIMATION STYLES */
+        .bubble-wrapper {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .bubble-wrapper.show {
+            opacity: 1;
+        }
+
+        .bubble {
+            width: 12px;
+            height: 12px;
+            background: #38bdf8;
+            border-radius: 50%;
+            box-shadow: 0 0 10px #38bdf8;
+            animation: bounce 0.6s infinite alternate;
+        }
+
+        .bubble:nth-child(2) { animation-delay: 0.2s; }
+        .bubble:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes bounce {
+            from { transform: translateY(0); }
+            to { transform: translateY(-12px); }
+        }
+
+        /* PROGRESS MESSAGE STYLES & BAR */
+        .progress-box {
+            margin-top: 18px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .progress-box.show {
+            opacity: 1;
+        }
+
+        .progress-text {
+            font-size: 14.5px;
+            color: #94a3b8;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            height: 6px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .progress-bar-fill {
+            width: 0%;
+            height: 100%;
+            background: linear-gradient(90deg, #38bdf8, #22c55e);
+            border-radius: 10px;
+            transition: width 1.5s ease-in-out;
+            box-shadow: 0 0 12px #38bdf8;
+        }
     </style>
 </head>
 
 <body>
-    
+
+    <!-- MAIN PAGE CONTENT (High Visibility in Background) -->
     <app-header></app-header>
     <main class="wide">
         <h1>Free programming tutorials</h1>
         <p>Pick a language to see all of its topics in the left menu.</p>
-        <div class="grid"><a href="/design-pattern/">Design Pattern</a><a href="/java/">Java</a><a href="/python/">Python</a></div>
+        <div class="grid">
+            <a href="/design-pattern/">Design Pattern</a>
+            <a href="/java/">Java</a>
+            <a href="/python/">Python</a>
+        </div>
     </main>
-   <app-footer></app-footer>
+    <app-footer></app-footer>
+
+    <!-- OVERLAY ANIMATION -->
+    <div id="splash-overlay">
+        <div class="glass-card">
+            
+            <!-- Tech Stack Animation Tags -->
+            <div class="tech-tags" id="tech-tags">
+                <span class="tag-pill">☕ Java</span>
+                <span class="tag-pill">☁️ AWS</span>
+                <span class="tag-pill">⚙️ Microservices</span>
+                <span class="tag-pill">🚀 Interview Prep</span>
+            </div>
+
+            <!-- Bouncing Loading Bubbles -->
+            <div class="bubble-wrapper" id="bubble-wrapper">
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+                <div class="bubble"></div>
+            </div>
+
+            <!-- Progress Message & Animated Loading Bar -->
+            <div class="progress-box" id="progress-box">
+                <div class="progress-text">⚙️ Development in progress... Content updating soon!</div>
+                <div class="progress-bar-container">
+                    <div class="progress-bar-fill" id="progress-bar"></div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- TIMELINE SCRIPT -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const overlay = document.getElementById("splash-overlay");
+            const techTags = document.getElementById("tech-tags");
+            const bubbleWrapper = document.getElementById("bubble-wrapper");
+            const progressBox = document.getElementById("progress-box");
+            const progressBar = document.getElementById("progress-bar");
+
+            // Step 1: Page Load hone par immediately Tech Tags appear (0.1s)
+            setTimeout(() => {
+                techTags.classList.add("show");
+            }, 100);
+
+            // Step 2: 2 second baad - Bubbles & Progress Bar dikhega
+            setTimeout(() => {
+                bubbleWrapper.classList.add("show");
+                progressBox.classList.add("show");
+                progressBar.style.width = "100%";
+            }, 2000);
+
+            // Step 3: Animation complete hone ke baad (3.8 second baad) Fade Out Smoothly
+            setTimeout(() => {
+                overlay.classList.add("fade-out");
+            }, 3800);
+        });
+    </script>
 </body>
 
 </html>
