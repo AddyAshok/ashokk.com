@@ -4,10 +4,10 @@ class CustomHeader extends HTMLElement {
         <style>
             /* Base Header Styling - Full Width */
             .header-nav-container {
-                background: rgba(15, 23, 42, 0.98);
+                background: rgba(245, 115, 215, 0.98);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
-                padding: 12px 24px;
+                padding: 5px 5px;
                 position: relative;
                 z-index: 1000;
                 width: 100%;
@@ -39,7 +39,7 @@ class CustomHeader extends HTMLElement {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 16px;
+                gap: 10px;
                 width: 100%;
             }
 
@@ -55,7 +55,7 @@ class CustomHeader extends HTMLElement {
                 text-decoration: none;
                 font-weight: 800;
                 font-size: 20px;
-                color: #f8fafc;
+                color: #0e33eb;
                 letter-spacing: -0.5px;
             }
             .brand-logo b {
@@ -91,7 +91,7 @@ class CustomHeader extends HTMLElement {
                 gap: 8px;
                 align-items: center;
                 max-width: 1400px;
-                margin: 10px auto 0;
+                margin: 1px auto 0;
                 padding-top: 10px;
                 border-top: 1px solid rgba(255, 255, 255, 0.05);
             }
@@ -102,7 +102,7 @@ class CustomHeader extends HTMLElement {
                 text-decoration: none;
                 font-size: 13.5px;
                 font-weight: 700;
-                padding: 7px 12px;
+                padding: 5px 5px;
                 border-radius: 8px;
                 border: 1px solid transparent;
                 transition: all 0.25s ease;
@@ -119,47 +119,6 @@ class CustomHeader extends HTMLElement {
                 border-color: rgba(56, 189, 248, 0.3);
             }
 
-            /* Sub-topics Dropdown Styling */
-            .dropdown-container {
-                position: relative;
-                display: inline-block;
-            }
-
-            .dropdown-menu {
-                display: none;
-                position: absolute;
-                top: 100%;
-                left: 0;
-                background: #0f172a;
-                border: 1px solid #334155;
-                border-radius: 8px;
-                min-width: 220px;
-                box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-                z-index: 1001;
-                padding: 6px 0;
-                margin-top: 4px;
-            }
-
-            .dropdown-menu a {
-                display: block;
-                padding: 8px 16px;
-                font-size: 13px;
-                color: #94a3b8;
-                border-radius: 0;
-            }
-
-            .dropdown-menu a:hover {
-                color: #38bdf8;
-                background: #1e293b;
-            }
-
-            /* LAPTOP/DESKTOP HOVER CLASSIC SHOW */
-            @media (min-width: 869px) {
-                .dropdown-container:hover .dropdown-menu {
-                    display: block !important;
-                }
-            }
-
             /* Three Dots Toggle Button (Right Aligned on Mobile) */
             .menu-toggle {
                 display: none;
@@ -174,8 +133,26 @@ class CustomHeader extends HTMLElement {
                 transition: all 0.2s;
             }
 
-            /* Responsive Mobile View (< 868px) */
+            /* DESKTOP VIEW (Laptop/PC) Rules */
+            @media (min-width: 869px) {
+                #java-dropdown {
+                    display: none !important; /* Hide dropdown container on laptop */
+                }
+                #desktop-java-link {
+                    display: inline-flex !important; /* Show simple Java link on laptop */
+                }
+            }
+
+            /* MOBILE VIEW (< 868px) Rules */
             @media (max-width: 868px) {
+                #desktop-java-link {
+                    display: none !important; /* Hide simple Java link on mobile */
+                }
+
+                #java-dropdown {
+                    display: block; /* Show dropdown container on mobile */
+                }
+
                 .menu-toggle {
                     display: block;
                 }
@@ -208,6 +185,7 @@ class CustomHeader extends HTMLElement {
                 }
 
                 .dropdown-menu {
+                    display: none;
                     position: static;
                     box-shadow: none;
                     background: #020617;
@@ -216,6 +194,19 @@ class CustomHeader extends HTMLElement {
                     margin-left: 12px;
                     margin-top: 4px;
                     padding-left: 8px;
+                }
+
+                .dropdown-menu a {
+                    display: block;
+                    padding: 8px 16px;
+                    font-size: 13px;
+                    color: #94a3b8;
+                    border-radius: 0;
+                }
+
+                .dropdown-menu a:hover {
+                    color: #38bdf8;
+                    background: #1e293b;
                 }
 
                 .dropdown-container.open .dropdown-menu {
@@ -241,30 +232,38 @@ class CustomHeader extends HTMLElement {
                 <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">⋮ Topic</button>
             </div>
 
-            <!-- Navigation Bar with Nested Sub-Topics -->
+            <!-- Navigation Bar -->
             <nav class="langs" id="nav-links" aria-label="Languages">
                 
-                <!-- Java Dropdown with Sub-Topics -->
+                <!-- Simple Java Link (Laptop/Desktop View) -->
+                <a href="/" id="desktop-java-link">Java</a>
+
+                <!-- Java Accordion Dropdown (Mobile View Only) -->
                 <div class="dropdown-container" id="java-dropdown">
-                    <button class="dropdown-btn" type="button">Java ▾</button>
+                    <button class="dropdown-btn" type="button">
+                        Java ▾
+                    </button>
                     <div class="dropdown-menu">
                         <a href="/java/">Java Overview</a>
-                        <a href="/java/oops/">OOPs Concepts</a>
-                        <a href="/java/exception-handling/">Exception Handling</a>
-                        <a href="/java/multithreading/">Multithreading & Concurrency</a>
-                        <a href="/java/collections/">Collections Framework</a>
-                        <a href="/java/memory-model/">JVM & Memory Management</a>
+                        <a href="/">OOPs Concepts</a>
+                        <a href="/">Exception Handling</a>
+                        <a href="/">Multithreading & Concurrency</a>
+                        <a href="/">Collections Framework</a>
+                        <a href="/">JVM & Memory Management</a>
                     </div>
                 </div>
 
                 <!-- Core Technical Topics -->
-                <a href="/spring-boot/">Spring Boot</a>
-                <a href="/spring-security/">Spring Security</a>
-                <a href="/spring-jpa/">Spring JPA</a>
-                <a href="/microservices/">Microservices</a>
-                <a href="/kafka/">Kafka</a>
-                <a href="/aws/">AWS Cloud</a>
+                <a href="/">Spring Boot</a>
+                <a href="/">Spring Security</a>
+                <a href="/">Spring JPA</a>
+                <a href="/">Microservices</a>
+                <a href="/">Kafka</a>
+                <a href="/">AWS Cloud</a>
                 <a href="/design-pattern/">Design Pattern</a>
+                <a href="/">System Design</a>
+                <a href="/">SQL</a>
+                <a href="/">Interview Question</a>
                 <a href="/python/">Python</a>
             </nav>
         </header>
@@ -278,7 +277,7 @@ class CustomHeader extends HTMLElement {
             navLinks.classList.toggle('active');
         });
 
-        // Sub-Topics Click Handler for Mobile + Hover Safeguard for Desktop
+        // Mobile Accordion Toggle for Sub-Topics
         const javaDropdown = this.querySelector('#java-dropdown');
         const javaBtn = javaDropdown.querySelector('.dropdown-btn');
 
