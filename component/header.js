@@ -4,10 +4,10 @@ class CustomHeader extends HTMLElement {
         <style>
             /* Base Header Styling - Full Width */
             .header-nav-container {
-                background: rgba(15, 23, 42, 0.98);
+                background: rgba(95, 158, 212, 0.98);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
-                padding: 12px 24px;
+                padding: 5px 5px;
                 position: relative;
                 z-index: 1000;
                 width: 100%;
@@ -39,7 +39,7 @@ class CustomHeader extends HTMLElement {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 16px;
+                gap: 10px;
                 width: 100%;
             }
 
@@ -55,7 +55,7 @@ class CustomHeader extends HTMLElement {
                 text-decoration: none;
                 font-weight: 800;
                 font-size: 20px;
-                color: #f8fafc;
+                color: #0e33eb;
                 letter-spacing: -0.5px;
             }
             .brand-logo b {
@@ -91,7 +91,7 @@ class CustomHeader extends HTMLElement {
                 gap: 8px;
                 align-items: center;
                 max-width: 1400px;
-                margin: 10px auto 0;
+                margin: 1px auto 0;
                 padding-top: 10px;
                 border-top: 1px solid rgba(255, 255, 255, 0.05);
             }
@@ -102,7 +102,7 @@ class CustomHeader extends HTMLElement {
                 text-decoration: none;
                 font-size: 13.5px;
                 font-weight: 700;
-                padding: 7px 12px;
+                padding: 5px 5px;
                 border-radius: 8px;
                 border: 1px solid transparent;
                 transition: all 0.25s ease;
@@ -130,7 +130,7 @@ class CustomHeader extends HTMLElement {
                 position: absolute;
                 top: 100%;
                 left: 0;
-                background: #0f172a;
+                background: #3972f5;
                 border: 1px solid #334155;
                 border-radius: 8px;
                 min-width: 220px;
