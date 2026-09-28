@@ -133,7 +133,7 @@ class CustomHeader extends HTMLElement {
                 background: #0f172a;
                 border: 1px solid #334155;
                 border-radius: 8px;
-                min-width: 200px;
+                min-width: 220px;
                 box-shadow: 0 10px 25px rgba(0,0,0,0.5);
                 z-index: 1001;
                 padding: 6px 0;
@@ -153,10 +153,10 @@ class CustomHeader extends HTMLElement {
                 background: #1e293b;
             }
 
-            /* Show Dropdown on Desktop Hover */
+            /* LAPTOP/DESKTOP HOVER CLASSIC SHOW */
             @media (min-width: 869px) {
                 .dropdown-container:hover .dropdown-menu {
-                    display: block;
+                    display: block !important;
                 }
             }
 
@@ -177,15 +177,15 @@ class CustomHeader extends HTMLElement {
             /* Responsive Mobile View (< 868px) */
             @media (max-width: 868px) {
                 .menu-toggle {
-                    display: block; /* Visible on Right Side */
+                    display: block;
                 }
 
                 .tech-badge {
-                    display: none; /* Mobile view Cleanliness */
+                    display: none;
                 }
 
                 .langs {
-                    display: none; /* Hidden by default */
+                    display: none;
                     flex-direction: column;
                     width: 100%;
                     gap: 4px;
@@ -207,7 +207,6 @@ class CustomHeader extends HTMLElement {
                     justify-content: space-between;
                 }
 
-                /* Mobile Nested Dropdown Accordion */
                 .dropdown-menu {
                     position: static;
                     box-shadow: none;
@@ -220,7 +219,7 @@ class CustomHeader extends HTMLElement {
                 }
 
                 .dropdown-container.open .dropdown-menu {
-                    display: block;
+                    display: block !important;
                 }
             }
         </style>
@@ -247,25 +246,28 @@ class CustomHeader extends HTMLElement {
                 
                 <!-- Java Dropdown with Sub-Topics -->
                 <div class="dropdown-container" id="java-dropdown">
-                    <button class="dropdown-btn">Java ▾</button>
+                    <button class="dropdown-btn" type="button">Java ▾</button>
                     <div class="dropdown-menu">
                         <a href="/java/">Java Overview</a>
-                        <a href="/java/oops/">OOPs Concepts</a>
-                        <a href="/java/exception-handling/">Exception Handling</a>
-                        <a href="/java/multithreading/">Multithreading & Concurrency</a>
-                        <a href="/java/collections/">Collections Framework</a>
-                        <a href="/java/memory-model/">JVM & Memory Management</a>
+                        <a href="/">OOPs Concepts</a>
+                        <a href="/">Exception Handling</a>
+                        <a href="/">Multithreading & Concurrency</a>
+                        <a href="/">Collections Framework</a>
+                        <a href="/">JVM & Memory Management</a>
                     </div>
                 </div>
 
                 <!-- Core Technical Topics -->
-                <a href="/spring-boot/">Spring Boot</a>
-                <a href="/spring-security/">Spring Security</a>
-                <a href="/spring-jpa/">Spring JPA</a>
-                <a href="/microservices/">Microservices</a>
-                <a href="/kafka/">Kafka</a>
-                <a href="/aws/">AWS Cloud</a>
+                <a href="/">Spring Boot</a>
+                <a href="/">Spring Security</a>
+                <a href="/">Spring JPA</a>
+                <a href="/">Microservices</a>
+                <a href="/">Kafka</a>
+                <a href="/">AWS Cloud</a>
                 <a href="/design-pattern/">Design Pattern</a>
+                <a href="/">System Design</a>
+                <a href="/">SQL</a>
+                <a href="/">Interview Question</a>
                 <a href="/python/">Python</a>
             </nav>
         </header>
@@ -279,7 +281,7 @@ class CustomHeader extends HTMLElement {
             navLinks.classList.toggle('active');
         });
 
-        // Mobile Accordion Toggle for Sub-Topics
+        // Sub-Topics Click Handler for Mobile + Hover Safeguard for Desktop
         const javaDropdown = this.querySelector('#java-dropdown');
         const javaBtn = javaDropdown.querySelector('.dropdown-btn');
 
