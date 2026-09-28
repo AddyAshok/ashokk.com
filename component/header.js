@@ -72,7 +72,6 @@ class CustomHeader extends HTMLElement {
                 font-weight: 600;
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
                 white-space: nowrap;
             }
 
