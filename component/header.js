@@ -4,7 +4,7 @@ class CustomHeader extends HTMLElement {
         <style>
             /* Base Header Styling - Full Width */
             .header-nav-container {
-                background: rgba(245, 115, 215, 0.98);
+                background: rgba(230, 174, 217, 0.98);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
                 padding: 5px 5px;
@@ -88,11 +88,11 @@ class CustomHeader extends HTMLElement {
             .langs {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 8px;
+                gap: 2px;
                 align-items: center;
                 max-width: 1400px;
                 margin: 1px auto 0;
-                padding-top: 10px;
+                padding-top: 1px;
                 border-top: 1px solid rgba(255, 255, 255, 0.05);
             }
 
@@ -236,7 +236,7 @@ class CustomHeader extends HTMLElement {
             <nav class="langs" id="nav-links" aria-label="Languages">
                 
                 <!-- Simple Java Link (Laptop/Desktop View) -->
-                <a href="/" id="desktop-java-link">Java</a>
+                <a href="/java/" id="desktop-java-link">Java</a>
 
                 <!-- Java Accordion Dropdown (Mobile View Only) -->
                 <div class="dropdown-container" id="java-dropdown">
