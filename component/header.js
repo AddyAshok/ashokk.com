@@ -267,7 +267,7 @@ class CustomHeader extends HTMLElement {
                 <a href="/">java 8 Feature</a>
                 
                  <a href="/">Coding Question</a>
-                 <a href="/">/Daily Blog</a>
+                 <a href="/">Daily Blog</a>
             </nav>
         </header>
         `;
