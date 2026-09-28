@@ -4,7 +4,7 @@ class CustomHeader extends HTMLElement {
         <style>
             /* Base Header Styling - Full Width */
             .header-nav-container {
-                background: rgba(230, 174, 217, 0.98);
+                background: rgba(147, 230, 108, 0.98);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
                 padding: 5px 5px;
@@ -22,7 +22,7 @@ class CustomHeader extends HTMLElement {
                 left: -100%;
                 width: 100%;
                 height: 2px;
-                background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent);
+                background: linear-gradient(90deg, transparent, #38bdf8, #7c85d7, transparent);
                 animation: scanline 3.5s ease-in-out infinite;
             }
 
@@ -39,7 +39,7 @@ class CustomHeader extends HTMLElement {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 10px;
+                gap: 1px;
                 width: 100%;
             }
 
