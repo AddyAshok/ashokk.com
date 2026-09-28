@@ -4,7 +4,7 @@ class CustomHeader extends HTMLElement {
         <style>
             /* Base Header Styling - Full Width */
             .header-nav-container {
-                background: rgba(147, 230, 108, 0.98);
+                background: rgba(120, 215, 199, 0.94);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
                 padding: 5px 5px;
@@ -47,7 +47,7 @@ class CustomHeader extends HTMLElement {
             .logo-group {
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                gap: 1px;
                 flex-wrap: wrap;
             }
 
@@ -102,7 +102,7 @@ class CustomHeader extends HTMLElement {
                 text-decoration: none;
                 font-size: 13.5px;
                 font-weight: 700;
-                padding: 5px 5px;
+                padding: 2px 2px;
                 border-radius: 8px;
                 border: 1px solid transparent;
                 transition: all 0.25s ease;
@@ -110,7 +110,7 @@ class CustomHeader extends HTMLElement {
                 cursor: pointer;
                 display: inline-flex;
                 align-items: center;
-                gap: 4px;
+                gap: 2px;
             }
 
             .langs a:hover, .dropdown-btn:hover {
