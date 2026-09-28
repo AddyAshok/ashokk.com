@@ -4,7 +4,7 @@ class CustomHeader extends HTMLElement {
         <style>
             /* Base Header Styling - Full Width */
             .header-nav-container {
-                background: rgba(120, 215, 199, 0.94);
+                background: rgba(122, 245, 137, 0.94);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
                 padding: 5px 5px;
@@ -259,11 +259,16 @@ class CustomHeader extends HTMLElement {
                 <a href="/">Microservices</a>
                 <a href="/">Kafka</a>
                 <a href="/">AWS Cloud</a>
+                <a href="/">Redis & Caching</a>
                 <a href="/design-pattern/">Design Pattern</a>
                 <a href="/">System Design</a>
                 <a href="/">SQL</a>
                 <a href="/">Interview Question</a>
-                <a href="/python/">Python</a>
+                <a href="/">java 8 Feature</a>
+                 <a href="/">/java 9 to 25 Features</a>
+                 <a href="/Coding Question/">Coding Question</a>
+                  <a href="/Coding Question/">Python</a>
+                   <a href="/Daily Blog/">Python</a>
             </nav>
         </header>
         `;
