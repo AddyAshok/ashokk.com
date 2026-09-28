@@ -132,13 +132,11 @@ class CustomHeader extends HTMLElement {
                 }
             }
         </style>
-
+         <header><a class="logo" href="/"><b>A</b>shokka.com</a>
         <div class="header-nav-container">
             <div class="header-inner">
-                <a href="/" class="brand-logo">Ashokka <span>Tech</span></a>
-                
                 <!-- Three Dots Menu Icon for Mobile -->
-                <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">⋮ Menu</button>
+                <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">⋮ Topic</button>
             </div>
 
             <!-- Navigation Links -->
@@ -155,7 +153,7 @@ class CustomHeader extends HTMLElement {
                 <a href="/">AWS</a>
                 <a href="/design-pattern/">Design Pattern</a>
             </nav>
-        </div>
+        </div></header>
         `;
 
         // Mobile Menu Toggle Script
