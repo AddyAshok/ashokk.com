@@ -8,18 +8,18 @@ class CustomHeader extends HTMLElement {
                 max-width: 100%;
                 position: sticky;
                 top: 0;
-                z-index: 1000;
+                z-index: 99999 !important; /* FIX 1: Ensures header stays above all page content */
             }
 
-            /* Main Header Styling - Modern Dark Tech Theme */
+            /* Main Header Styling - Clean Edutech Theme */
             .header-nav-container {
-                background: #0f172a; /* Clean Deep Slate */
+                background: #0f172a; /* Deep Slate Background */
                 border-bottom: 1px solid #1e293b;
                 padding: 10px 20px;
                 position: relative;
                 width: 100%;
                 box-sizing: border-box;
-                overflow: hidden;
+                overflow: visible; /* FIX 2: Prevents hiding elements inside header */
             }
 
             /* Neon Glow Animated Top Border */
@@ -40,7 +40,7 @@ class CustomHeader extends HTMLElement {
                 100% { left: 100%; }
             }
 
-            /* Inner Wrapper - Flex Row Layout */
+            /* Inner Wrapper - Horizontal Layout */
             .header-inner {
                 max-width: 1400px;
                 margin: 0 auto;
@@ -51,7 +51,7 @@ class CustomHeader extends HTMLElement {
                 width: 100%;
             }
 
-            /* Brand Logo & Tech Badges */
+            /* Brand Logo & Tech Badges Group */
             .logo-group {
                 display: flex;
                 align-items: center;
@@ -91,7 +91,7 @@ class CustomHeader extends HTMLElement {
                 box-shadow: 0 0 6px #22c55e;
             }
 
-            /* Desktop Navigation Links - No Gap / Spacing Bug */
+            /* Desktop Navigation Bar */
             .langs {
                 display: flex;
                 align-items: center;
@@ -99,14 +99,14 @@ class CustomHeader extends HTMLElement {
                 margin: 0;
                 padding: 0;
                 overflow-x: auto;
-                scrollbar-width: none; /* Hide scrollbar for clean UI */
+                scrollbar-width: none;
             }
 
             .langs::-webkit-scrollbar {
                 display: none;
             }
 
-            /* Sleek Pill Nav Links */
+            /* Navigation Links Styling */
             .langs a, .dropdown-btn {
                 color: #94a3b8;
                 text-decoration: none;
@@ -213,7 +213,7 @@ class CustomHeader extends HTMLElement {
 
         <header class="header-nav-container">
             <div class="header-inner">
-                <!-- Left: Brand Logo & Sub-Badge -->
+                <!-- Left: Corrected Brand Logo & Tech Badges -->
                 <div class="logo-group">
                     <a class="brand-logo" href="/">
                         Ashokka<span>.com</span>
@@ -224,7 +224,7 @@ class CustomHeader extends HTMLElement {
                     </span>
                 </div>
 
-                <!-- Right: Desktop Navigation Bar -->
+                <!-- Right: Navigation Bar -->
                 <nav class="langs" id="nav-links" aria-label="Main Navigation">
                     <a href="/java/" id="desktop-java-link">Java</a>
 
