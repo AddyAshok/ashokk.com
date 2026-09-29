@@ -2,26 +2,24 @@ class CustomHeader extends HTMLElement {
     connectedCallback() {
         this.innerHTML = `
         <style>
-            /* Custom Element Box Fix */
             app-header {
                 display: block;
                 width: 100%;
                 max-width: 100%;
-                overflow-x: hidden;
+                position: sticky;
+                top: 0;
+                z-index: 1000;
             }
 
-            /* Base Header Styling - Full Width & Strict Overflow Control */
+            /* Main Header Styling - Modern Dark Tech Theme */
             .header-nav-container {
-                background: rgba(122, 245, 137, 0.94);
-                backdrop-filter: blur(12px);
+                background: #0f172a; /* Clean Deep Slate */
                 border-bottom: 1px solid #1e293b;
-                padding: 8px 16px;
+                padding: 10px 20px;
                 position: relative;
-                z-index: 1000;
                 width: 100%;
-                max-width: 100%;
                 box-sizing: border-box;
-                overflow: hidden; /* FIX: Prevents scanline animation from causing horizontal scrollbar */
+                overflow: hidden;
             }
 
             /* Neon Glow Animated Top Border */
@@ -32,7 +30,7 @@ class CustomHeader extends HTMLElement {
                 left: -100%;
                 width: 100%;
                 height: 2px;
-                background: linear-gradient(90deg, transparent, #38bdf8, #7c85d7, transparent);
+                background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent);
                 animation: scanline 3.5s ease-in-out infinite;
             }
 
@@ -42,40 +40,39 @@ class CustomHeader extends HTMLElement {
                 100% { left: 100%; }
             }
 
-            /* Inner Wrapper - Max Laptop Screen Spacing */
+            /* Inner Wrapper - Flex Row Layout */
             .header-inner {
                 max-width: 1400px;
                 margin: 0 auto;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 12px;
+                gap: 20px;
                 width: 100%;
-                box-sizing: border-box;
             }
 
-            /* Logo & Technical Badge Group */
+            /* Brand Logo & Tech Badges */
             .logo-group {
                 display: flex;
                 align-items: center;
                 gap: 12px;
-                flex-wrap: wrap;
+                white-space: nowrap;
             }
 
             .brand-logo {
                 text-decoration: none;
                 font-weight: 800;
-                font-size: 20px;
-                color: #0e33eb;
+                font-size: 22px;
+                color: #ffffff;
                 letter-spacing: -0.5px;
             }
-            .brand-logo b {
+            .brand-logo span {
                 color: #38bdf8;
             }
 
             .tech-badge {
-                font-size: 11.5px;
-                color: #2517e9;
+                font-size: 11px;
+                color: #38bdf8;
                 background: rgba(56, 189, 248, 0.1);
                 border: 1px solid rgba(56, 189, 248, 0.25);
                 padding: 4px 10px;
@@ -84,71 +81,71 @@ class CustomHeader extends HTMLElement {
                 display: inline-flex;
                 align-items: center;
                 gap: 6px;
-                white-space: nowrap;
             }
 
             .badge-dot {
                 height: 6px;
                 width: 6px;
-                background-color: #0e2ee2;
+                background-color: #22c55e;
                 border-radius: 50%;
-                box-shadow: 0 0 6px #e7ede9;
+                box-shadow: 0 0 6px #22c55e;
             }
 
-            /* Desktop Navigation Bar */
+            /* Desktop Navigation Links - No Gap / Spacing Bug */
             .langs {
                 display: flex;
-                flex-wrap: wrap;
-                gap: 6px 12px;
-                align-items: center;
-                max-width: 1400px;
-                margin: 8px auto 0;
-                padding-top: 8px;
-                border-top: 1px solid rgba(0, 0, 0, 0.08);
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            /* Main Links Styling */
-            .langs a, .dropdown-btn {
-                color: #0f172a;
-                text-decoration: none;
-                font-size: 13.5px;
-                font-weight: 700;
-                padding: 4px 8px;
-                border-radius: 6px;
-                border: 1px solid transparent;
-                transition: all 0.25s ease;
-                background: transparent;
-                cursor: pointer;
-                display: inline-flex;
                 align-items: center;
                 gap: 4px;
+                margin: 0;
+                padding: 0;
+                overflow-x: auto;
+                scrollbar-width: none; /* Hide scrollbar for clean UI */
+            }
+
+            .langs::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Sleek Pill Nav Links */
+            .langs a, .dropdown-btn {
+                color: #94a3b8;
+                text-decoration: none;
+                font-size: 13.5px;
+                font-weight: 600;
+                padding: 6px 12px;
+                border-radius: 6px;
+                transition: all 0.2s ease;
                 white-space: nowrap;
+                background: transparent;
+                border: none;
+                cursor: pointer;
             }
 
             .langs a:hover, .dropdown-btn:hover {
-                color: #0e33eb;
-                background: rgba(56, 189, 248, 0.15);
-                border-color: rgba(56, 189, 248, 0.3);
+                color: #ffffff;
+                background: #1e293b;
             }
 
-            /* Three Dots Toggle Button (Right Aligned on Mobile) */
+            .langs a.active {
+                color: #38bdf8;
+                background: rgba(56, 189, 248, 0.1);
+            }
+
+            /* Mobile Toggle Button */
             .menu-toggle {
                 display: none;
                 background: #1e293b;
                 border: 1px solid #334155;
                 color: #38bdf8;
-                border-radius: 8px;
+                border-radius: 6px;
                 padding: 6px 12px;
                 cursor: pointer;
-                font-size: 15px;
-                font-weight: 700;
-                transition: all 0.2s;
+                font-size: 14px;
+                font-weight: 600;
             }
 
-            /* DESKTOP VIEW (Laptop/PC) Rules */
-            @media (min-width: 869px) {
+            /* DESKTOP VIEW */
+            @media (min-width: 900px) {
                 #java-dropdown {
                     display: none !important;
                 }
@@ -157,32 +154,28 @@ class CustomHeader extends HTMLElement {
                 }
             }
 
-            /* MOBILE VIEW (< 868px) Rules */
-            @media (max-width: 868px) {
+            /* MOBILE VIEW */
+            @media (max-width: 899px) {
                 #desktop-java-link {
                     display: none !important;
-                }
-
-                #java-dropdown {
-                    display: block;
-                }
-
-                .menu-toggle {
-                    display: block;
                 }
 
                 .tech-badge {
                     display: none;
                 }
 
+                .menu-toggle {
+                    display: block;
+                }
+
                 .langs {
                     display: none;
                     flex-direction: column;
                     width: 100%;
-                    gap: 4px;
+                    gap: 6px;
                     padding-top: 12px;
+                    margin-top: 10px;
                     border-top: 1px solid #1e293b;
-                    margin-top: 12px;
                 }
 
                 .langs.active {
@@ -200,27 +193,16 @@ class CustomHeader extends HTMLElement {
 
                 .dropdown-menu {
                     display: none;
-                    position: static;
-                    box-shadow: none;
                     background: #020617;
-                    border: none;
                     border-left: 2px solid #38bdf8;
-                    margin-left: 12px;
-                    margin-top: 4px;
-                    padding-left: 8px;
+                    margin-left: 10px;
+                    padding-left: 6px;
                 }
 
                 .dropdown-menu a {
                     display: block;
-                    padding: 8px 16px;
-                    font-size: 13px;
+                    padding: 8px 12px;
                     color: #94a3b8;
-                    border-radius: 0;
-                }
-
-                .dropdown-menu a:hover {
-                    color: #38bdf8;
-                    background: #1e293b;
                 }
 
                 .dropdown-container.open .dropdown-menu {
@@ -231,10 +213,10 @@ class CustomHeader extends HTMLElement {
 
         <header class="header-nav-container">
             <div class="header-inner">
-                <!-- Left: Logo & Technical Badge -->
+                <!-- Left: Brand Logo & Sub-Badge -->
                 <div class="logo-group">
                     <a class="brand-logo" href="/">
-                        <b>A</b>shokka.com
+                        Ashokka<span>.com</span>
                     </a>
                     <span class="tech-badge">
                         <span class="badge-dot"></span>
@@ -242,67 +224,60 @@ class CustomHeader extends HTMLElement {
                     </span>
                 </div>
 
-                <!-- Right: Mobile Menu Toggle Button -->
-                <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">⋮ Topic</button>
-            </div>
+                <!-- Right: Desktop Navigation Bar -->
+                <nav class="langs" id="nav-links" aria-label="Main Navigation">
+                    <a href="/java/" id="desktop-java-link">Java</a>
 
-            <!-- Navigation Bar -->
-            <nav class="langs" id="nav-links" aria-label="Languages">
-                
-                <!-- Simple Java Link (Laptop/Desktop View) -->
-                <a href="/java/" id="desktop-java-link">Java</a>
-
-                <!-- Java Accordion Dropdown (Mobile View Only) -->
-                <div class="dropdown-container" id="java-dropdown">
-                    <button class="dropdown-btn" type="button">
-                        Java ▾
-                    </button>
-                    <div class="dropdown-menu">
-                        <a href="/java/">Java Overview</a>
-                        <a href="/">OOPs Concepts</a>
-                        <a href="/">Exception Handling</a>
-                        <a href="/">Multithreading & Concurrency</a>
-                        <a href="/">Collections Framework</a>
-                        <a href="/">JVM & Memory Management</a>
+                    <div class="dropdown-container" id="java-dropdown">
+                        <button class="dropdown-btn" type="button">Java ▾</button>
+                        <div class="dropdown-menu">
+                            <a href="/java/">Java Overview</a>
+                            <a href="/">OOPs Concepts</a>
+                            <a href="/">Exception Handling</a>
+                            <a href="/">Multithreading & Concurrency</a>
+                            <a href="/">Collections Framework</a>
+                            <a href="/">JVM & Memory Management</a>
+                        </div>
                     </div>
-                </div>
 
-                <!-- Core Technical Topics -->
-                <a href="/">Spring Boot</a>
-                <a href="/">Spring Security</a>
-                <a href="/">Spring JPA</a>
-                <a href="/">Microservices</a>
-                <a href="/">Kafka</a>
-                <a href="/">AWS Cloud</a>
-                <a href="/">Redis & Caching</a>
-                <a href="/design-pattern/">Design Pattern</a>
-                <a href="/">System Design</a>
-                <a href="/">SQL</a>
-                <a href="/">Interview Question</a>
-                <a href="/java8">java 8 Feature</a>
-                <a href="/">Coding Question</a>
-                <a href="/">Daily Blog</a>
-            </nav>
+                    <a href="/">Spring Boot</a>
+                    <a href="/">Spring Security</a>
+                    <a href="/">Spring JPA</a>
+                    <a href="/">Microservices</a>
+                    <a href="/">Kafka</a>
+                    <a href="/">AWS Cloud</a>
+                    <a href="/">Redis & Caching</a>
+                    <a href="/design-pattern/">Design Pattern</a>
+                    <a href="/">System Design</a>
+                    <a href="/">SQL</a>
+                    <a href="/">Interview Question</a>
+                    <a href="/java8">Java 8 Feature</a>
+                    <a href="/">Coding Question</a>
+                    <a href="/">Daily Blog</a>
+                </nav>
+
+                <!-- Mobile Menu Button -->
+                <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">☰ Menu</button>
+            </div>
         </header>
         `;
 
-        // Mobile Menu Toggle Logic
+        // Mobile Menu Toggle
         const toggleBtn = this.querySelector('#mobile-menu-btn');
         const navLinks = this.querySelector('#nav-links');
-
         if (toggleBtn && navLinks) {
             toggleBtn.addEventListener('click', () => {
                 navLinks.classList.toggle('active');
             });
         }
 
-        // Mobile Accordion Toggle for Sub-Topics
+        // Mobile Accordion Toggle
         const javaDropdown = this.querySelector('#java-dropdown');
         if (javaDropdown) {
             const javaBtn = javaDropdown.querySelector('.dropdown-btn');
             if (javaBtn) {
                 javaBtn.addEventListener('click', (e) => {
-                    if (window.innerWidth <= 868) {
+                    if (window.innerWidth <= 899) {
                         e.preventDefault();
                         javaDropdown.classList.toggle('open');
                     }
