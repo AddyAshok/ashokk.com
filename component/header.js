@@ -11,23 +11,24 @@ class CustomHeader extends HTMLElement {
                 z-index: 99999 !important;
             }
 
-            /* Container & Glassmorphism Backdrop with Entrance Animation */
+            /* Container & Glassmorphism Backdrop */
             .header-nav-container {
-                background: rgba(15, 23, 42, 0.96);
+                background: rgba(15, 23, 42, 0.98);
                 backdrop-filter: blur(14px);
                 -webkit-backdrop-filter: blur(14px);
                 border-bottom: 1px solid #1e293b;
                 position: relative;
                 width: 100%;
                 box-sizing: border-box;
-                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-                animation: headerSlideDown 0.5s ease-out forwards;
+                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
+                animation: headerSlideDown 0.4s ease-out forwards;
             }
 
+            /* Entrance Animation */
             @keyframes headerSlideDown {
                 from {
                     opacity: 0;
-                    transform: translateY(-15px);
+                    transform: translateY(-12px);
                 }
                 to {
                     opacity: 1;
@@ -35,7 +36,7 @@ class CustomHeader extends HTMLElement {
                 }
             }
 
-            /* Animated Gradient Border at Top */
+            /* Top Animated Gradient Line */
             .header-nav-container::before {
                 content: '';
                 position: absolute;
@@ -61,6 +62,7 @@ class CustomHeader extends HTMLElement {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
+                box-sizing: border-box;
             }
 
             .logo-group {
@@ -81,7 +83,7 @@ class CustomHeader extends HTMLElement {
             }
 
             .brand-logo:hover {
-                transform: scale(1.03);
+                transform: scale(1.02);
             }
 
             .brand-logo span {
@@ -89,13 +91,13 @@ class CustomHeader extends HTMLElement {
                 text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
             }
 
-            /* Pulsing Tech Status Badge */
+            /* Tech Status Badge */
             .tech-badge {
-                font-size: 11.5px;
+                font-size: 11px;
                 color: #38bdf8;
                 background: rgba(56, 189, 248, 0.08);
                 border: 1px solid rgba(56, 189, 248, 0.25);
-                padding: 4px 12px;
+                padding: 4px 10px;
                 border-radius: 20px;
                 font-weight: 600;
                 display: inline-flex;
@@ -140,7 +142,7 @@ class CustomHeader extends HTMLElement {
             .categories-bar {
                 background: #090d16;
                 border-top: 1px solid rgba(30, 41, 59, 0.7);
-                padding: 2px 12px;
+                padding: 4px 12px;
                 width: 100%;
                 box-sizing: border-box;
             }
@@ -150,31 +152,25 @@ class CustomHeader extends HTMLElement {
                 margin: 0 auto;
                 display: flex;
                 align-items: center;
-                justify-content: space-between; /* Links ko poori width me perfectly adjust karega */
-                gap: 4px;
-                overflow-x: auto;
-                white-space: nowrap;
-                scrollbar-width: none;
-                padding: 3px 0;
+                justify-content: center; /* Subhi links centralize honge aur wrap ho payenge */
+                flex-wrap: wrap; /* Prevent cutting of last items */
+                gap: 3px 6px; /* Vertical and horizontal gap */
+                box-sizing: border-box;
             }
 
-            .categories-inner::-webkit-scrollbar {
-                display: none;
-            }
-
-            /* Compact Navigation Links with Smooth Glow Animations */
+            /* Animated Navigation Items */
             .categories-inner a {
                 color: #94a3b8;
                 text-decoration: none;
-                font-size: 12.5px;
+                font-size: 12px;
                 font-weight: 600;
-                padding: 6px 10px;
+                padding: 5px 9px;
                 border-radius: 6px;
-                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
                 display: inline-block;
                 border: 1px solid transparent;
-                flex-shrink: 0;
+                white-space: nowrap;
             }
 
             /* Hover Glow & Lift Effect */
@@ -186,7 +182,7 @@ class CustomHeader extends HTMLElement {
                 box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
             }
 
-            /* Active Tab Styling */
+            /* Active State */
             .categories-inner a.active {
                 color: #38bdf8;
                 background: rgba(56, 189, 248, 0.15);
@@ -194,11 +190,11 @@ class CustomHeader extends HTMLElement {
                 box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
             }
 
-            /* Animated Bottom Line Indicator on Hover */
+            /* Bottom Glow Indicator */
             .categories-inner a::after {
                 content: '';
                 position: absolute;
-                bottom: 2px;
+                bottom: 1px;
                 left: 50%;
                 width: 0;
                 height: 2px;
@@ -210,17 +206,11 @@ class CustomHeader extends HTMLElement {
 
             .categories-inner a:hover::after,
             .categories-inner a.active::after {
-                width: 60%;
+                width: 70%;
             }
 
             /* RESPONSIVE DESIGN FOR SMALLER SCREENS */
-            @media (max-width: 992px) {
-                .categories-inner {
-                    justify-content: flex-start;
-                }
-            }
-
-            @media (max-width: 850px) {
+            @media (max-width: 900px) {
                 .tech-badge {
                     display: none;
                 }
@@ -239,7 +229,6 @@ class CustomHeader extends HTMLElement {
                 .categories-inner {
                     flex-direction: column;
                     align-items: stretch;
-                    white-space: normal;
                     gap: 4px;
                 }
                 .categories-inner a {
@@ -275,7 +264,7 @@ class CustomHeader extends HTMLElement {
                 <button class="menu-toggle" id="mobile-toggle-btn" aria-label="Toggle Navigation">☰ Topics Menu</button>
             </div>
 
-            <!-- Row 2: Category Navigation Bar -->
+            <!-- Row 2: Fully Responsive Nav Bar -->
             <nav class="categories-bar" id="categories-nav">
                 <div class="categories-inner">
                     <a href="/java/" class="active">Java</a>
@@ -298,7 +287,7 @@ class CustomHeader extends HTMLElement {
         </header>
         `;
 
-        // Mobile Menu Button Toggle Logic
+        // Mobile Navigation Toggle
         const toggleBtn = this.querySelector('#mobile-toggle-btn');
         const categoriesNav = this.querySelector('#categories-nav');
         if (toggleBtn && categoriesNav) {
