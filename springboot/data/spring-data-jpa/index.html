@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Spring Data JPA – Spring Boot – Ashokka Tech</title>
+<meta name="description" content="Spring Data JPA removes almost all database boilerplate.">
+<link rel="canonical" href="https://ashokka.com/springboot/data/spring-data-jpa/">
+<meta property="og:title" content="Spring Data JPA – Spring Boot – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/springboot/css/springboot.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/springboot/js/springboot.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/" aria-current="page">Spring Data JPA</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/data/">Data and Transactions</a> / Spring Data JPA</div>
+<h1>Spring Data JPA</h1><p>Spring Data JPA removes almost all database boilerplate. You write an interface, and Spring creates the implementation with ready-made CRUD, paging, sorting and query methods on top of JPA and Hibernate.</p><h2>Setup</h2><pre><code class="language-properties">spring.datasource.url=jdbc:postgresql://localhost:5432/shop
+spring.datasource.username=app
+spring.datasource.password=${DB_PASSWORD}
+spring.jpa.hibernate.ddl-auto=validate
+spring.jpa.show-sql=true
+spring.jpa.properties.hibernate.format_sql=true</code></pre><table><thead><tr><th>ddl-auto</th><th>Effect</th><th>Use</th></tr></thead><tbody><tr><td>none</td><td>Does nothing</td><td>Production with migrations</td></tr><tr><td>validate</td><td>Checks that tables match entities</td><td>Production (recommended with Flyway)</td></tr><tr><td>update</td><td>Adds missing tables and columns</td><td>Quick prototypes only</td></tr><tr><td>create</td><td>Drops and creates schema at start</td><td>Tests</td></tr><tr><td>create-drop</td><td>Creates at start, drops at shutdown</td><td>In-memory test databases</td></tr></tbody></table><h2>Entity</h2><pre><code class="language-java">import jakarta.persistence.*;
+import java.math.BigDecimal;
+
+@Entity
+@Table(name = &quot;products&quot;)
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @Column(nullable = false, length = 100)
+    private String name;
+
+    @Column(nullable = false, precision = 10, scale = 2)
+    private BigDecimal price;
+
+    private String category;
+
+    protected Product() { }                       // required by JPA
+
+    public Product(String name, BigDecimal price, String category) {
+        this.name = name; this.price = price; this.category = category;
+    }
+
+    public Long getId() { return id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+    public BigDecimal getPrice() { return price; }
+    public void setPrice(BigDecimal price) { this.price = price; }
+    public String getCategory() { return category; }
+}</code></pre><h2>Repository</h2><pre class="dia"><code>Repository  ◄─ CrudRepository  ◄─ ListCrudRepository  ◄─┐
+                       PagingAndSortingRepository  ◄──────────┼─ JpaRepository
+save, findById, findAll, deleteById, count, existsById, findAll(Pageable) ...</code></pre><pre><code class="language-java">import java.math.BigDecimal;
+import java.util.List;
+import java.util.Optional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.*;
+import org.springframework.data.repository.query.Param;
+
+public interface ProductRepository extends JpaRepository&lt;Product, Long&gt; {
+
+    List&lt;Product&gt; findByCategory(String category);
+    Optional&lt;Product&gt; findByNameIgnoreCase(String name);
+    List&lt;Product&gt; findByPriceGreaterThan(BigDecimal price);
+    List&lt;Product&gt; findByNameContainingIgnoreCase(String text);
+    List&lt;Product&gt; findTop3ByOrderByPriceDesc();
+    boolean existsByName(String name);
+    long countByCategory(String category);
+    Page&lt;Product&gt; findByCategory(String category, Pageable pageable);
+
+    @Query(&quot;select p from Product p where p.price between :min and :max order by p.price&quot;)
+    List&lt;Product&gt; findInRange(@Param(&quot;min&quot;) BigDecimal min, @Param(&quot;max&quot;) BigDecimal max);
+
+    @Query(value = &quot;select * from products where category = ?1 limit 5&quot;, nativeQuery = true)
+    List&lt;Product&gt; firstFiveNative(String category);
+
+    @Modifying
+    @Transactional
+    @Query(&quot;update Product p set p.price = p.price * :factor where p.category = :category&quot;)
+    int raisePrices(@Param(&quot;category&quot;) String category, @Param(&quot;factor&quot;) BigDecimal factor);
+}</code></pre><table><thead><tr><th>Method name part</th><th>Meaning</th></tr></thead><tbody><tr><td>findBy / readBy / getBy</td><td>Select</td></tr><tr><td>countBy / existsBy / deleteBy</td><td>Count, check, delete</td></tr><tr><td>And, Or</td><td>Combine conditions</td></tr><tr><td>GreaterThan, LessThan, Between</td><td>Comparisons</td></tr><tr><td>Like, Containing, StartingWith, IgnoreCase</td><td>Text search</td></tr><tr><td>OrderByPriceDesc</td><td>Sorting</td></tr><tr><td>Top3, First</td><td>Limit results</td></tr></tbody></table><h2>Paging and sorting</h2><pre><code class="language-java">Pageable pageable = PageRequest.of(0, 10, Sort.by(&quot;price&quot;).descending());
+Page&lt;Product&gt; page = repository.findByCategory(&quot;books&quot;, pageable);
+System.out.println(page.getContent());
+System.out.println(page.getTotalElements() + &quot; total, &quot; + page.getTotalPages() + &quot; pages&quot;);</code></pre><h2>Projections: read only what you need</h2><pre><code class="language-java">public interface ProductSummary {       // interface projection
+    String getName();
+    BigDecimal getPrice();
+}
+List&lt;ProductSummary&gt; findByCategory(String category);     // in the repository
+
+public record ProductView(String name, BigDecimal price) { }   // class-based (DTO) projection
+List&lt;ProductView&gt; findViewByCategory(String category);</code></pre><p class="use"><b>Common mistake:</b> Using spring.jpa.hibernate.ddl-auto=update in production. It can change your schema unexpectedly. Use validate together with migrations such as Flyway.</p><h2>Interview questions</h2><h3>What is the difference between CrudRepository and JpaRepository?</h3><p>JpaRepository extends the CRUD and paging repositories and adds JPA-specific methods such as flush() and saveAllAndFlush().</p><h3>When does save() insert and when does it update?</h3><p>If the entity is new (id is null) it inserts. If it has an id that exists, it merges and updates.</p><h3>Derived query or @Query?</h3><p>Use derived methods for simple queries. Use @Query when the method name would be too long or the query is complex.</p><div class="np"><a href="/springboot/web/rest-client/">&larr; Calling Other APIs: RestClient and WebClient</a><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

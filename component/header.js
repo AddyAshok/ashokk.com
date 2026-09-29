@@ -243,7 +243,7 @@ class CustomHeader extends HTMLElement {
                     
                     <nav class="categories-nav" id="categories-nav">
                         <a href="/java/" class="active">Java</a>
-                        <a href="/">Spring Boot</a>
+                        <a href="/springboot/">Spring Boot</a>
                         <a href="/">Spring Security</a>
                         <a href="/">Spring JPA</a>
                         <a href="/">Microservices</a>

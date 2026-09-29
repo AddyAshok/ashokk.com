@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Connection Pool (HikariCP) and Flyway Migrations – Spring Boot – Ashokka Tech</title>
+<meta name="description" content="Two things every real project needs: a tuned connection pool, and versioned database migrations instead of letting Hibernate change your schema..">
+<link rel="canonical" href="https://ashokka.com/springboot/data/datasource-hikari-flyway/">
+<meta property="og:title" content="Connection Pool (HikariCP) and Flyway Migrations – Spring Boot – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/springboot/css/springboot.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/springboot/js/springboot.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/datasource-hikari-flyway/" aria-current="page">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/data/">Data and Transactions</a> / Connection Pool (HikariCP) and Flyway Migrations</div>
+<h1>Connection Pool (HikariCP) and Flyway Migrations</h1><p>Two things every real project needs: a tuned connection pool, and versioned database migrations instead of letting Hibernate change your schema.</p><h2>HikariCP: the default connection pool</h2><p>Opening a database connection is slow. A pool keeps a fixed number of open connections and lends them to your code. Spring Boot uses HikariCP by default.</p><pre><code class="language-properties">spring.datasource.url=jdbc:postgresql://localhost:5432/shop
+spring.datasource.username=app
+spring.datasource.password=${DB_PASSWORD}
+
+spring.datasource.hikari.maximum-pool-size=10
+spring.datasource.hikari.minimum-idle=5
+spring.datasource.hikari.connection-timeout=30000
+spring.datasource.hikari.idle-timeout=600000
+spring.datasource.hikari.max-lifetime=1800000</code></pre><table><thead><tr><th>Property</th><th>Meaning</th><th>Default</th></tr></thead><tbody><tr><td>maximum-pool-size</td><td>Maximum connections in the pool</td><td>10</td></tr><tr><td>minimum-idle</td><td>Idle connections kept ready</td><td>same as maximum</td></tr><tr><td>connection-timeout</td><td>Max wait (ms) for a free connection before an exception</td><td>30000</td></tr><tr><td>idle-timeout</td><td>How long an idle connection may stay (ms)</td><td>600000</td></tr><tr><td>max-lifetime</td><td>Maximum life of a connection (ms). Keep it below the database limit</td><td>1800000</td></tr></tbody></table><ul><li>A bigger pool is not always faster. A small pool (10 to 20) is enough for most services.</li><li>Do not make the pool larger than the database can handle, and remember that every application instance has its own pool.</li><li>If you see &#x27;Connection is not available, request timed out&#x27;, look for slow queries or long transactions before you increase the pool.</li></ul><h2>Flyway: version control for your database</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.flywaydb&lt;/groupId&gt;
+    &lt;artifactId&gt;flyway-core&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;!-- Flyway 10+ needs a database module, for example for PostgreSQL: --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.flywaydb&lt;/groupId&gt;
+    &lt;artifactId&gt;flyway-database-postgresql&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre><pre class="dia"><code>src/main/resources/db/migration/
+    V1__create_products.sql
+    V2__add_category_column.sql
+    V3__insert_default_data.sql
+Naming: V&lt;version&gt;__&lt;description&gt;.sql   (two underscores)</code></pre><pre><code class="language-sql">-- V1__create_products.sql
+CREATE TABLE products (
+    id       BIGSERIAL PRIMARY KEY,
+    name     VARCHAR(100)  NOT NULL,
+    price    NUMERIC(10,2) NOT NULL
+);
+
+-- V2__add_category_column.sql
+ALTER TABLE products ADD COLUMN category VARCHAR(50);</code></pre><pre><code class="language-properties">spring.flyway.enabled=true
+spring.flyway.baseline-on-migrate=true      # for an existing database
+spring.jpa.hibernate.ddl-auto=validate      # Hibernate only checks, Flyway changes</code></pre><p>At startup Flyway checks the table flyway_schema_history, runs every new migration in order, and stores a checksum for each. Rules:</p><ul><li>Never edit a migration that was already applied. Flyway detects the changed checksum and fails. Create a new version instead.</li><li>Keep migrations small and repeatable on every environment.</li><li>Use R__name.sql for repeatable migrations such as views.</li></ul><h2>H2 console for local development</h2><pre><code class="language-properties">spring.h2.console.enabled=true
+spring.datasource.url=jdbc:h2:mem:testdb
+# open http://localhost:8080/h2-console</code></pre><p class="use"><b>Common mistake:</b> Editing an old Flyway migration file after it ran on a database. The checksum no longer matches and startup fails. Always add a new versioned migration.</p><h2>Interview questions</h2><h3>What is the default pool in Spring Boot?</h3><p>HikariCP, chosen because it is small and very fast.</p><h3>Flyway or Liquibase?</h3><p>Both work well. Flyway uses plain SQL files and is simpler. Liquibase uses XML, YAML or SQL changelogs with more features like rollback.</p><h3>Why not use ddl-auto=update?</h3><p>It cannot handle renames, data changes or rollbacks safely and gives no history. Migrations are repeatable and reviewable.</p><div class="np"><a href="/springboot/data/transactions/">&larr; Transactions with @Transactional</a><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers) &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>
