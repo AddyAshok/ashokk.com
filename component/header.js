@@ -198,7 +198,7 @@ class CustomHeader extends HTMLElement {
                     flex-direction: column;
                     align-items: stretch;
                     white-space: normal;
-                    gap: 8px;
+                    gap: 2px;
                 }
                 .categories-inner a {
                     width: 100%;
