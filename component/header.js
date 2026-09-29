@@ -45,7 +45,7 @@ class CustomHeader extends HTMLElement {
             .top-brand-row {
                 max-width: 1400px;
                 margin: 0 auto;
-                padding: 12px 20px;
+                padding: 2px 10px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -128,7 +128,7 @@ class CustomHeader extends HTMLElement {
             .categories-bar {
                 background: #090d16;
                 border-top: 1px solid rgba(30, 41, 59, 0.7);
-                padding: 2px 2px;
+                padding: 0px 2px;
                 width: 100%;
                 box-sizing: border-box;
             }
@@ -138,7 +138,7 @@ class CustomHeader extends HTMLElement {
                 margin: 0 auto;
                 display: flex;
                 align-items: center;
-                gap: 6px;
+                gap: 2px;
                 overflow-x: auto;
                 white-space: nowrap;
                 scrollbar-width: none;
