@@ -11,7 +11,7 @@ class CustomHeader extends HTMLElement {
                 z-index: 99999 !important;
             }
 
-            /* Container & Glassmorphism Backdrop */
+            /* Container & Glassmorphism Backdrop with Entrance Animation */
             .header-nav-container {
                 background: rgba(15, 23, 42, 0.96);
                 backdrop-filter: blur(14px);
@@ -21,6 +21,18 @@ class CustomHeader extends HTMLElement {
                 width: 100%;
                 box-sizing: border-box;
                 box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+                animation: headerSlideDown 0.5s ease-out forwards;
+            }
+
+            @keyframes headerSlideDown {
+                from {
+                    opacity: 0;
+                    transform: translateY(-15px);
+                }
+                to {
+                    opacity: 1;
+                    transform: translateY(0);
+                }
             }
 
             /* Animated Gradient Border at Top */
@@ -45,7 +57,7 @@ class CustomHeader extends HTMLElement {
             .top-brand-row {
                 max-width: 1400px;
                 margin: 0 auto;
-                padding: 2px 10px;
+                padding: 6px 16px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
@@ -54,13 +66,13 @@ class CustomHeader extends HTMLElement {
             .logo-group {
                 display: flex;
                 align-items: center;
-                gap: 14px;
+                gap: 12px;
             }
 
             .brand-logo {
                 text-decoration: none;
                 font-weight: 800;
-                font-size: 24px;
+                font-size: 22px;
                 color: #ffffff;
                 letter-spacing: -0.5px;
                 display: inline-flex;
@@ -79,21 +91,21 @@ class CustomHeader extends HTMLElement {
 
             /* Pulsing Tech Status Badge */
             .tech-badge {
-                font-size: 12px;
+                font-size: 11.5px;
                 color: #38bdf8;
                 background: rgba(56, 189, 248, 0.08);
                 border: 1px solid rgba(56, 189, 248, 0.25);
-                padding: 5px 14px;
+                padding: 4px 12px;
                 border-radius: 20px;
                 font-weight: 600;
                 display: inline-flex;
                 align-items: center;
-                gap: 8px;
+                gap: 6px;
             }
 
             .badge-dot {
-                height: 8px;
-                width: 8px;
+                height: 7px;
+                width: 7px;
                 background-color: #22c55e;
                 border-radius: 50%;
                 box-shadow: 0 0 8px #22c55e;
@@ -102,7 +114,7 @@ class CustomHeader extends HTMLElement {
 
             @keyframes pulseGlow {
                 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-                70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+                70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
                 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
             }
 
@@ -113,9 +125,9 @@ class CustomHeader extends HTMLElement {
                 border: 1px solid #334155;
                 color: #38bdf8;
                 border-radius: 6px;
-                padding: 6px 14px;
+                padding: 5px 12px;
                 cursor: pointer;
-                font-size: 14px;
+                font-size: 13px;
                 font-weight: 600;
                 transition: all 0.2s ease;
             }
@@ -124,11 +136,11 @@ class CustomHeader extends HTMLElement {
                 background: #334155;
             }
 
-            /* --- ROW 2: CATEGORIES NAVIGATION BAR (NICHE WALI ROW) --- */
+            /* --- ROW 2: CATEGORIES NAVIGATION BAR --- */
             .categories-bar {
                 background: #090d16;
                 border-top: 1px solid rgba(30, 41, 59, 0.7);
-                padding: 0px 2px;
+                padding: 2px 12px;
                 width: 100%;
                 box-sizing: border-box;
             }
@@ -138,47 +150,76 @@ class CustomHeader extends HTMLElement {
                 margin: 0 auto;
                 display: flex;
                 align-items: center;
-                gap: 2px;
+                justify-content: space-between; /* Links ko poori width me perfectly adjust karega */
+                gap: 4px;
                 overflow-x: auto;
                 white-space: nowrap;
                 scrollbar-width: none;
-                padding: 2px 0;
+                padding: 3px 0;
             }
 
             .categories-inner::-webkit-scrollbar {
                 display: none;
             }
 
-            /* Fantastic Animated Navigation Item Styling */
+            /* Compact Navigation Links with Smooth Glow Animations */
             .categories-inner a {
                 color: #94a3b8;
                 text-decoration: none;
-                font-size: 13.5px;
+                font-size: 12.5px;
                 font-weight: 600;
-                padding: 7px 14px;
-                border-radius: 8px;
+                padding: 6px 10px;
+                border-radius: 6px;
                 transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
                 position: relative;
                 display: inline-block;
                 border: 1px solid transparent;
+                flex-shrink: 0;
             }
 
+            /* Hover Glow & Lift Effect */
             .categories-inner a:hover {
                 color: #ffffff;
                 background: rgba(56, 189, 248, 0.12);
                 border-color: rgba(56, 189, 248, 0.3);
                 transform: translateY(-2px);
-                box-shadow: 0 6px 16px rgba(56, 189, 248, 0.2);
+                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
             }
 
+            /* Active Tab Styling */
             .categories-inner a.active {
                 color: #38bdf8;
                 background: rgba(56, 189, 248, 0.15);
                 border-color: rgba(56, 189, 248, 0.4);
-                box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+                box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
             }
 
-            /* RESPONSIVE DESIGN */
+            /* Animated Bottom Line Indicator on Hover */
+            .categories-inner a::after {
+                content: '';
+                position: absolute;
+                bottom: 2px;
+                left: 50%;
+                width: 0;
+                height: 2px;
+                background: #38bdf8;
+                transition: all 0.25s ease;
+                transform: translateX(-50%);
+                border-radius: 2px;
+            }
+
+            .categories-inner a:hover::after,
+            .categories-inner a.active::after {
+                width: 60%;
+            }
+
+            /* RESPONSIVE DESIGN FOR SMALLER SCREENS */
+            @media (max-width: 992px) {
+                .categories-inner {
+                    justify-content: flex-start;
+                }
+            }
+
             @media (max-width: 850px) {
                 .tech-badge {
                     display: none;
@@ -192,19 +233,29 @@ class CustomHeader extends HTMLElement {
                 .categories-bar.mobile-open {
                     display: block;
                     background: #020617;
-                    padding: 12px 16px;
+                    padding: 10px 12px;
+                    animation: fadeIn 0.3s ease;
                 }
                 .categories-inner {
                     flex-direction: column;
                     align-items: stretch;
                     white-space: normal;
-                    gap: 2px;
+                    gap: 4px;
                 }
                 .categories-inner a {
                     width: 100%;
                     box-sizing: border-box;
-                    padding: 10px 14px;
+                    padding: 8px 12px;
+                    text-align: left;
                 }
+                .categories-inner a::after {
+                    display: none;
+                }
+            }
+
+            @keyframes fadeIn {
+                from { opacity: 0; transform: translateY(-5px); }
+                to { opacity: 1; transform: translateY(0); }
             }
         </style>
 
@@ -224,7 +275,7 @@ class CustomHeader extends HTMLElement {
                 <button class="menu-toggle" id="mobile-toggle-btn" aria-label="Toggle Navigation">☰ Topics Menu</button>
             </div>
 
-            <!-- Row 2: Full Nav Items Exactly Under Logo Row -->
+            <!-- Row 2: Category Navigation Bar -->
             <nav class="categories-bar" id="categories-nav">
                 <div class="categories-inner">
                     <a href="/java/" class="active">Java</a>
@@ -238,7 +289,7 @@ class CustomHeader extends HTMLElement {
                     <a href="/design-pattern/">Design Pattern</a>
                     <a href="/">System Design</a>
                     <a href="/">SQL</a>
-                    <a href="/interview-questions/">Interview Question</a>
+                    <a href="/">Interview Question</a>
                     <a href="/java8/">Java 8 Feature</a>
                     <a href="/">Coding Question</a>
                     <a href="/">Daily Blog</a>
@@ -247,7 +298,7 @@ class CustomHeader extends HTMLElement {
         </header>
         `;
 
-        // Mobile Menu Button Functionality
+        // Mobile Menu Button Toggle Logic
         const toggleBtn = this.querySelector('#mobile-toggle-btn');
         const categoriesNav = this.querySelector('#categories-nav');
         if (toggleBtn && categoriesNav) {
