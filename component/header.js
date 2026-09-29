@@ -2,16 +2,26 @@ class CustomHeader extends HTMLElement {
     connectedCallback() {
         this.innerHTML = `
         <style>
-            /* Base Header Styling - Full Width */
+            /* Custom Element Box Fix */
+            app-header {
+                display: block;
+                width: 100%;
+                max-width: 100%;
+                overflow-x: hidden;
+            }
+
+            /* Base Header Styling - Full Width & Strict Overflow Control */
             .header-nav-container {
                 background: rgba(122, 245, 137, 0.94);
                 backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
-                padding: 5px 5px;
+                padding: 8px 16px;
                 position: relative;
                 z-index: 1000;
                 width: 100%;
+                max-width: 100%;
                 box-sizing: border-box;
+                overflow: hidden; /* FIX: Prevents scanline animation from causing horizontal scrollbar */
             }
 
             /* Neon Glow Animated Top Border */
@@ -39,15 +49,16 @@ class CustomHeader extends HTMLElement {
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 1px;
+                gap: 12px;
                 width: 100%;
+                box-sizing: border-box;
             }
 
             /* Logo & Technical Badge Group */
             .logo-group {
                 display: flex;
                 align-items: center;
-                gap: 1px;
+                gap: 12px;
                 flex-wrap: wrap;
             }
 
@@ -72,6 +83,7 @@ class CustomHeader extends HTMLElement {
                 font-weight: 600;
                 display: inline-flex;
                 align-items: center;
+                gap: 6px;
                 white-space: nowrap;
             }
 
@@ -87,34 +99,37 @@ class CustomHeader extends HTMLElement {
             .langs {
                 display: flex;
                 flex-wrap: wrap;
-                gap: 2px;
+                gap: 6px 12px;
                 align-items: center;
                 max-width: 1400px;
-                margin: 1px auto 0;
-                padding-top: 1px;
-                border-top: 1px solid rgba(255, 255, 255, 0.05);
+                margin: 8px auto 0;
+                padding-top: 8px;
+                border-top: 1px solid rgba(0, 0, 0, 0.08);
+                width: 100%;
+                box-sizing: border-box;
             }
 
             /* Main Links Styling */
             .langs a, .dropdown-btn {
-                color: #cbd5e1;
+                color: #0f172a;
                 text-decoration: none;
                 font-size: 13.5px;
                 font-weight: 700;
-                padding: 2px 2px;
-                border-radius: 8px;
+                padding: 4px 8px;
+                border-radius: 6px;
                 border: 1px solid transparent;
                 transition: all 0.25s ease;
                 background: transparent;
                 cursor: pointer;
                 display: inline-flex;
                 align-items: center;
-                gap: 2px;
+                gap: 4px;
+                white-space: nowrap;
             }
 
             .langs a:hover, .dropdown-btn:hover {
-                color: #ffffff;
-                background: rgba(56, 189, 248, 0.12);
+                color: #0e33eb;
+                background: rgba(56, 189, 248, 0.15);
                 border-color: rgba(56, 189, 248, 0.3);
             }
 
@@ -135,21 +150,21 @@ class CustomHeader extends HTMLElement {
             /* DESKTOP VIEW (Laptop/PC) Rules */
             @media (min-width: 869px) {
                 #java-dropdown {
-                    display: none !important; /* Hide dropdown container on laptop */
+                    display: none !important;
                 }
                 #desktop-java-link {
-                    display: inline-flex !important; /* Show simple Java link on laptop */
+                    display: inline-flex !important;
                 }
             }
 
             /* MOBILE VIEW (< 868px) Rules */
             @media (max-width: 868px) {
                 #desktop-java-link {
-                    display: none !important; /* Hide simple Java link on mobile */
+                    display: none !important;
                 }
 
                 #java-dropdown {
-                    display: block; /* Show dropdown container on mobile */
+                    display: block;
                 }
 
                 .menu-toggle {
@@ -165,7 +180,7 @@ class CustomHeader extends HTMLElement {
                     flex-direction: column;
                     width: 100%;
                     gap: 4px;
-                    padding-top: 15px;
+                    padding-top: 12px;
                     border-top: 1px solid #1e293b;
                     margin-top: 12px;
                 }
@@ -265,9 +280,8 @@ class CustomHeader extends HTMLElement {
                 <a href="/">SQL</a>
                 <a href="/">Interview Question</a>
                 <a href="/java8">java 8 Feature</a>
-                
-                 <a href="/">Coding Question</a>
-                 <a href="/">Daily Blog</a>
+                <a href="/">Coding Question</a>
+                <a href="/">Daily Blog</a>
             </nav>
         </header>
         `;
@@ -276,20 +290,25 @@ class CustomHeader extends HTMLElement {
         const toggleBtn = this.querySelector('#mobile-menu-btn');
         const navLinks = this.querySelector('#nav-links');
 
-        toggleBtn.addEventListener('click', () => {
-            navLinks.classList.toggle('active');
-        });
+        if (toggleBtn && navLinks) {
+            toggleBtn.addEventListener('click', () => {
+                navLinks.classList.toggle('active');
+            });
+        }
 
         // Mobile Accordion Toggle for Sub-Topics
         const javaDropdown = this.querySelector('#java-dropdown');
-        const javaBtn = javaDropdown.querySelector('.dropdown-btn');
-
-        javaBtn.addEventListener('click', (e) => {
-            if (window.innerWidth <= 868) {
-                e.preventDefault();
-                javaDropdown.classList.toggle('open');
+        if (javaDropdown) {
+            const javaBtn = javaDropdown.querySelector('.dropdown-btn');
+            if (javaBtn) {
+                javaBtn.addEventListener('click', (e) => {
+                    if (window.innerWidth <= 868) {
+                        e.preventDefault();
+                        javaDropdown.classList.toggle('open');
+                    }
+                });
             }
-        });
+        }
     }
 }
 customElements.define('app-header', CustomHeader);
