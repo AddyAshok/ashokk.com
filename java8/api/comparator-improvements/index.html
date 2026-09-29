@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Comparator Improvements in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Comparator Improvements in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Comparator Improvements in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/api/comparator-improvements/">
 <meta property="og:title" content="Comparator Improvements in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/" aria-current="page">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / Comparator Improvements</div>
-<h1>Comparator Improvements in Java 8</h1><p>Java 8 made sorting much easier with static and default methods on Comparator. You can build a sort rule from a getter and chain more rules on it.</p><h2>Key points</h2><ul><li>Comparator.comparing(keyExtractor): sort by one field.</li><li>thenComparing(): add a second rule when the first is equal.</li><li>reversed(): flips the order. naturalOrder() and reverseOrder() are also available.</li><li>nullsFirst() and nullsLast() handle null values safely.</li></ul><h2>Real life example</h2><p>Sorting students by marks, and if marks are equal, by name.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Comparator Improvements in Java 8</h1><p>Java 8 made sorting much easier with static and default methods on Comparator. You can build a sort rule from a getter and chain more rules on it.</p><h2>How it works in depth</h2><p>Comparator is a functional interface with one abstract method, compare(a, b), so lambdas work with it. Java 8 added static factory methods (comparing, comparingInt, naturalOrder, reverseOrder, nullsFirst, nullsLast) and default methods (reversed, thenComparing). Together they let you build complex sort rules in a readable, builder style.</p><p>Use comparingInt, comparingLong or comparingDouble to avoid boxing. thenComparing accepts a key extractor or another Comparator. Sorting objects is stable, so elements with equal keys keep their earlier relative order. Remember: reversed() reverses the whole comparator built before it.</p><h2>Key points</h2><ul><li>Comparator.comparing(keyExtractor): sort by one field.</li><li>thenComparing(): add a second rule when the first is equal.</li><li>reversed(): flips the order. naturalOrder() and reverseOrder() are also available.</li><li>nullsFirst() and nullsLast() handle null values safely.</li></ul><h2>Real life example</h2><p>Sorting students by marks, and if marks are equal, by name.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -40,9 +40,53 @@ class Person {
     String getName() { return name; }
     int getAge() { return age; }
     public String toString() { return name + &quot;(&quot; + age + &quot;)&quot;; }
-}</code></pre><h2>Output</h2><pre><code>[Sita(25), Amit(25), Ram(30), Neha(30)]
+}</code></pre><p><b>Output:</b></p><pre><code>[Sita(25), Amit(25), Ram(30), Neha(30)]
 [Amit(25), Sita(25), Neha(30), Ram(30)]
-[Neha(30), Ram(30), Amit(25), Sita(25)]</code></pre><p class="use"><b>Common mistake:</b> Writing (a, b) -&gt; a.age - b.age by hand. It can overflow for large numbers. Use Comparator.comparing.</p><div class="np"><a href="/java8/api/map-new-methods/">&larr; New Methods in Map</a><a href="/java8/api/stringjoiner/">StringJoiner and String.join &rarr;</a></div></article>
+[Neha(30), Ram(30), Amit(25), Sita(25)]</code></pre><h2>Example 2: Sort by multiple fields with primitive comparators</h2><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Student&gt; list = Arrays.asList(new Student(&quot;Ram&quot;, 80, 500), new Student(&quot;Sita&quot;, 90, 400),
+                new Student(&quot;Amit&quot;, 80, 300), new Student(&quot;Neha&quot;, 90, 450));
+        list.sort(Comparator.comparingInt(Student::getMarks).reversed().thenComparingDouble(Student::getFee));
+        System.out.println(list);
+        list.sort(Comparator.comparing(Student::getName, Comparator.reverseOrder()));
+        System.out.println(list);
+        list.sort(Comparator.comparing(Student::getName));
+        System.out.println(list);
+    }
+}
+
+class Student {
+    String name; int marks; double fee;
+    Student(String n, int m, double f) { name = n; marks = m; fee = f; }
+    String getName() { return name; }
+    int getMarks() { return marks; }
+    double getFee() { return fee; }
+    public String toString() { return name; }
+}</code></pre><p><b>Output:</b></p><pre><code>[Sita, Neha, Amit, Ram]
+[Sita, Ram, Neha, Amit]
+[Amit, Neha, Ram, Sita]</code></pre><h2>Example 3: Sorting strings, numbers and nulls</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;String&gt; items = Arrays.asList(&quot;banana&quot;, null, &quot;apple&quot;, &quot;cherry&quot;);
+        items.sort(Comparator.nullsFirst(Comparator.naturalOrder()));
+        System.out.println(items);
+        items.sort(Comparator.nullsLast(Comparator.reverseOrder()));
+        System.out.println(items);
+        List&lt;String&gt; words = Arrays.asList(&quot;pear&quot;, &quot;fig&quot;, &quot;banana&quot;, &quot;kiwi&quot;);
+        words.sort(Comparator.comparing(String::length).thenComparing(Comparator.naturalOrder()));
+        System.out.println(words);
+        System.out.println(Collections.max(words, Comparator.comparing(String::length)));
+        System.out.println(words.stream().min(Comparator.comparing(String::length)).get());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>[null, apple, banana, cherry]
+[cherry, banana, apple, null]
+[fig, kiwi, pear, banana]
+banana
+fig</code></pre><p class="use"><b>Common mistake:</b> Writing (a, b) -&gt; a.age - b.age by hand. It can overflow for large numbers. Use Comparator.comparing.</p><h2>Interview questions</h2><h3>What is the difference between comparing and comparingInt?</h3><p>comparingInt works with an int key and avoids boxing to Integer, so it is faster. Use it when the key is a primitive int.</p><h3>Does reversed() reverse only the last rule?</h3><p>No. It reverses the whole comparator it is called on. To reverse only one rule, pass Comparator.reverseOrder() as the second argument of that comparing or thenComparing call.</p><h3>What is the difference between Comparable and Comparator?</h3><p>Comparable is implemented inside the class and defines its natural order (compareTo). Comparator is a separate object that defines any custom order.</p><div class="np"><a href="/java8/api/map-new-methods/">&larr; New Methods in Map</a><a href="/java8/api/stringjoiner/">StringJoiner and String.join &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

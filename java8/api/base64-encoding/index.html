@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Base64 Encoding in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Base64 Encoding in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Base64 Encoding in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/api/base64-encoding/">
 <meta property="og:title" content="Base64 Encoding in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/" aria-current="page">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / Base64 Encoding</div>
-<h1>Base64 Encoding in Java 8</h1><p>Java 8 added java.util.Base64 for encoding binary data as text and decoding it back. It is used in emails, URLs, tokens and JSON. Base64 is encoding, not encryption, so it gives no security.</p><h2>Key points</h2><ul><li>Basic: getEncoder() and getDecoder().</li><li>URL and filename safe: getUrlEncoder() and getUrlDecoder().</li><li>MIME: getMimeEncoder() breaks long output into lines.</li><li>withoutPadding() removes the trailing = characters.</li></ul><h2>Real life example</h2><p>Packing a fragile item in a standard box so it can travel through the post safely. Anyone can open the box.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Base64 Encoding in Java 8</h1><p>Java 8 added java.util.Base64 for encoding binary data as text and decoding it back. It is used in emails, URLs, tokens and JSON. Base64 is encoding, not encryption, so it gives no security.</p><h2>How it works in depth</h2><p>Base64 turns every 3 bytes into 4 printable characters (A-Z, a-z, 0-9, + and /), so the output is about 33 percent bigger. If the input length is not a multiple of 3, one or two = padding characters are added. The URL encoder uses - and _ instead of + and /, so the result is safe in URLs and file names.</p><p>Java 8 provides three encoder and decoder pairs: Basic, URL and MIME. Always pass a charset such as UTF-8 when converting between String and bytes. Decoding invalid input throws IllegalArgumentException.</p><h2>Key points</h2><ul><li>Basic: getEncoder() and getDecoder().</li><li>URL and filename safe: getUrlEncoder() and getUrlDecoder().</li><li>MIME: getMimeEncoder() breaks long output into lines.</li><li>withoutPadding() removes the trailing = characters.</li></ul><h2>Real life example</h2><p>Packing a fragile item in a standard box so it can travel through the post safely. Anyone can open the box.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 import java.nio.charset.StandardCharsets;
 
 public class Main {
@@ -32,9 +32,51 @@ public class Main {
         String url = Base64.getUrlEncoder().withoutPadding().encodeToString(&quot;a?b&amp;c=d&gt;&quot;.getBytes(StandardCharsets.UTF_8));
         System.out.println(url);
     }
-}</code></pre><h2>Output</h2><pre><code>SmF2YSA4IGlzIGdyZWF0IQ==
+}</code></pre><p><b>Output:</b></p><pre><code>SmF2YSA4IGlzIGdyZWF0IQ==
 Java 8 is great!
-YT9iJmM9ZD4</code></pre><p class="use"><b>Common mistake:</b> Storing passwords with Base64 and thinking they are protected. Anyone can decode it in one line.</p><div class="np"><a href="/java8/api/stringjoiner/">&larr; StringJoiner and String.join</a><a href="/java8/api/completable-future/">CompletableFuture &rarr;</a></div></article>
+YT9iJmM9ZD4</code></pre><h2>Example 2: Basic, URL and MIME encoders</h2><pre><code class="language-java">import java.util.*;
+import java.nio.charset.StandardCharsets;
+
+public class Main {
+    public static void main(String[] args) {
+        byte[] data = &quot;Hello, Java 8 &gt;&gt;&gt; ???&quot;.getBytes(StandardCharsets.UTF_8);
+        System.out.println(Base64.getEncoder().encodeToString(data));
+        System.out.println(Base64.getUrlEncoder().encodeToString(data));
+        System.out.println(Base64.getEncoder().withoutPadding().encodeToString(&quot;ab&quot;.getBytes(StandardCharsets.UTF_8)));
+        System.out.println(Base64.getEncoder().encodeToString(&quot;ab&quot;.getBytes(StandardCharsets.UTF_8)));
+        StringBuilder longText = new StringBuilder();
+        for (int i = 0; i &lt; 60; i++) longText.append(&quot;A&quot;);
+        String mime = Base64.getMimeEncoder().encodeToString(longText.toString().getBytes(StandardCharsets.UTF_8));
+        System.out.println(mime.split(&quot;\r\n&quot;).length + &quot; lines&quot;);
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>SGVsbG8sIEphdmEgOCA+Pj4gPz8/
+SGVsbG8sIEphdmEgOCA-Pj4gPz8_
+YWI
+YWI=
+2 lines</code></pre><h2>Example 3: Decoding and handling bad input</h2><pre><code class="language-java">import java.util.*;
+import java.nio.charset.StandardCharsets;
+
+public class Main {
+    public static void main(String[] args) {
+        String token = &quot;user:secret&quot;;
+        String encoded = Base64.getEncoder().encodeToString(token.getBytes(StandardCharsets.UTF_8));
+        System.out.println(&quot;Encoded: &quot; + encoded);
+        String[] parts = new String(Base64.getDecoder().decode(encoded), StandardCharsets.UTF_8).split(&quot;:&quot;);
+        System.out.println(parts[0] + &quot; / &quot; + parts[1]);
+        try {
+            Base64.getDecoder().decode(&quot;not valid base64!!&quot;);
+        } catch (IllegalArgumentException e) {
+            System.out.println(&quot;Invalid Base64 input&quot;);
+        }
+        byte[] raw = {1, 2, 3, 4, 5};
+        System.out.println(Base64.getEncoder().encodeToString(raw));
+        System.out.println(Arrays.toString(Base64.getDecoder().decode(&quot;AQIDBAU=&quot;)));
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>Encoded: dXNlcjpzZWNyZXQ=
+user / secret
+Invalid Base64 input
+AQIDBAU=
+[1, 2, 3, 4, 5]</code></pre><p class="use"><b>Common mistake:</b> Storing passwords with Base64 and thinking they are protected. Anyone can decode it in one line.</p><h2>Interview questions</h2><h3>Is Base64 encryption?</h3><p>No. It is only an encoding that anyone can reverse. It gives no security, so never use it to protect passwords or secrets.</p><h3>Why does Base64 output end with = characters?</h3><p>The = characters are padding. They fill the last group when the input length is not a multiple of 3 bytes.</p><h3>What is the difference between the basic and URL encoder?</h3><p>The URL encoder replaces + with - and / with _, so the text can be used safely in URLs and file names.</p><div class="np"><a href="/java8/api/stringjoiner/">&larr; StringJoiner and String.join</a><a href="/java8/api/completable-future/">CompletableFuture &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

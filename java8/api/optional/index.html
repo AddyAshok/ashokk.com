@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Optional in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Optional in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Optional in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/api/optional/">
 <meta property="og:title" content="Optional in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/" aria-current="page">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / Optional</div>
-<h1>Optional in Java 8</h1><p>Optional&lt;T&gt; is a container that may or may not hold a non-null value. It makes the &quot;no value&quot; case visible in the code, so you avoid NullPointerException.</p><h2>Key points</h2><ul><li>Create: Optional.of(x) (throws NPE if x is null), Optional.ofNullable(x), Optional.empty().</li><li>Read: orElse(default), orElseGet(supplier), orElseThrow(supplier), ifPresent(consumer), isPresent().</li><li>Transform: map(), flatMap(), filter().</li><li>Use it as a return type. Do not use it for fields or method parameters.</li></ul><h2>Real life example</h2><p>A gift box that may be empty. You check inside before using it.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Optional in Java 8</h1><p>Optional&lt;T&gt; is a container that may or may not hold a non-null value. It makes the &quot;no value&quot; case visible in the code, so you avoid NullPointerException.</p><h2>How it works in depth</h2><p>Optional is a value-based, immutable class meant to be a return type that says the result may be missing. Note that orElse always evaluates its argument, while orElseGet runs the supplier only when the Optional is empty. This matters when creating the default value is expensive.</p><p>Optional works well with streams: map, flatMap and filter let you chain safe transformations without null checks. Methods like ifPresentOrElse(), or() and stream() were added in Java 9 and are not available in Java 8.</p><h2>Key points</h2><ul><li>Create: Optional.of(x) (throws NPE if x is null), Optional.ofNullable(x), Optional.empty().</li><li>Read: orElse(default), orElseGet(supplier), orElseThrow(supplier), ifPresent(consumer), isPresent().</li><li>Transform: map(), flatMap(), filter().</li><li>Use it as a return type. Do not use it for fields or method parameters.</li></ul><h2>Real life example</h2><p>A gift box that may be empty. You check inside before using it.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -35,13 +35,52 @@ public class Main {
         try { empty.orElseThrow(() -&gt; new IllegalStateException(&quot;No value&quot;)); }
         catch (IllegalStateException e) { System.out.println(&quot;Error: &quot; + e.getMessage()); }
     }
-}</code></pre><h2>Output</h2><pre><code>true
+}</code></pre><p><b>Output:</b></p><pre><code>true
 Unknown
 Generated
 Hello Ram
 RAM
 false
-Error: No value</code></pre><p class="use"><b>Common mistake:</b> Calling get() without checking. That throws NoSuchElementException, just like a null problem. Prefer orElse or ifPresent.</p><div class="np"><a href="/java8/streams/parallel-streams/">&larr; Parallel Streams</a><a href="/java8/api/date-time-api/">Date and Time API &rarr;</a></div></article>
+Error: No value</code></pre><h2>Example 2: Old null checks vs Optional chaining</h2><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        User u1 = new User(new Address(&quot;Delhi&quot;));
+        User u2 = new User(null);
+        System.out.println(u1.getAddress().map(Address::getCity).orElse(&quot;Unknown city&quot;));
+        System.out.println(u2.getAddress().map(Address::getCity).orElse(&quot;Unknown city&quot;));
+        System.out.println(Optional.of(u1).flatMap(User::getAddress).isPresent());
+    }
+}
+
+class Address { String city; Address(String c) { city = c; } String getCity() { return city; } }
+class User {
+    Address address;
+    User(Address a) { address = a; }
+    Optional&lt;Address&gt; getAddress() { return Optional.ofNullable(address); }
+}</code></pre><p><b>Output:</b></p><pre><code>Delhi
+Unknown city
+true</code></pre><h2>Example 3: orElse vs orElseGet</h2><pre><code class="language-java">import java.util.*;
+import java.util.function.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Supplier&lt;String&gt; expensive = () -&gt; { System.out.println(&quot;  computing default...&quot;); return &quot;default&quot;; };
+        Optional&lt;String&gt; present = Optional.of(&quot;value&quot;);
+        System.out.println(&quot;orElse:&quot;);
+        System.out.println(present.orElse(expensive.get()));
+        System.out.println(&quot;orElseGet:&quot;);
+        System.out.println(present.orElseGet(expensive));
+        Optional&lt;String&gt; emptyOpt = Optional.empty();
+        System.out.println(emptyOpt.orElseGet(expensive));
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>orElse:
+  computing default...
+value
+orElseGet:
+value
+  computing default...
+default</code></pre><p class="use"><b>Common mistake:</b> Calling get() without checking. That throws NoSuchElementException, just like a null problem. Prefer orElse or ifPresent.</p><h2>Interview questions</h2><h3>Should Optional be used as a field or method parameter?</h3><p>No. It was designed for return types. As a field it is not serializable and adds memory cost, and as a parameter it makes calling code awkward.</p><h3>What is the difference between Optional.of and Optional.ofNullable?</h3><p>of() throws NullPointerException if the value is null. ofNullable() returns an empty Optional for null.</p><h3>Why is calling get() directly a bad practice?</h3><p>get() throws NoSuchElementException on an empty Optional, which is the same problem as a null pointer. Use orElse, orElseGet, ifPresent or map instead.</p><div class="np"><a href="/java8/streams/parallel-streams/">&larr; Parallel Streams</a><a href="/java8/api/date-time-api/">Date and Time API &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

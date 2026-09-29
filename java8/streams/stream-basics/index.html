@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Stream API Basics in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Stream API Basics in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Stream API Basics in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/streams/stream-basics/">
 <meta property="og:title" content="Stream API Basics in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/" aria-current="page">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/streams/">Stream API</a> / Stream API Basics</div>
-<h1>Stream API Basics in Java 8</h1><p>A stream is a sequence of elements that supports operations such as filter, map and collect. A stream does not store data. It reads data from a source (collection, array), runs a pipeline of operations, and gives a result. A pipeline is: source, then intermediate operations, then one terminal operation.</p><h2>Key points</h2><ul><li>Streams never change the original source.</li><li>Intermediate operations are lazy. Nothing runs until a terminal operation is called.</li><li>A stream can be used only once. A second use throws IllegalStateException.</li><li>Create streams with list.stream(), Arrays.stream(array), Stream.of(...), IntStream.range(1, 5), Stream.iterate() and Stream.generate().</li></ul><h2>Real life example</h2><p>A factory conveyor belt: items enter, pass through stations (filter, change), and come out as a finished box.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Stream API Basics in Java 8</h1><p>A stream is a sequence of elements that supports operations such as filter, map and collect. A stream does not store data. It reads data from a source (collection, array), runs a pipeline of operations, and gives a result. A pipeline is: source, then intermediate operations, then one terminal operation.</p><h2>How it works in depth</h2><p>Streams use internal iteration: you say what to do and the library decides how to loop. Data flows through the pipeline one element at a time, not stage by stage. For filter followed by map, the first element goes through both steps before the second element starts. This saves memory and allows early stopping.</p><p>A collection stores data and can be used many times. A stream is a one-time computation over data and can even be infinite (Stream.iterate). Java also has primitive streams (IntStream, LongStream, DoubleStream) that avoid boxing and offer sum(), average() and range().</p><h2>Key points</h2><ul><li>Streams never change the original source.</li><li>Intermediate operations are lazy. Nothing runs until a terminal operation is called.</li><li>A stream can be used only once. A second use throws IllegalStateException.</li><li>Create streams with list.stream(), Arrays.stream(array), Stream.of(...), IntStream.range(1, 5), Stream.iterate() and Stream.generate().</li></ul><h2>Real life example</h2><p>A factory conveyor belt: items enter, pass through stations (filter, change), and come out as a finished box.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 import java.util.stream.*;
 
 public class Main {
@@ -37,11 +37,46 @@ public class Main {
         s.count();
         try { s.count(); } catch (IllegalStateException e) { System.out.println(&quot;Stream already used&quot;); }
     }
-}</code></pre><h2>Output</h2><pre><code>[24, 16, 42, 32]
+}</code></pre><p><b>Output:</b></p><pre><code>[24, 16, 42, 32]
 [5, 12, 8, 21, 3, 16]
 15
 3
-Stream already used</code></pre><p class="use"><b>Common mistake:</b> Reusing a stream after a terminal operation. Create a new stream each time.</p><div class="np"><a href="/java8/language/default-static-interface-methods/">&larr; Default and Static Methods in Interfaces</a><a href="/java8/streams/intermediate-operations/">Intermediate Operations &rarr;</a></div></article>
+Stream already used</code></pre><h2>Example 2: Elements flow one by one (lazy evaluation)</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;String&gt; result = Stream.of(&quot;a&quot;, &quot;bb&quot;, &quot;ccc&quot;, &quot;dd&quot;)
+                .filter(s -&gt; { System.out.println(&quot;filter: &quot; + s); return s.length() &gt; 1; })
+                .map(s -&gt; { System.out.println(&quot;map: &quot; + s); return s.toUpperCase(); })
+                .limit(2)
+                .collect(Collectors.toList());
+        System.out.println(result);
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>filter: a
+filter: bb
+map: bb
+filter: ccc
+map: ccc
+[BB, CCC]</code></pre><h2>Example 3: Different ways to create streams</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        int[] array = {3, 1, 2};
+        System.out.println(Arrays.stream(array).sum());
+        System.out.println(Stream.of(&quot;x&quot;, &quot;y&quot;).collect(Collectors.toList()));
+        System.out.println(IntStream.range(0, 5).boxed().collect(Collectors.toList()));
+        System.out.println(Stream.iterate(1, n -&gt; n * 2).limit(6).collect(Collectors.toList()));
+        System.out.println(Stream.generate(() -&gt; &quot;hi&quot;).limit(3).collect(Collectors.joining(&quot;-&quot;)));
+        System.out.println(IntStream.of(4, 8, 12).average().getAsDouble());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>6
+[x, y]
+[0, 1, 2, 3, 4]
+[1, 2, 4, 8, 16, 32]
+hi-hi-hi
+8.0</code></pre><p class="use"><b>Common mistake:</b> Reusing a stream after a terminal operation. Create a new stream each time.</p><h2>Interview questions</h2><h3>What is the difference between a Stream and a Collection?</h3><p>A collection stores data in memory and can be used many times. A stream stores nothing, is used only once and describes a computation on data.</p><h3>Can a stream be reused?</h3><p>No. After a terminal operation the stream is closed. Using it again throws IllegalStateException. Create a new stream from the source.</p><h3>What is a short-circuit operation?</h3><p>An operation that can finish before it sees all elements, such as limit, findFirst and anyMatch. This lets streams work on infinite data.</p><div class="np"><a href="/java8/language/default-static-interface-methods/">&larr; Default and Static Methods in Interfaces</a><a href="/java8/streams/intermediate-operations/">Intermediate Operations &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

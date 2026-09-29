@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Intermediate Operations in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Intermediate Operations in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Intermediate Operations in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/streams/intermediate-operations/">
 <meta property="og:title" content="Intermediate Operations in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/" aria-current="page">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/streams/">Stream API</a> / Intermediate Operations</div>
-<h1>Intermediate Operations in Java 8</h1><p>Intermediate operations return a new stream, so you can chain them. They are lazy: they do nothing until a terminal operation starts the pipeline.</p><h2>Key points</h2><ul><li>filter(Predicate): keeps matching elements.</li><li>map(Function): changes each element. flatMap(Function): turns many small streams into one stream.</li><li>sorted(), distinct(), limit(n), skip(n): sort, remove duplicates, take first n, skip first n.</li><li>peek(Consumer): look at elements while they pass, mainly for debugging.</li></ul><h2>Real life example</h2><p>Stations on a conveyor belt: one removes bad items, one paints, one sorts.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Intermediate Operations in Java 8</h1><p>Intermediate operations return a new stream, so you can chain them. They are lazy: they do nothing until a terminal operation starts the pipeline.</p><h2>How it works in depth</h2><p>Intermediate operations are either stateless or stateful. filter, map and peek are stateless: each element is handled alone. sorted and distinct are stateful: sorted must see all elements first, and distinct must remember what it has seen. Stateful operations need more memory and can slow down parallel streams.</p><p>map is one-to-one: each input gives exactly one output. flatMap is one-to-many: each input gives a stream, and all those streams are merged into one flat stream. Variants like mapToInt and mapToDouble return primitive streams that avoid boxing.</p><h2>Key points</h2><ul><li>filter(Predicate): keeps matching elements.</li><li>map(Function): changes each element. flatMap(Function): turns many small streams into one stream.</li><li>sorted(), distinct(), limit(n), skip(n): sort, remove duplicates, take first n, skip first n.</li><li>peek(Consumer): look at elements while they pass, mainly for debugging.</li></ul><h2>Real life example</h2><p>Stations on a conveyor belt: one removes bad items, one paints, one sorts.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 import java.util.stream.*;
 
 public class Main {
@@ -35,14 +35,50 @@ public class Main {
                 .peek(w -&gt; System.out.println(&quot;peek: &quot; + w)).collect(Collectors.toList());
         System.out.println(a);
     }
-}</code></pre><h2>Output</h2><pre><code>[banana, apple, cherry, apple]
+}</code></pre><p><b>Output:</b></p><pre><code>[banana, apple, cherry, apple]
 [BANANA, APPLE, CHERRY, APPLE, DATE]
 [apple, banana, cherry, date]
 [apple, cherry]
 [1, 2, 3, 4, 5]
 peek: apple
 peek: apple
-[apple, apple]</code></pre><p class="use"><b>Common mistake:</b> Using peek() to change data or expecting it to run without a terminal operation.</p><div class="np"><a href="/java8/streams/stream-basics/">&larr; Stream API Basics</a><a href="/java8/streams/terminal-operations/">Terminal Operations &rarr;</a></div></article>
+[apple, apple]</code></pre><h2>Example 2: map vs flatMap</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;String&gt; sentences = Arrays.asList(&quot;Java is fun&quot;, &quot;Streams are powerful&quot;);
+        System.out.println(sentences.stream().map(s -&gt; s.split(&quot; &quot;)).count());
+        System.out.println(sentences.stream().flatMap(s -&gt; Arrays.stream(s.split(&quot; &quot;))).count());
+        System.out.println(sentences.stream().flatMap(s -&gt; Arrays.stream(s.split(&quot; &quot;))).map(String::length).collect(Collectors.toList()));
+        System.out.println(sentences.stream().mapToInt(String::length).sum());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>2
+6
+[4, 2, 3, 7, 3, 8]
+31</code></pre><h2>Example 3: Sorting objects and pagination with skip and limit</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Product&gt; products = Arrays.asList(new Product(&quot;Pen&quot;, 10), new Product(&quot;Book&quot;, 250),
+                new Product(&quot;Bag&quot;, 900), new Product(&quot;Lamp&quot;, 450), new Product(&quot;Cup&quot;, 120));
+        System.out.println(products.stream().sorted(Comparator.comparing(Product::getPrice).reversed())
+                .map(Product::getName).collect(Collectors.toList()));
+        int page = 2, size = 2;
+        System.out.println(products.stream().map(Product::getName).skip((page - 1) * size).limit(size).collect(Collectors.toList()));
+        System.out.println(products.stream().filter(p -&gt; p.getPrice() &gt; 100).map(Product::getName).sorted().collect(Collectors.toList()));
+    }
+}
+
+class Product {
+    String name; double price;
+    Product(String n, double p) { name = n; price = p; }
+    String getName() { return name; }
+    double getPrice() { return price; }
+}</code></pre><p><b>Output:</b></p><pre><code>[Bag, Lamp, Book, Cup, Pen]
+[Bag, Lamp]
+[Bag, Book, Cup, Lamp]</code></pre><p class="use"><b>Common mistake:</b> Using peek() to change data or expecting it to run without a terminal operation.</p><h2>Interview questions</h2><h3>What is the difference between map and flatMap?</h3><p>map converts each element into exactly one new element. flatMap converts each element into a stream and joins all streams into one, so it is used for nested lists or splitting text.</p><h3>Is sorted() stable?</h3><p>Yes, for ordered streams. Elements that compare as equal keep their original relative order.</p><h3>Why does my peek() print nothing?</h3><p>Intermediate operations are lazy. Without a terminal operation such as collect or count, the pipeline never runs.</p><div class="np"><a href="/java8/streams/stream-basics/">&larr; Stream API Basics</a><a href="/java8/streams/terminal-operations/">Terminal Operations &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

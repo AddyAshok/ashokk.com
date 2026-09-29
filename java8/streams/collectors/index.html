@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Collectors in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Collectors in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Collectors in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/streams/collectors/">
 <meta property="og:title" content="Collectors in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/" aria-current="page">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/streams/">Stream API</a> / Collectors</div>
-<h1>Collectors in Java 8</h1><p>The Collectors class gives ready-made recipes for the collect() terminal operation. You can gather elements into a list, set or map, join them into a string, group them, count them and calculate averages.</p><h2>Key points</h2><ul><li>toList(), toSet(), toMap(): collect into collections.</li><li>joining(delimiter, prefix, suffix): joins strings.</li><li>groupingBy(classifier, downstream): groups like SQL GROUP BY. partitioningBy(predicate): splits into true and false groups.</li><li>counting(), summingInt(), averagingInt(), mapping(): downstream collectors used inside grouping.</li></ul><h2>Real life example</h2><p>Sorting mail into boxes by city, then counting how many letters are in each box.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Collectors in Java 8</h1><p>The Collectors class gives ready-made recipes for the collect() terminal operation. You can gather elements into a list, set or map, join them into a string, group them, count them and calculate averages.</p><h2>How it works in depth</h2><p>collect(Collector) is a mutable reduction. A Collector has four parts: a supplier (creates the container), an accumulator (adds one element), a combiner (merges containers in parallel) and a finisher (final conversion). You rarely write your own, because the Collectors class has ready-made ones.</p><p>Downstream collectors are collectors used inside groupingBy. groupingBy(classifier, downstream) applies the second collector (counting, summingInt, mapping, maxBy) to every group. By default it returns a HashMap; pass TreeMap::new to get sorted keys. partitioningBy always gives exactly two keys: false and true.</p><h2>Key points</h2><ul><li>toList(), toSet(), toMap(): collect into collections.</li><li>joining(delimiter, prefix, suffix): joins strings.</li><li>groupingBy(classifier, downstream): groups like SQL GROUP BY. partitioningBy(predicate): splits into true and false groups.</li><li>counting(), summingInt(), averagingInt(), mapping(): downstream collectors used inside grouping.</li></ul><h2>Real life example</h2><p>Sorting mail into boxes by city, then counting how many letters are in each box.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 import java.util.stream.*;
 
 public class Main {
@@ -45,11 +45,59 @@ class Employee {
     String getName() { return name; }
     String getDept() { return dept; }
     int getSalary() { return salary; }
-}</code></pre><h2>Output</h2><pre><code>[Ram, Sita, Amit, Neha]
+}</code></pre><p><b>Output:</b></p><pre><code>[Ram, Sita, Amit, Neha]
 {HR=[Sita, Neha], IT=[Ram, Amit]}
 {HR=2, IT=2}
 48750.0
-{false=2, true=2}</code></pre><p class="use"><b>Common mistake:</b> toMap() throws IllegalStateException on duplicate keys. Pass a merge function as the third argument.</p><div class="np"><a href="/java8/streams/terminal-operations/">&larr; Terminal Operations</a><a href="/java8/streams/parallel-streams/">Parallel Streams &rarr;</a></div></article>
+{false=2, true=2}</code></pre><h2>Example 2: toSet, toMap and statistics</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;String&gt; words = Arrays.asList(&quot;apple&quot;, &quot;bat&quot;, &quot;apple&quot;, &quot;cat&quot;);
+        System.out.println(words.stream().collect(Collectors.toSet()).size());
+        Map&lt;String, Integer&gt; lengths = words.stream().distinct().collect(Collectors.toMap(w -&gt; w, String::length));
+        System.out.println(new TreeMap&lt;&gt;(lengths));
+        Map&lt;String, Integer&gt; counts = words.stream().collect(Collectors.toMap(w -&gt; w, w -&gt; 1, Integer::sum));
+        System.out.println(new TreeMap&lt;&gt;(counts));
+        System.out.println(words.stream().collect(Collectors.summarizingInt(String::length)).getMax());
+        List&lt;String&gt; frozen = words.stream().collect(Collectors.collectingAndThen(Collectors.toList(), Collections::unmodifiableList));
+        System.out.println(frozen);
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>3
+{apple=5, bat=3, cat=3}
+{apple=2, bat=1, cat=1}
+5
+[apple, bat, apple, cat]</code></pre><h2>Example 3: Grouping employees with downstream collectors</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Emp&gt; emps = Arrays.asList(new Emp(&quot;Ram&quot;, &quot;IT&quot;, 50000), new Emp(&quot;Sita&quot;, &quot;HR&quot;, 40000),
+                new Emp(&quot;Amit&quot;, &quot;IT&quot;, 60000), new Emp(&quot;Neha&quot;, &quot;HR&quot;, 45000), new Emp(&quot;Raj&quot;, &quot;OPS&quot;, 30000));
+        Map&lt;String, Integer&gt; total = emps.stream().collect(
+                Collectors.groupingBy(Emp::getDept, TreeMap::new, Collectors.summingInt(Emp::getSalary)));
+        System.out.println(total);
+        Map&lt;String, Optional&lt;Emp&gt;&gt; top = emps.stream().collect(
+                Collectors.groupingBy(Emp::getDept, TreeMap::new, Collectors.maxBy(Comparator.comparingInt(Emp::getSalary))));
+        top.forEach((d, e) -&gt; System.out.println(d + &quot; top earner: &quot; + e.get().getName()));
+        Map&lt;Boolean, List&lt;String&gt;&gt; split = emps.stream().collect(Collectors.partitioningBy(
+                e -&gt; e.getSalary() &gt; 42000, Collectors.mapping(Emp::getName, Collectors.toList())));
+        System.out.println(split);
+    }
+}
+
+class Emp {
+    String name; String dept; int salary;
+    Emp(String n, String d, int s) { name = n; dept = d; salary = s; }
+    String getName() { return name; }
+    String getDept() { return dept; }
+    int getSalary() { return salary; }
+}</code></pre><p><b>Output:</b></p><pre><code>{HR=85000, IT=110000, OPS=30000}
+HR top earner: Neha
+IT top earner: Amit
+OPS top earner: Raj
+{false=[Sita, Raj], true=[Ram, Amit, Neha]}</code></pre><p class="use"><b>Common mistake:</b> toMap() throws IllegalStateException on duplicate keys. Pass a merge function as the third argument.</p><h2>Interview questions</h2><h3>What is the difference between groupingBy and partitioningBy?</h3><p>groupingBy makes any number of groups by a key function. partitioningBy uses a Predicate and always makes exactly two groups, false and true.</p><h3>What happens when toMap finds a duplicate key?</h3><p>It throws IllegalStateException. Give a merge function as the third argument, for example Integer::sum, to combine the values.</p><h3>Which List does Collectors.toList() return?</h3><p>An ArrayList in practice, but the specification gives no guarantee. Use toCollection(LinkedList::new) if you need a specific type.</p><div class="np"><a href="/java8/streams/terminal-operations/">&larr; Terminal Operations</a><a href="/java8/streams/parallel-streams/">Parallel Streams &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

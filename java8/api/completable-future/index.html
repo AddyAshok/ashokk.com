@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>CompletableFuture in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn CompletableFuture in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn CompletableFuture in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/api/completable-future/">
 <meta property="og:title" content="CompletableFuture in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/" aria-current="page">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / CompletableFuture</div>
-<h1>CompletableFuture in Java 8</h1><p>CompletableFuture is an improved Future. It runs tasks asynchronously and lets you chain, combine and handle errors without blocking. The plain Future could only wait with get().</p><h2>Key points</h2><ul><li>supplyAsync(supplier) starts a task in another thread. runAsync is for tasks with no result.</li><li>thenApply, thenAccept, thenCompose: continue after the task finishes.</li><li>thenCombine joins two independent futures. allOf and anyOf wait for many futures.</li><li>exceptionally and handle deal with errors. join() waits for the result.</li></ul><h2>Real life example</h2><p>Ordering food and a cake at different shops at the same time, then combining them for the party.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.concurrent.*;
+<h1>CompletableFuture in Java 8</h1><p>CompletableFuture is an improved Future. It runs tasks asynchronously and lets you chain, combine and handle errors without blocking. The plain Future could only wait with get().</p><h2>How it works in depth</h2><p>A CompletableFuture is both a Future and a CompletionStage. Async tasks run in ForkJoinPool.commonPool() by default, but you can pass your own Executor as the last argument. Methods that end with Async run the next step in another thread; the others run in the thread that finished the previous step.</p><p>Chaining methods: thenApply (transform), thenAccept (consume), thenRun (run code), thenCompose (next step returns a future), thenCombine (join two futures). Error handling: exceptionally (recover), handle (result or error) and whenComplete (observe). join() throws an unchecked CompletionException, while get() throws checked exceptions.</p><h2>Key points</h2><ul><li>supplyAsync(supplier) starts a task in another thread. runAsync is for tasks with no result.</li><li>thenApply, thenAccept, thenCompose: continue after the task finishes.</li><li>thenCombine joins two independent futures. allOf and anyOf wait for many futures.</li><li>exceptionally and handle deal with errors. join() waits for the result.</li></ul><h2>Real life example</h2><p>Ordering food and a cake at different shops at the same time, then combining them for the party.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.concurrent.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -37,10 +37,53 @@ public class Main {
         CompletableFuture.allOf(a, b).join();
         System.out.println(&quot;All done&quot;);
     }
-}</code></pre><h2>Output</h2><pre><code>Hello World
+}</code></pre><p><b>Output:</b></p><pre><code>Hello World
 30
 -1
-All done</code></pre><p class="use"><b>Common mistake:</b> Calling get() or join() right away on every future. It blocks the thread and cancels the benefit of async code.</p><div class="np"><a href="/java8/api/base64-encoding/">&larr; Base64 Encoding</a><span></span></div></article>
+All done</code></pre><h2>Example 2: thenCompose vs thenApply</h2><pre><code class="language-java">import java.util.concurrent.*;
+
+public class Main {
+    public static void main(String[] args) {
+        CompletableFuture&lt;Integer&gt; userId = CompletableFuture.supplyAsync(() -&gt; 7);
+        CompletableFuture&lt;String&gt; name = userId.thenCompose(id -&gt; CompletableFuture.supplyAsync(() -&gt; &quot;User-&quot; + id));
+        System.out.println(name.join());
+        CompletableFuture&lt;CompletableFuture&lt;String&gt;&gt; nested = userId.thenApply(id -&gt; CompletableFuture.supplyAsync(() -&gt; &quot;User-&quot; + id));
+        System.out.println(nested.join().join());
+        CompletableFuture&lt;Void&gt; done = userId.thenAccept(id -&gt; System.out.println(&quot;Got id &quot; + id));
+        done.join();
+        CompletableFuture&lt;String&gt; combined = name.thenCombine(CompletableFuture.supplyAsync(() -&gt; &quot;Delhi&quot;), (n, c) -&gt; n + &quot; from &quot; + c);
+        System.out.println(combined.join());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>User-7
+User-7
+Got id 7
+User-7 from Delhi</code></pre><h2>Example 3: Custom executor, handle and allOf</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+import java.util.concurrent.*;
+
+public class Main {
+    public static void main(String[] args) {
+        ExecutorService pool = Executors.newFixedThreadPool(3);
+        List&lt;CompletableFuture&lt;Integer&gt;&gt; futures = new ArrayList&lt;&gt;();
+        for (int i = 1; i &lt;= 3; i++) {
+            final int n = i;
+            futures.add(CompletableFuture.supplyAsync(() -&gt; n * n, pool));
+        }
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+        System.out.println(futures.stream().map(CompletableFuture::join).collect(Collectors.toList()));
+        CompletableFuture&lt;String&gt; risky = CompletableFuture.supplyAsync(() -&gt; {
+            if (true) throw new IllegalStateException(&quot;failed&quot;);
+            return &quot;ok&quot;;
+        }, pool).handle((result, error) -&gt; {
+            if (error == null) return result;
+            Throwable root = error.getCause() != null ? error.getCause() : error;
+            return &quot;Recovered from: &quot; + root.getMessage();
+        });
+        System.out.println(risky.join());
+        pool.shutdown();
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>[1, 4, 9]
+Recovered from: failed</code></pre><p class="use"><b>Common mistake:</b> Calling get() or join() right away on every future. It blocks the thread and cancels the benefit of async code.</p><h2>Interview questions</h2><h3>What is the difference between Future and CompletableFuture?</h3><p>Future can only be waited on with a blocking get(). CompletableFuture lets you chain, combine and handle errors without blocking, and you can complete it manually.</p><h3>What is the difference between join() and get()?</h3><p>Both wait for the result. get() throws checked exceptions (InterruptedException, ExecutionException). join() throws the unchecked CompletionException, so it is easier to use in lambdas.</p><h3>Which thread pool does CompletableFuture use?</h3><p>By default the common ForkJoinPool. For blocking or I/O tasks, pass your own Executor to avoid blocking the shared pool.</p><div class="np"><a href="/java8/api/base64-encoding/">&larr; Base64 Encoding</a><span></span></div></article>
 </div>
 <app-footer></app-footer>
 </body>

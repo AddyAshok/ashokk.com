@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Terminal Operations in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Terminal Operations in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Terminal Operations in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/streams/terminal-operations/">
 <meta property="og:title" content="Terminal Operations in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/" aria-current="page">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/streams/">Stream API</a> / Terminal Operations</div>
-<h1>Terminal Operations in Java 8</h1><p>A terminal operation starts the pipeline, produces a result (or a side effect) and closes the stream. Only one terminal operation can be used per stream.</p><h2>Key points</h2><ul><li>reduce(identity, op): combines all elements into one value (sum, product).</li><li>count(), min(), max(): simple results. min and max return Optional.</li><li>anyMatch, allMatch, noneMatch: test a condition and return boolean. They stop early when the answer is known (short-circuit).</li><li>findFirst, findAny, forEach, toArray, collect are other common terminal operations.</li></ul><h2>Real life example</h2><p>The last button on the machine. Until you press it, nothing moves.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Terminal Operations in Java 8</h1><p>A terminal operation starts the pipeline, produces a result (or a side effect) and closes the stream. Only one terminal operation can be used per stream.</p><h2>How it works in depth</h2><p>Terminal operations are eager. They return a value (count, reduce), a boolean (anyMatch), an Optional (findFirst, max, min) or nothing (forEach). Short-circuiting terminal operations such as anyMatch and findFirst stop as soon as the answer is known, so they can work even on infinite streams.</p><p>reduce has three forms: reduce(BinaryOperator) returns an Optional; reduce(identity, BinaryOperator) returns a value; reduce(identity, accumulator, combiner) is used when the result type is different or for parallel streams. The operation should be associative, because parallel streams may group elements in any way.</p><h2>Key points</h2><ul><li>reduce(identity, op): combines all elements into one value (sum, product).</li><li>count(), min(), max(): simple results. min and max return Optional.</li><li>anyMatch, allMatch, noneMatch: test a condition and return boolean. They stop early when the answer is known (short-circuit).</li><li>findFirst, findAny, forEach, toArray, collect are other common terminal operations.</li></ul><h2>Real life example</h2><p>The last button on the machine. Until you press it, nothing moves.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 import java.util.stream.*;
 
 public class Main {
@@ -37,7 +37,7 @@ public class Main {
         System.out.println();
         System.out.println(Arrays.toString(nums.stream().mapToInt(Integer::intValue).toArray()));
     }
-}</code></pre><h2>Output</h2><pre><code>27
+}</code></pre><p><b>Output:</b></p><pre><code>27
 9
 2
 5
@@ -46,7 +46,43 @@ true
 true
 9
 2 4 5 7 9 
-[4, 9, 2, 7, 5]</code></pre><p class="use"><b>Common mistake:</b> Calling get() on the Optional from min/max/findFirst when the stream can be empty. Use orElse instead.</p><div class="np"><a href="/java8/streams/intermediate-operations/">&larr; Intermediate Operations</a><a href="/java8/streams/collectors/">Collectors &rarr;</a></div></article>
+[4, 9, 2, 7, 5]</code></pre><h2>Example 2: reduce in different forms</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Integer&gt; nums = Arrays.asList(1, 2, 3, 4, 5);
+        Optional&lt;Integer&gt; product = nums.stream().reduce((a, b) -&gt; a * b);
+        System.out.println(product.get());
+        System.out.println(nums.stream().reduce(0, (a, b) -&gt; a + b));
+        System.out.println(nums.stream().reduce(Integer.MIN_VALUE, Math::max));
+        System.out.println(Stream.of(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;).reduce(&quot;&quot;, (a, b) -&gt; a + b));
+        int totalLength = Stream.of(&quot;Java&quot;, &quot;Stream&quot;).reduce(0, (sum, s) -&gt; sum + s.length(), Integer::sum);
+        System.out.println(totalLength);
+        System.out.println(new ArrayList&lt;Integer&gt;().stream().reduce(Integer::sum).isPresent());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>120
+15
+5
+abc
+10
+false</code></pre><h2>Example 3: Short-circuit operations on an infinite stream</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        System.out.println(Stream.iterate(1, n -&gt; n + 1).filter(n -&gt; n % 7 == 0).findFirst().get());
+        System.out.println(Stream.iterate(1, n -&gt; n + 1).anyMatch(n -&gt; n * n &gt; 200));
+        IntSummaryStatistics st = Stream.iterate(1, n -&gt; n * 2).limit(5).mapToInt(Integer::intValue).summaryStatistics();
+        System.out.println(st.getMin() + &quot; &quot; + st.getMax() + &quot; &quot; + st.getSum() + &quot; &quot; + st.getAverage());
+        System.out.println(Stream.of(&quot;b&quot;, &quot;a&quot;, &quot;c&quot;).sorted().findFirst().orElse(&quot;none&quot;));
+        System.out.println(Stream.&lt;String&gt;empty().findFirst().orElse(&quot;none&quot;));
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>7
+true
+1 16 31 6.2
+a
+none</code></pre><p class="use"><b>Common mistake:</b> Calling get() on the Optional from min/max/findFirst when the stream can be empty. Use orElse instead.</p><h2>Interview questions</h2><h3>What is the difference between findFirst and findAny?</h3><p>findFirst always returns the first element in encounter order. findAny may return any element, which is faster in parallel streams.</p><h3>What is the difference between forEach and forEachOrdered?</h3><p>forEach may process elements in any order on a parallel stream. forEachOrdered keeps the encounter order, but can be slower.</p><h3>Why do max and min return an Optional?</h3><p>The stream can be empty, and then there is no maximum or minimum. Optional forces you to handle that case.</p><div class="np"><a href="/java8/streams/intermediate-operations/">&larr; Intermediate Operations</a><a href="/java8/streams/collectors/">Collectors &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

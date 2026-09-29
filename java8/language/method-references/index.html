@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Method References in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Method References in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Method References in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/language/method-references/">
 <meta property="og:title" content="Method References in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/" aria-current="page">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/language/">Language Features</a> / Method References</div>
-<h1>Method References in Java 8</h1><p>A method reference is a shorter form of a lambda that only calls one existing method. You write it with the :: operator. It makes code shorter and easier to read.</p><h2>Key points</h2><ul><li>Static method: ClassName::staticMethod (Util::isLong).</li><li>Method of a specific object: object::method (System.out::println).</li><li>Method of any object of a type: ClassName::instanceMethod (String::length).</li><li>Constructor: ClassName::new (ArrayList::new). The method must match the functional interface signature.</li></ul><h2>Real life example</h2><p>Instead of writing the whole instruction again, you just point to a method that already does the job.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Method References in Java 8</h1><p>A method reference is a shorter form of a lambda that only calls one existing method. You write it with the :: operator. It makes code shorter and easier to read.</p><h2>How it works in depth</h2><p>A method reference is only another way to write a lambda. The compiler converts it, so anything you write as a method reference can also be written as a lambda. The rule is: (args) -&gt; Class.method(args) becomes Class::method.</p><p>Know the difference between ClassName::instanceMethod and object::method. With String::length, the first parameter of the functional interface becomes the object on which the method is called. With object::method, the object is fixed and all parameters are passed as arguments to the method.</p><h2>Key points</h2><ul><li>Static method: ClassName::staticMethod (Util::isLong).</li><li>Method of a specific object: object::method (System.out::println).</li><li>Method of any object of a type: ClassName::instanceMethod (String::length).</li><li>Constructor: ClassName::new (ArrayList::new). The method must match the functional interface signature.</li></ul><h2>Real life example</h2><p>Instead of writing the whole instruction again, you just point to a method that already does the job.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 import java.util.function.*;
 
 public class Main {
@@ -39,12 +39,54 @@ public class Main {
 
 class Util {
     static boolean isLong(String s) { return s.length() &gt; 3; }
-}</code></pre><h2>Output</h2><pre><code>Ram
+}</code></pre><p><b>Output:</b></p><pre><code>Ram
 Sita
 Laxman
 true
 4
-[New]</code></pre><p class="use"><b>Common mistake:</b> If a method is overloaded, the compiler may not know which one you mean. Use a lambda in that case.</p><div class="np"><a href="/java8/language/functional-interfaces/">&larr; Functional Interfaces</a><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces &rarr;</a></div></article>
+[New]</code></pre><h2>Example 2: All four types side by side</h2><pre><code class="language-java">import java.util.function.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Function&lt;String, Integer&gt; parse = Integer::parseInt;            // static method
+        Printer printer = new Printer();
+        Consumer&lt;String&gt; c = printer::print;                            // method of a specific object
+        Function&lt;String, String&gt; trim = String::trim;                   // method of any object of a type
+        Function&lt;String, Person&gt; create = Person::new;                  // constructor
+        System.out.println(parse.apply(&quot;42&quot;) + 1);
+        c.accept(&quot;hello&quot;);
+        System.out.println(&quot;[&quot; + trim.apply(&quot;  spaces  &quot;) + &quot;]&quot;);
+        System.out.println(create.apply(&quot;Ram&quot;));
+    }
+}
+
+class Printer {
+    void print(String s) { System.out.println(&quot;Printer: &quot; + s); }
+}
+class Person {
+    String name;
+    Person(String name) { this.name = name; }
+    public String toString() { return &quot;Person &quot; + name; }
+}</code></pre><p><b>Output:</b></p><pre><code>43
+Printer: hello
+[spaces]
+Person Ram</code></pre><h2>Example 3: Method references with streams</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;String&gt; names = Arrays.asList(&quot;ram&quot;, &quot;sita&quot;, &quot;amit&quot;);
+        List&lt;String&gt; upper = names.stream().map(String::toUpperCase).collect(Collectors.toList());
+        System.out.println(upper);
+        List&lt;Integer&gt; lengths = names.stream().map(String::length).collect(Collectors.toList());
+        System.out.println(lengths);
+        System.out.println(names.stream().sorted(String::compareTo).collect(Collectors.toList()));
+        System.out.println(Stream.of(&quot;1&quot;, &quot;2&quot;, &quot;3&quot;).map(Integer::valueOf).reduce(0, Integer::sum));
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>[RAM, SITA, AMIT]
+[3, 4, 4]
+[amit, ram, sita]
+6</code></pre><p class="use"><b>Common mistake:</b> If a method is overloaded, the compiler may not know which one you mean. Use a lambda in that case.</p><h2>Interview questions</h2><h3>Method reference or lambda, which is better?</h3><p>Both give the same result. Use a method reference when the lambda only calls one method, because it is shorter and clearer. Use a lambda when you need extra logic.</p><h3>Can I reference a constructor that takes arguments?</h3><p>Yes, if the functional interface matches. For example Function&lt;String, Person&gt; can use Person::new for a constructor Person(String).</p><h3>Does System.out::println work for any type?</h3><p>Yes. println is overloaded, and the compiler picks the right version from the element type.</p><div class="np"><a href="/java8/language/functional-interfaces/">&larr; Functional Interfaces</a><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

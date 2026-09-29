@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>StringJoiner and String.join in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn StringJoiner and String.join in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn StringJoiner and String.join in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/api/stringjoiner/">
 <meta property="og:title" content="StringJoiner and String.join in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/" aria-current="page">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / StringJoiner and String.join</div>
-<h1>StringJoiner and String.join in Java 8</h1><p>StringJoiner builds a string from many parts with a delimiter, and an optional prefix and suffix. String.join is a quick one-line version.</p><h2>Key points</h2><ul><li>new StringJoiner(delimiter, prefix, suffix), then add() for each part.</li><li>setEmptyValue() gives a text to show when nothing was added.</li><li>String.join(delimiter, items) works with varargs and any Iterable.</li><li>Collectors.joining() does the same job inside streams.</li></ul><h2>Real life example</h2><p>Writing names with commas between them and brackets around the list.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>StringJoiner and String.join in Java 8</h1><p>StringJoiner builds a string from many parts with a delimiter, and an optional prefix and suffix. String.join is a quick one-line version.</p><h2>How it works in depth</h2><p>StringJoiner is a small helper class in java.util. It collects the parts and joins them when toString() is called. The prefix and suffix are added only once. String.join(delimiter, ...) uses StringJoiner internally and covers the most common case in one line.</p><p>Compare with other tools: StringBuilder is more flexible, but you must handle the last delimiter yourself. Collectors.joining is the stream version. merge(otherJoiner) adds the content of another StringJoiner (without its prefix and suffix) as one element.</p><h2>Key points</h2><ul><li>new StringJoiner(delimiter, prefix, suffix), then add() for each part.</li><li>setEmptyValue() gives a text to show when nothing was added.</li><li>String.join(delimiter, items) works with varargs and any Iterable.</li><li>Collectors.joining() does the same job inside streams.</li></ul><h2>Real life example</h2><p>Writing names with commas between them and brackets around the list.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -33,11 +33,49 @@ public class Main {
         System.out.println(empty);
         System.out.println(sj.length());
     }
-}</code></pre><h2>Output</h2><pre><code>[Ram, Sita, Amit]
+}</code></pre><p><b>Output:</b></p><pre><code>[Ram, Sita, Amit]
 2024-03-15
 a/b/c
 NONE
-17</code></pre><p class="use"><b>Common mistake:</b> Building such strings with += in a loop. It creates many temporary objects and leaves an extra delimiter at the end.</p><div class="np"><a href="/java8/api/comparator-improvements/">&larr; Comparator Improvements</a><a href="/java8/api/base64-encoding/">Base64 Encoding &rarr;</a></div></article>
+17</code></pre><h2>Example 2: Building a list without an extra comma</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        String[] items = {&quot;milk&quot;, &quot;eggs&quot;, &quot;bread&quot;};
+        StringBuilder sb = new StringBuilder();
+        for (String i : items) sb.append(i).append(&quot;, &quot;);
+        System.out.println(&quot;StringBuilder: &quot; + sb);
+        StringJoiner sj = new StringJoiner(&quot;, &quot;);
+        for (String i : items) sj.add(i);
+        System.out.println(&quot;StringJoiner: &quot; + sj);
+        System.out.println(&quot;String.join: &quot; + String.join(&quot;, &quot;, items));
+        System.out.println(&quot;Stream: &quot; + Arrays.stream(items).collect(Collectors.joining(&quot;, &quot;, &quot;&lt;&quot;, &quot;&gt;&quot;)));
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>StringBuilder: milk, eggs, bread, 
+StringJoiner: milk, eggs, bread
+String.join: milk, eggs, bread
+Stream: &lt;milk, eggs, bread&gt;</code></pre><h2>Example 3: merge and empty value</h2><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        StringJoiner a = new StringJoiner(&quot;-&quot;, &quot;(&quot;, &quot;)&quot;);
+        a.add(&quot;1&quot;).add(&quot;2&quot;);
+        StringJoiner b = new StringJoiner(&quot;+&quot;, &quot;{&quot;, &quot;}&quot;);
+        b.add(&quot;x&quot;).add(&quot;y&quot;);
+        a.merge(b);
+        System.out.println(a);
+        StringJoiner none = new StringJoiner(&quot;,&quot;, &quot;[&quot;, &quot;]&quot;);
+        System.out.println(none);
+        none.setEmptyValue(&quot;empty&quot;);
+        System.out.println(none);
+        none.add(&quot;&quot;);
+        System.out.println(none + &quot;|&quot; + none.length());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>(1-2-x+y)
+[]
+empty
+[]|2</code></pre><p class="use"><b>Common mistake:</b> Building such strings with += in a loop. It creates many temporary objects and leaves an extra delimiter at the end.</p><h2>Interview questions</h2><h3>When should I use StringJoiner instead of StringBuilder?</h3><p>Use StringJoiner when you join items with a delimiter, because it handles the last delimiter for you. Use StringBuilder for general text building.</p><h3>What does String.join do with null elements?</h3><p>A null element is written as the text null. String.join does not throw an exception for it.</p><h3>Is StringJoiner thread-safe?</h3><p>No. Use it only inside one thread, or protect it yourself.</p><div class="np"><a href="/java8/api/comparator-improvements/">&larr; Comparator Improvements</a><a href="/java8/api/base64-encoding/">Base64 Encoding &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

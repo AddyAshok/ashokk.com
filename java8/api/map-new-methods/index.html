@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>New Methods in Map in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn New Methods in Map in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn New Methods in Map in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/api/map-new-methods/">
 <meta property="og:title" content="New Methods in Map in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/" aria-current="page">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / New Methods in Map</div>
-<h1>New Methods in Map in Java 8</h1><p>Java 8 added methods to Map that replace common if-else code: getOrDefault, putIfAbsent, computeIfAbsent, computeIfPresent, compute and merge.</p><h2>Key points</h2><ul><li>getOrDefault(key, default): returns default when the key is missing.</li><li>putIfAbsent(key, value): puts only if the key has no value.</li><li>computeIfAbsent(key, fn): creates the value if missing. Perfect for Map of Lists.</li><li>merge(key, value, fn): adds the value or combines with the old one. Perfect for counting.</li></ul><h2>Real life example</h2><p>A register book: if the name is not there, write it; if it is there, update its count.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>New Methods in Map in Java 8</h1><p>Java 8 added methods to Map that replace common if-else code: getOrDefault, putIfAbsent, computeIfAbsent, computeIfPresent, compute and merge.</p><h2>How it works in depth</h2><p>These methods turn check-then-act code into one line. For compute, computeIfPresent and merge, if the function returns null, the key is removed from the map. This makes them useful for updating and deleting in one step.</p><p>merge is the best tool for counting: map.merge(word, 1, Integer::sum). computeIfAbsent is the best tool for a Map of Lists (grouping). In ConcurrentHashMap these methods are atomic, so they are safe for many threads.</p><h2>Key points</h2><ul><li>getOrDefault(key, default): returns default when the key is missing.</li><li>putIfAbsent(key, value): puts only if the key has no value.</li><li>computeIfAbsent(key, fn): creates the value if missing. Perfect for Map of Lists.</li><li>merge(key, value, fn): adds the value or combines with the old one. Perfect for counting.</li></ul><h2>Real life example</h2><p>A register book: if the name is not there, write it; if it is there, update its count.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 
 public class Main {
     public static void main(String[] args) {
@@ -36,9 +36,47 @@ public class Main {
         System.out.println(new TreeMap&lt;&gt;(stock));
         System.out.println(groups);
     }
-}</code></pre><h2>Output</h2><pre><code>0
+}</code></pre><p><b>Output:</b></p><pre><code>0
 {apple=15, banana=10}
-{fruits=[mango, kiwi]}</code></pre><p class="use"><b>Common mistake:</b> Using computeIfAbsent and changing the same map inside the function. That can throw ConcurrentModificationException.</p><div class="np"><a href="/java8/api/foreach-method/">&larr; forEach, removeIf and replaceAll</a><a href="/java8/api/comparator-improvements/">Comparator Improvements &rarr;</a></div></article>
+{fruits=[mango, kiwi]}</code></pre><h2>Example 2: Word count with merge</h2><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        String text = &quot;to be or not to be&quot;;
+        Map&lt;String, Integer&gt; count = new TreeMap&lt;&gt;();
+        for (String w : text.split(&quot; &quot;)) {
+            count.merge(w, 1, Integer::sum);
+        }
+        System.out.println(count);
+        Map&lt;String, Integer&gt; old = new TreeMap&lt;&gt;();
+        for (String w : text.split(&quot; &quot;)) {
+            if (old.containsKey(w)) old.put(w, old.get(w) + 1); else old.put(w, 1);
+        }
+        System.out.println(old.equals(count));
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>{be=2, not=1, or=1, to=2}
+true</code></pre><h2>Example 3: compute, computeIfPresent and removing with null</h2><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Map&lt;String, Integer&gt; m = new TreeMap&lt;&gt;();
+        m.put(&quot;a&quot;, 1);
+        m.put(&quot;b&quot;, 2);
+        m.compute(&quot;a&quot;, (k, v) -&gt; v == null ? 1 : v + 10);
+        m.compute(&quot;z&quot;, (k, v) -&gt; v == null ? 1 : v + 10);
+        m.computeIfPresent(&quot;b&quot;, (k, v) -&gt; null);
+        System.out.println(m);
+        System.out.println(m.getOrDefault(&quot;b&quot;, -1));
+        m.replace(&quot;a&quot;, 100);
+        m.remove(&quot;z&quot;, 5);
+        System.out.println(m);
+        m.remove(&quot;z&quot;, 1);
+        System.out.println(m);
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>{a=11, z=1}
+-1
+{a=100, z=1}
+{a=100}</code></pre><p class="use"><b>Common mistake:</b> Using computeIfAbsent and changing the same map inside the function. That can throw ConcurrentModificationException.</p><h2>Interview questions</h2><h3>What is the difference between putIfAbsent and computeIfAbsent?</h3><p>putIfAbsent takes a ready value, which is always created. computeIfAbsent takes a function that runs only when the key is missing, so it is better when the value is costly to create.</p><h3>What happens if the function of merge returns null?</h3><p>The key is removed from the map.</p><h3>Are these methods thread-safe?</h3><p>Only in ConcurrentHashMap, where they are atomic. In a normal HashMap they are not thread-safe.</p><div class="np"><a href="/java8/api/foreach-method/">&larr; forEach, removeIf and replaceAll</a><a href="/java8/api/comparator-improvements/">Comparator Improvements &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

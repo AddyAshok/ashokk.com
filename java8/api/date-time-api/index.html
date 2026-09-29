@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Date and Time API in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Date and Time API in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Date and Time API in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/api/date-time-api/">
 <meta property="og:title" content="Date and Time API in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/" aria-current="page">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / Date and Time API</div>
-<h1>Date and Time API in Java 8</h1><p>Java 8 added the java.time package. The old Date and Calendar classes were mutable, not thread-safe and confusing (months started at 0). The new classes are immutable, thread-safe and clear.</p><h2>Key points</h2><ul><li>LocalDate (date), LocalTime (time), LocalDateTime (both), ZonedDateTime (with time zone), Instant (machine time).</li><li>Period measures days, months and years. Duration measures hours, minutes and seconds.</li><li>DateTimeFormatter formats and parses text.</li><li>Every change like plusDays() returns a new object. The original stays the same.</li></ul><h2>Real life example</h2><p>A calendar and a clock that never get scribbled on. Every change gives you a fresh copy.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.time.*;
+<h1>Date and Time API in Java 8</h1><p>Java 8 added the java.time package. The old Date and Calendar classes were mutable, not thread-safe and confusing (months started at 0). The new classes are immutable, thread-safe and clear.</p><h2>How it works in depth</h2><p>The old java.util.Date is a moment in time that pretends to be a date, is mutable and is not thread-safe. SimpleDateFormat is not thread-safe either. The java.time package follows ISO-8601, is immutable, is thread-safe, and clearly separates human time (LocalDate, LocalTime) from machine time (Instant).</p><p>Choose the class by need: LocalDate for a birthday, LocalTime for an opening time, LocalDateTime for an appointment without a time zone, ZonedDateTime for a meeting across time zones, and Instant for a timestamp. ChronoUnit and TemporalAdjusters make date calculations easy, and DateTimeFormatter is immutable and thread-safe.</p><h2>Key points</h2><ul><li>LocalDate (date), LocalTime (time), LocalDateTime (both), ZonedDateTime (with time zone), Instant (machine time).</li><li>Period measures days, months and years. Duration measures hours, minutes and seconds.</li><li>DateTimeFormatter formats and parses text.</li><li>Every change like plusDays() returns a new object. The original stays the same.</li></ul><h2>Real life example</h2><p>A calendar and a clock that never get scribbled on. Every change gives you a fresh copy.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.time.*;
 import java.time.format.*;
 
 public class Main {
@@ -38,14 +38,53 @@ public class Main {
         System.out.println(d.toMinutes() + &quot; minutes&quot;);
         System.out.println(LocalDate.parse(&quot;2025-01-01&quot;).getMonth());
     }
-}</code></pre><h2>Output</h2><pre><code>2024-03-15
+}</code></pre><p><b>Output:</b></p><pre><code>2024-03-15
 2024-04-04
 FRIDAY
 true
 15-03-2024 14:30
 24 years, 2 months
 330 minutes
-JANUARY</code></pre><p class="use"><b>Common mistake:</b> Ignoring that objects are immutable. date.plusDays(5) alone does nothing; you must use the returned value.</p><div class="np"><a href="/java8/api/optional/">&larr; Optional</a><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll &rarr;</a></div></article>
+JANUARY</code></pre><h2>Example 2: Date calculations with ChronoUnit and TemporalAdjusters</h2><pre><code class="language-java">import java.time.*;
+import java.time.format.*;
+import java.time.temporal.*;
+
+public class Main {
+    public static void main(String[] args) {
+        LocalDate start = LocalDate.of(2024, 1, 31);
+        System.out.println(start.plusMonths(1));
+        System.out.println(ChronoUnit.DAYS.between(start, LocalDate.of(2024, 12, 25)));
+        System.out.println(start.with(TemporalAdjusters.firstDayOfNextMonth()));
+        System.out.println(start.with(TemporalAdjusters.next(DayOfWeek.MONDAY)));
+        System.out.println(start.isBefore(LocalDate.of(2024, 2, 1)));
+        System.out.println(start.lengthOfMonth());
+        System.out.println(start.withDayOfMonth(1).getDayOfWeek());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>2024-02-29
+329
+2024-02-01
+2024-02-05
+true
+31
+MONDAY</code></pre><h2>Example 3: Time zones and formatting</h2><pre><code class="language-java">import java.util.*;
+import java.time.*;
+import java.time.format.*;
+
+public class Main {
+    public static void main(String[] args) {
+        LocalDateTime meeting = LocalDateTime.of(2024, 6, 10, 18, 30);
+        ZonedDateTime india = meeting.atZone(ZoneId.of(&quot;Asia/Kolkata&quot;));
+        ZonedDateTime london = india.withZoneSameInstant(ZoneId.of(&quot;Europe/London&quot;));
+        DateTimeFormatter fmt = DateTimeFormatter.ofPattern(&quot;dd MMM yyyy, hh:mm a&quot;, Locale.ENGLISH);
+        System.out.println(india.format(fmt) + &quot; in India&quot;);
+        System.out.println(london.format(fmt) + &quot; in London&quot;);
+        System.out.println(LocalDate.parse(&quot;15/08/2024&quot;, DateTimeFormatter.ofPattern(&quot;dd/MM/yyyy&quot;)));
+        System.out.println(Instant.ofEpochSecond(0));
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>10 Jun 2024, 06:30 PM in India
+10 Jun 2024, 02:00 PM in London
+2024-08-15
+1970-01-01T00:00:00Z</code></pre><p class="use"><b>Common mistake:</b> Ignoring that objects are immutable. date.plusDays(5) alone does nothing; you must use the returned value.</p><h2>Interview questions</h2><h3>Why is java.time better than Date and Calendar?</h3><p>Its classes are immutable and thread-safe, months start at 1, the API is clear, and it separates date, time and zone properly.</p><h3>What is the difference between LocalDateTime and ZonedDateTime?</h3><p>LocalDateTime has no time zone, so it is not a fixed moment in time. ZonedDateTime includes a zone and represents an exact moment.</p><h3>What is the difference between Period and Duration?</h3><p>Period measures date-based amounts (years, months, days). Duration measures time-based amounts (hours, minutes, seconds, nanoseconds).</p><div class="np"><a href="/java8/api/optional/">&larr; Optional</a><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

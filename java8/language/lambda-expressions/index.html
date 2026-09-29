@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Lambda Expressions in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Lambda Expressions in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Lambda Expressions in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/language/lambda-expressions/">
 <meta property="og:title" content="Lambda Expressions in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/" aria-current="page">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/language/">Language Features</a> / Lambda Expressions</div>
-<h1>Lambda Expressions in Java 8</h1><p>A lambda expression is a short way to write an anonymous function. It lets you pass code (behavior) as a value, so you write much less code than with anonymous inner classes. Syntax: (parameters) -&gt; expression, or (parameters) -&gt; { statements }.</p><h2>Key points</h2><ul><li>It can be used only where a functional interface is expected.</li><li>Parameter types are optional because Java infers them. With one parameter you can drop the brackets.</li><li>A lambda can use a local variable only if it is final or effectively final (never changed).</li><li>Inside a lambda, this means the enclosing class, not the lambda itself.</li></ul><h2>Real life example</h2><p>Telling a friend &quot;do this when you reach&quot; instead of building a whole helper class for one small instruction.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Lambda Expressions in Java 8</h1><p>A lambda expression is a short way to write an anonymous function. It lets you pass code (behavior) as a value, so you write much less code than with anonymous inner classes. Syntax: (parameters) -&gt; expression, or (parameters) -&gt; { statements }.</p><h2>How it works in depth</h2><p>Behind the scenes a lambda is not an anonymous inner class. The compiler uses the invokedynamic instruction and the JVM creates the function object at run time. Because of this, lambdas are lighter than anonymous classes and do not create a separate .class file.</p><p>The type of a lambda comes from where you use it (target typing). The same text x -&gt; x * 2 can be a Function&lt;Integer,Integer&gt; or an IntUnaryOperator, depending on the variable it is assigned to. The body can be a single expression (its value is returned automatically) or a block with braces and a return statement.</p><h2>Key points</h2><ul><li>It can be used only where a functional interface is expected.</li><li>Parameter types are optional because Java infers them. With one parameter you can drop the brackets.</li><li>A lambda can use a local variable only if it is final or effectively final (never changed).</li><li>Inside a lambda, this means the enclosing class, not the lambda itself.</li></ul><h2>Real life example</h2><p>Telling a friend &quot;do this when you reach&quot; instead of building a whole helper class for one small instruction.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 import java.util.function.*;
 
 public class Main {
@@ -33,9 +33,59 @@ public class Main {
         BinaryOperator&lt;Integer&gt; add = (x, y) -&gt; x + y;
         System.out.println(add.apply(3, 4));
     }
-}</code></pre><h2>Output</h2><pre><code>Hello from lambda
+}</code></pre><p><b>Output:</b></p><pre><code>Hello from lambda
 [Al, Bob, Charlie]
-7</code></pre><p class="use"><b>Common mistake:</b> Changing a local variable inside a lambda gives a compile error. If you really need a counter, use an array or AtomicInteger.</p><div class="np"><span></span><a href="/java8/language/functional-interfaces/">Functional Interfaces &rarr;</a></div></article>
+7</code></pre><h2>Example 2: Old way (anonymous class) vs lambda</h2><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;String&gt; names = Arrays.asList(&quot;Charlie&quot;, &quot;Al&quot;, &quot;Bob&quot;);
+        Collections.sort(names, new Comparator&lt;String&gt;() {
+            public int compare(String a, String b) { return a.length() - b.length(); }
+        });
+        System.out.println(&quot;Anonymous class: &quot; + names);
+        List&lt;String&gt; names2 = Arrays.asList(&quot;Charlie&quot;, &quot;Al&quot;, &quot;Bob&quot;);
+        Collections.sort(names2, (a, b) -&gt; a.length() - b.length());
+        System.out.println(&quot;Lambda: &quot; + names2);
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>Anonymous class: [Al, Bob, Charlie]
+Lambda: [Al, Bob, Charlie]</code></pre><h2>Example 3: Lambda syntax variations</h2><pre><code class="language-java">import java.util.function.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Runnable noParam = () -&gt; System.out.println(&quot;no parameter&quot;);
+        Function&lt;Integer, Integer&gt; oneParam = x -&gt; x * 2;
+        BiFunction&lt;Integer, Integer, Integer&gt; twoParams = (x, y) -&gt; x + y;
+        BiFunction&lt;Integer, Integer, Integer&gt; typed = (Integer x, Integer y) -&gt; x * y;
+        Function&lt;Integer, String&gt; block = n -&gt; {
+            String size = n &gt; 10 ? &quot;big&quot; : &quot;small&quot;;
+            return n + &quot; is &quot; + size;
+        };
+        noParam.run();
+        System.out.println(oneParam.apply(5));
+        System.out.println(twoParams.apply(2, 3));
+        System.out.println(typed.apply(4, 5));
+        System.out.println(block.apply(20));
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>no parameter
+10
+5
+20
+20 is big</code></pre><h2>Example 4: Using local variables inside a lambda</h2><pre><code class="language-java">import java.util.function.*;
+
+public class Main {
+    public static void main(String[] args) {
+        int base = 100;
+        Function&lt;Integer, Integer&gt; addBase = x -&gt; x + base;
+        System.out.println(addBase.apply(5));
+        int[] counter = {0};
+        Runnable inc = () -&gt; counter[0]++;
+        inc.run();
+        inc.run();
+        System.out.println(counter[0]);
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>105
+2</code></pre><p class="use"><b>Common mistake:</b> Changing a local variable inside a lambda gives a compile error. If you really need a counter, use an array or AtomicInteger.</p><h2>Interview questions</h2><h3>Can a lambda be used without a functional interface?</h3><p>No. The target type of a lambda must always be a functional interface.</p><h3>Is a lambda the same as an anonymous class?</h3><p>No. Inside a lambda, this means the enclosing class, but inside an anonymous class this means the anonymous object. They also compile differently (invokedynamic vs a separate class).</p><h3>Why must captured local variables be effectively final?</h3><p>A lambda may run later or on another thread. Local variables live on the stack, so Java copies their value. Allowing changes would create confusing and unsafe code.</p><div class="np"><span></span><a href="/java8/language/functional-interfaces/">Functional Interfaces &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

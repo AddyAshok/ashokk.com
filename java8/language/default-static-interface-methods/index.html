@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Default and Static Methods in Interfaces in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Default and Static Methods in Interfaces in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Default and Static Methods in Interfaces in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/language/default-static-interface-methods/">
 <meta property="og:title" content="Default and Static Methods in Interfaces in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/" aria-current="page">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/language/">Language Features</a> / Default and Static Methods in Interfaces</div>
-<h1>Default and Static Methods in Interfaces in Java 8</h1><p>Before Java 8 an interface could only have abstract methods, so adding a new method broke every class that implemented it. Java 8 allows default methods (with a body) and static methods in interfaces. This is how Java added stream() and forEach() to Collection without breaking old code.</p><h2>Key points</h2><ul><li>A default method uses the default keyword. Implementing classes may override it.</li><li>If a class implements two interfaces with the same default method, it must override it and can call Interface.super.method().</li><li>A static method belongs to the interface. Call it as InterfaceName.method(); it is not inherited.</li><li>Interfaces still cannot have instance fields or constructors.</li></ul><h2>Real life example</h2><p>A company adds a new rule to its handbook. Old employees follow a default version until they choose their own.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">public class Main {
+<h1>Default and Static Methods in Interfaces in Java 8</h1><p>Before Java 8 an interface could only have abstract methods, so adding a new method broke every class that implemented it. Java 8 allows default methods (with a body) and static methods in interfaces. This is how Java added stream() and forEach() to Collection without breaking old code.</p><h2>How it works in depth</h2><p>Default methods were added for backward compatibility. If forEach() had been added to Iterable as an abstract method, millions of classes would have stopped compiling. As a default method, every old class got it for free. Conflict rules: a method from a class always wins over an interface; a more specific interface wins over a general one; otherwise the class must override the method.</p><p>Static interface methods are utility methods that belong to the interface itself, for example Comparator.naturalOrder() and Stream.of(). They cannot be overridden and are not inherited by implementing classes. Private interface methods were added later in Java 9, not in Java 8.</p><h2>Key points</h2><ul><li>A default method uses the default keyword. Implementing classes may override it.</li><li>If a class implements two interfaces with the same default method, it must override it and can call Interface.super.method().</li><li>A static method belongs to the interface. Call it as InterfaceName.method(); it is not inherited.</li><li>Interfaces still cannot have instance fields or constructors.</li></ul><h2>Real life example</h2><p>A company adds a new rule to its handbook. Old employees follow a default version until they choose their own.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">public class Main {
     public static void main(String[] args) {
         new Tesla().start();
         System.out.println(Vehicle.wheels());
@@ -40,9 +40,50 @@ class Tesla implements Vehicle, Electric {
         Vehicle.super.start();
         Electric.super.start();
     }
-}</code></pre><h2>Output</h2><pre><code>Vehicle starting
+}</code></pre><p><b>Output:</b></p><pre><code>Vehicle starting
 Electric starting
-4</code></pre><p class="use"><b>Common mistake:</b> Forgetting to resolve the conflict when two interfaces have the same default method gives a compile error.</p><div class="np"><a href="/java8/language/method-references/">&larr; Method References</a><a href="/java8/streams/stream-basics/">Stream API Basics &rarr;</a></div></article>
+4</code></pre><h2>Example 2: Adding a method without breaking old classes</h2><pre><code class="language-java">public class Main {
+    public static void main(String[] args) {
+        System.out.println(new Square().describe());
+        System.out.println(new Circle().describe());
+    }
+}
+
+interface Shape {
+    double area();
+    default String describe() { return &quot;Shape with area &quot; + area(); }
+}
+
+class Square implements Shape {
+    double side = 3;
+    public double area() { return side * side; }
+}
+class Circle implements Shape {
+    double r = 1;
+    public double area() { return 3.14 * r * r; }
+    public String describe() { return &quot;Circle! &quot; + Shape.super.describe(); }
+}</code></pre><p><b>Output:</b></p><pre><code>Shape with area 9.0
+Circle! Shape with area 3.14</code></pre><h2>Example 3: Static helper method and the class-wins rule</h2><pre><code class="language-java">public class Main {
+    public static void main(String[] args) {
+        Validator v = Validator.notEmpty().and(s -&gt; s.length() &lt; 5);
+        System.out.println(v.validate(&quot;Java&quot;));
+        System.out.println(v.validate(&quot;Programming&quot;));
+        System.out.println(v.validate(&quot;&quot;));
+        System.out.println(new Child().hello());
+    }
+}
+
+interface Validator {
+    boolean validate(String s);
+    static Validator notEmpty() { return s -&gt; s != null &amp;&amp; !s.isEmpty(); }
+    default Validator and(Validator other) { return s -&gt; validate(s) &amp;&amp; other.validate(s); }
+}
+class Base { public String hello() { return &quot;Hello from class&quot;; } }
+interface Greeter { default String hello() { return &quot;Hello from interface&quot;; } }
+class Child extends Base implements Greeter { }</code></pre><p><b>Output:</b></p><pre><code>true
+false
+false
+Hello from class</code></pre><p class="use"><b>Common mistake:</b> Forgetting to resolve the conflict when two interfaces have the same default method gives a compile error.</p><h2>Interview questions</h2><h3>How does Java solve the diamond problem?</h3><p>If two interfaces give the same default method, the class must override it and choose explicitly, for example Vehicle.super.start(). Otherwise the code does not compile.</p><h3>Can a default method override methods of Object like equals()?</h3><p>No. A default method cannot override equals(), hashCode() or toString(). It gives a compile error.</p><h3>What is the difference between an abstract class and an interface now?</h3><p>An abstract class can have fields (state) and constructors, but an interface cannot. A class can implement many interfaces but extend only one class.</p><div class="np"><a href="/java8/language/method-references/">&larr; Method References</a><a href="/java8/streams/stream-basics/">Stream API Basics &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

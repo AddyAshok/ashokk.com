@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Parallel Streams in Java 8 – Ashokka Tech</title>
-<meta name="description" content="Learn Parallel Streams in Java 8 with a simple explanation, key points, a complete example and output.">
+<meta name="description" content="Learn Parallel Streams in Java 8 in depth: explanation, key points, complete examples with output and interview questions.">
 <link rel="canonical" href="https://ashokka.com/java8/streams/parallel-streams/">
 <meta property="og:title" content="Parallel Streams in Java 8 – Ashokka Tech">
 <meta property="og:type" content="article">
@@ -19,7 +19,7 @@
 <nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/" aria-current="page">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
 <article class="pg">
 <div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/streams/">Stream API</a> / Parallel Streams</div>
-<h1>Parallel Streams in Java 8</h1><p>A parallel stream splits the work across many threads (the ForkJoin common pool) so it can use all CPU cores. Use stream.parallel() or collection.parallelStream().</p><h2>Key points</h2><ul><li>Best for large data and CPU-heavy, independent tasks.</li><li>Not good for small data, I/O work, or tasks that change shared variables (not thread-safe).</li><li>forEach may print in any order. Use forEachOrdered to keep the order.</li><li>Always measure. Parallel is not always faster because splitting and merging cost time.</li></ul><h2>Real life example</h2><p>Ten people counting a big pile of coins together instead of one person counting alone.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+<h1>Parallel Streams in Java 8</h1><p>A parallel stream splits the work across many threads (the ForkJoin common pool) so it can use all CPU cores. Use stream.parallel() or collection.parallelStream().</p><h2>How it works in depth</h2><p>Parallel streams use the common ForkJoinPool, which by default has one thread fewer than the number of CPU cores, and the calling thread helps as well. The source is split into chunks by a Spliterator, each chunk is processed by a thread, and the results are combined. ArrayList and arrays split very well; LinkedList and Stream.iterate split badly.</p><p>Rules for safe parallel code: operations must be stateless and non-interfering, and reduce operations must be associative. Small data, boxing and I/O make parallel streams slower. Encounter order is kept by collect(toList()), but not by forEach.</p><h2>Key points</h2><ul><li>Best for large data and CPU-heavy, independent tasks.</li><li>Not good for small data, I/O work, or tasks that change shared variables (not thread-safe).</li><li>forEach may print in any order. Use forEachOrdered to keep the order.</li><li>Always measure. Parallel is not always faster because splitting and merging cost time.</li></ul><h2>Real life example</h2><p>Ten people counting a big pile of coins together instead of one person counting alone.</p><h2>Example 1: Basics</h2><p>Save as <code>Main.java</code>, compile with <code>javac Main.java</code> and run with <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
 import java.util.stream.*;
 
 public class Main {
@@ -32,10 +32,41 @@ public class Main {
         System.out.println();
         System.out.println(nums.parallelStream().isParallel());
     }
-}</code></pre><h2>Output</h2><pre><code>500000500000
+}</code></pre><p><b>Output:</b></p><pre><code>500000500000
 [1, 4, 9, 16, 25, 36]
 1 2 3 4 5 6 
-true</code></pre><p class="use"><b>Common mistake:</b> Modifying a shared list or counter inside a parallel stream gives wrong results. Use collect() or reduce() instead.</p><div class="np"><a href="/java8/streams/collectors/">&larr; Collectors</a><a href="/java8/api/optional/">Optional &rarr;</a></div></article>
+true</code></pre><h2>Example 2: Sequential and parallel give the same result</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Integer&gt; nums = IntStream.rangeClosed(1, 20).boxed().collect(Collectors.toList());
+        int seq = nums.stream().mapToInt(n -&gt; n * n).sum();
+        int par = nums.parallelStream().mapToInt(n -&gt; n * n).sum();
+        System.out.println(seq + &quot; &quot; + par + &quot; &quot; + (seq == par));
+        System.out.println(nums.parallelStream().filter(n -&gt; n % 2 == 0).collect(Collectors.toList()));
+        System.out.println(nums.parallelStream().reduce(0, Integer::sum));
+        System.out.println(IntStream.range(0, 100).parallel().isParallel() + &quot; &quot; + IntStream.range(0, 100).parallel().sequential().isParallel());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>2870 2870 true
+[2, 4, 6, 8, 10, 12, 14, 16, 18, 20]
+210
+true false</code></pre><h2>Example 3: Safe ways to combine results</h2><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Integer&gt; safe = IntStream.rangeClosed(1, 1000).parallel().boxed().collect(Collectors.toList());
+        System.out.println(&quot;collect size: &quot; + safe.size());
+        long evens = IntStream.rangeClosed(1, 1000).parallel().filter(n -&gt; n % 2 == 0).count();
+        System.out.println(&quot;evens: &quot; + evens);
+        java.util.concurrent.atomic.AtomicInteger counter = new java.util.concurrent.atomic.AtomicInteger();
+        IntStream.rangeClosed(1, 1000).parallel().forEach(n -&gt; counter.incrementAndGet());
+        System.out.println(&quot;atomic counter: &quot; + counter.get());
+    }
+}</code></pre><p><b>Output:</b></p><pre><code>collect size: 1000
+evens: 500
+atomic counter: 1000</code></pre><p class="use"><b>Common mistake:</b> Modifying a shared list or counter inside a parallel stream gives wrong results. Use collect() or reduce() instead.</p><h2>Interview questions</h2><h3>When should I use a parallel stream?</h3><p>Use it for large data sets with CPU-heavy, independent work, and only after measuring. For small lists or I/O tasks, a normal stream is usually faster.</p><h3>Is a parallel stream always faster?</h3><p>No. Splitting the work and merging the results costs time. On small data the overhead is bigger than the gain.</p><h3>Which thread pool do parallel streams use?</h3><p>The common ForkJoinPool (ForkJoinPool.commonPool()), which is shared by the whole application.</p><div class="np"><a href="/java8/streams/collectors/">&larr; Collectors</a><a href="/java8/api/optional/">Optional &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>
