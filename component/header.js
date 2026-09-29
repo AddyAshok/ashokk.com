@@ -128,7 +128,7 @@ class CustomHeader extends HTMLElement {
             .categories-bar {
                 background: #090d16;
                 border-top: 1px solid rgba(30, 41, 59, 0.7);
-                padding: 6px 16px;
+                padding: 2px 2px;
                 width: 100%;
                 box-sizing: border-box;
             }
@@ -228,20 +228,20 @@ class CustomHeader extends HTMLElement {
             <nav class="categories-bar" id="categories-nav">
                 <div class="categories-inner">
                     <a href="/java/" class="active">Java</a>
-                    <a href="/spring-boot/">Spring Boot</a>
-                    <a href="/spring-security/">Spring Security</a>
-                    <a href="/spring-jpa/">Spring JPA</a>
-                    <a href="/microservices/">Microservices</a>
-                    <a href="/kafka/">Kafka</a>
-                    <a href="/aws/">AWS Cloud</a>
-                    <a href="/redis/">Redis & Caching</a>
+                    <a href="/">Spring Boot</a>
+                    <a href="/">Spring Security</a>
+                    <a href="/">Spring JPA</a>
+                    <a href="/">Microservices</a>
+                    <a href="/">Kafka</a>
+                    <a href="/">AWS Cloud</a>
+                    <a href="/">Redis & Caching</a>
                     <a href="/design-pattern/">Design Pattern</a>
-                    <a href="/system-design/">System Design</a>
-                    <a href="/sql/">SQL</a>
+                    <a href="/">System Design</a>
+                    <a href="/">SQL</a>
                     <a href="/interview-questions/">Interview Question</a>
                     <a href="/java8/">Java 8 Feature</a>
-                    <a href="/coding-questions/">Coding Question</a>
-                    <a href="/blog/">Daily Blog</a>
+                    <a href="/">Coding Question</a>
+                    <a href="/">Daily Blog</a>
                 </div>
             </nav>
         </header>
