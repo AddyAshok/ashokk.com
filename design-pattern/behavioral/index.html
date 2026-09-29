@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Behavioral Design Patterns in Java – Ashokka Tech</title>
+<meta name="description" content="Learn all 11 behavioral design patterns in Java with simple explanations, real life examples and code.">
+<link rel="canonical" href="https://ashokka.com/design-pattern/behavioral/">
+<meta property="og:title" content="Behavioral Design Patterns in Java – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/design-pattern/css/design-pattern.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/design-pattern/js/design-pattern.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Design pattern menu">
+<h2>Design Patterns</h2>
+<ul><li><a href="/design-pattern/creational/">Creational Patterns</a></li><li><a href="/design-pattern/structural/">Structural Patterns</a></li><li><a href="/design-pattern/behavioral/" aria-current="page">Behavioral Patterns</a></li></ul>
+<h3>Behavioral list</h3>
+<ul class="pl"><li><a href="#chain-of-responsibility">Chain of Responsibility</a></li><li><a href="#command">Command</a></li><li><a href="#interpreter">Interpreter</a></li><li><a href="#iterator">Iterator</a></li><li><a href="#mediator">Mediator</a></li><li><a href="#memento">Memento</a></li><li><a href="#observer">Observer</a></li><li><a href="#state">State</a></li><li><a href="#strategy">Strategy</a></li><li><a href="#template-method">Template Method</a></li><li><a href="#visitor">Visitor</a></li></ul>
+</nav>
+<article>
+<div class="crumbs"><a href="/">Home</a> / Design Pattern / Behavioral</div>
+<h1>Behavioral Design Patterns in Java</h1>
+<p>Behavioral patterns are about how objects talk to each other and share work. They make communication clear and loosely connected. There are 11 behavioral patterns.</p>
+<section class="pat" id="chain-of-responsibility"><h2>1. Chain of Responsibility</h2><p>A request moves along a chain of handlers. Each handler either handles it or passes it to the next one.</p><p><b>Real life:</b> A leave request goes to the manager first. If the manager cannot approve, it goes to the director.</p><p class="use"><b>Use when:</b> More than one object can handle a request and you do not know which one in advance.</p><pre><code class="language-java">abstract class Handler {
+    private Handler next;
+    Handler setNext(Handler n) { next = n; return n; }
+    void handle(int amount) {
+        if (next != null) next.handle(amount);      // pass forward
+        else System.out.println(&quot;Rejected&quot;);
+    }
+}
+class Manager extends Handler {
+    void handle(int a) { if (a &lt;= 1000) System.out.println(&quot;Manager approved&quot;); else super.handle(a); }
+}
+class Director extends Handler {
+    void handle(int a) { if (a &lt;= 10000) System.out.println(&quot;Director approved&quot;); else super.handle(a); }
+}
+
+Handler m = new Manager();
+m.setNext(new Director());
+m.handle(500);      // Manager approved
+m.handle(5000);     // Director approved
+m.handle(50000);    // Rejected</code></pre></section>
+<section class="pat" id="command"><h2>2. Command</h2><p>Command turns a request into an object. Because it is an object, you can store it, pass it around, delay it or undo it.</p><p><b>Real life:</b> In a restaurant, the waiter writes your order on paper. The paper (command) goes to the chef.</p><p class="use"><b>Use when:</b> You need buttons, menus, queues, or undo and redo.</p><pre><code class="language-java">interface Command { void execute(); }
+
+class Light {
+    void on()  { System.out.println(&quot;Light ON&quot;); }
+    void off() { System.out.println(&quot;Light OFF&quot;); }
+}
+class LightOn  implements Command {
+    private Light light;
+    LightOn(Light l) { light = l; }
+    public void execute() { light.on(); }
+}
+class LightOff implements Command {
+    private Light light;
+    LightOff(Light l) { light = l; }
+    public void execute() { light.off(); }
+}
+
+class RemoteControl {                              // does not know what the command does
+    private Command command;
+    void setCommand(Command c) { command = c; }
+    void press() { command.execute(); }
+}
+
+Light light = new Light();
+RemoteControl remote = new RemoteControl();
+remote.setCommand(new LightOn(light));
+remote.press();                                    // Light ON</code></pre></section>
+<section class="pat" id="interpreter"><h2>3. Interpreter</h2><p>Interpreter defines a small language (grammar) and a way to read and calculate sentences of that language.</p><p><b>Real life:</b> A calculator understands 10 + 5 - 3 and gives the answer.</p><p class="use"><b>Use when:</b> You have simple rules or expressions that repeat, like math formulas, search filters or rules.</p><pre><code class="language-java">interface Expr { int eval(); }
+
+class Num implements Expr {
+    private int n;
+    Num(int n) { this.n = n; }
+    public int eval() { return n; }
+}
+class Add implements Expr {
+    private Expr left, right;
+    Add(Expr l, Expr r) { left = l; right = r; }
+    public int eval() { return left.eval() + right.eval(); }
+}
+class Sub implements Expr {
+    private Expr left, right;
+    Sub(Expr l, Expr r) { left = l; right = r; }
+    public int eval() { return left.eval() - right.eval(); }
+}
+
+Expr e = new Sub(new Add(new Num(10), new Num(5)), new Num(3));   // (10 + 5) - 3
+System.out.println(e.eval());                                     // 12</code></pre></section>
+<section class="pat" id="iterator"><h2>4. Iterator</h2><p>Iterator gives a standard way to go through the items of a collection one by one, without showing how the collection is built inside.</p><p><b>Real life:</b> Turning the pages of a book. You do not care how the book is bound.</p><p class="use"><b>Use when:</b> You want to loop over a collection using a simple for-each loop.</p><pre><code class="language-java">class NameList implements Iterable&lt;String&gt; {
+    private String[] names = {&quot;Ram&quot;, &quot;Sita&quot;, &quot;Amit&quot;};
+
+    public Iterator&lt;String&gt; iterator() {
+        return new Iterator&lt;String&gt;() {
+            private int i = 0;
+            public boolean hasNext() { return i &lt; names.length; }
+            public String next()     { return names[i++]; }
+        };
+    }
+}
+
+for (String name : new NameList()) {
+    System.out.println(name);                      // Ram, Sita, Amit
+}</code></pre></section>
+<section class="pat" id="mediator"><h2>5. Mediator</h2><p>Mediator is a middle object. Objects talk to the mediator, not directly to each other. This removes tangled connections.</p><p><b>Real life:</b> An air traffic controller. Planes talk to the tower, not to each other.</p><p class="use"><b>Use when:</b> Many objects talk to many other objects and the code is becoming messy.</p><pre><code class="language-java">class ChatRoom {                                   // the mediator
+    private List&lt;User&gt; users = new ArrayList&lt;&gt;();
+    void join(User u) { users.add(u); }
+    void send(String msg, User from) {
+        for (User u : users)
+            if (u != from) u.receive(msg, from.name);
+    }
+}
+
+class User {
+    String name;
+    private ChatRoom room;
+    User(String name, ChatRoom room) { this.name = name; this.room = room; room.join(this); }
+    void send(String msg) { room.send(msg, this); }
+    void receive(String msg, String from) { System.out.println(name + &quot; got &#x27;&quot; + msg + &quot;&#x27; from &quot; + from); }
+}
+
+ChatRoom room = new ChatRoom();
+User ram = new User(&quot;Ram&quot;, room);
+User sita = new User(&quot;Sita&quot;, room);
+ram.send(&quot;Hi&quot;);                                    // Sita got &#x27;Hi&#x27; from Ram</code></pre></section>
+<section class="pat" id="memento"><h2>6. Memento</h2><p>Memento saves a snapshot of an object's state so you can go back to it later. It does this without breaking encapsulation.</p><p><b>Real life:</b> Save point in a video game, or Ctrl+Z in a text editor.</p><p class="use"><b>Use when:</b> You need undo, rollback or restore features.</p><pre><code class="language-java">class Editor {
+    private String text = &quot;&quot;;
+    void type(String t) { text += t; }
+    String getText()    { return text; }
+
+    Snapshot save()          { return new Snapshot(text); }   // create memento
+    void restore(Snapshot s) { text = s.text; }               // go back
+
+    static class Snapshot {
+        private final String text;
+        private Snapshot(String text) { this.text = text; }
+    }
+}
+
+Editor e = new Editor();
+e.type(&quot;Hello&quot;);
+Editor.Snapshot saved = e.save();
+e.type(&quot; World&quot;);
+e.restore(saved);
+System.out.println(e.getText());                   // Hello</code></pre></section>
+<section class="pat" id="observer"><h2>7. Observer</h2><p>When one object changes, all objects that subscribed to it are told automatically.</p><p><b>Real life:</b> YouTube: when a channel uploads a video, all subscribers get a notification.</p><p class="use"><b>Use when:</b> One change must update many other objects, and you do not want them tightly connected.</p><pre><code class="language-java">interface Observer { void update(String news); }
+
+class NewsChannel {                                // the subject
+    private List&lt;Observer&gt; subscribers = new ArrayList&lt;&gt;();
+    void subscribe(Observer o) { subscribers.add(o); }
+    void publish(String news) {
+        for (Observer o : subscribers) o.update(news);   // tell everyone
+    }
+}
+
+class Reader implements Observer {
+    private String name;
+    Reader(String name) { this.name = name; }
+    public void update(String news) { System.out.println(name + &quot; read: &quot; + news); }
+}
+
+NewsChannel channel = new NewsChannel();
+channel.subscribe(new Reader(&quot;Ram&quot;));
+channel.subscribe(new Reader(&quot;Sita&quot;));
+channel.publish(&quot;Breaking news!&quot;);                 // Ram and Sita both get it</code></pre></section>
+<section class="pat" id="state"><h2>8. State</h2><p>State lets an object change its behavior when its internal state changes. Each state is its own class.</p><p><b>Real life:</b> A traffic light: red, green and yellow behave differently and follow each other in order.</p><p class="use"><b>Use when:</b> An object has many states and big if-else or switch blocks are making the code hard to read.</p><pre><code class="language-java">interface State {
+    void next(TrafficLight light);
+    String color();
+}
+class Red    implements State { public void next(TrafficLight l) { l.state = new Green();  } public String color() { return &quot;RED&quot;; } }
+class Green  implements State { public void next(TrafficLight l) { l.state = new Yellow(); } public String color() { return &quot;GREEN&quot;; } }
+class Yellow implements State { public void next(TrafficLight l) { l.state = new Red();    } public String color() { return &quot;YELLOW&quot;; } }
+
+class TrafficLight {
+    State state = new Red();
+    void change() { state.next(this); }
+}
+
+TrafficLight light = new TrafficLight();
+System.out.println(light.state.color());           // RED
+light.change();
+System.out.println(light.state.color());           // GREEN</code></pre></section>
+<section class="pat" id="strategy"><h2>9. Strategy</h2><p>Strategy keeps several ways (algorithms) to do one job in separate classes. You can switch between them while the program runs.</p><p><b>Real life:</b> Going to the office by car, bus or bike. The goal is same, the way is different.</p><p class="use"><b>Use when:</b> You have many ways to do the same task, like payment methods, sorting or discounts.</p><pre><code class="language-java">interface Payment { void pay(int amount); }
+
+class UpiPayment  implements Payment { public void pay(int a) { System.out.println(&quot;Paid &quot; + a + &quot; by UPI&quot;); } }
+class CardPayment implements Payment { public void pay(int a) { System.out.println(&quot;Paid &quot; + a + &quot; by Card&quot;); } }
+
+class Cart {
+    private Payment payment;
+    void setPayment(Payment p) { payment = p; }           // choose the strategy
+    void checkout(int amount)  { payment.pay(amount); }
+}
+
+Cart cart = new Cart();
+cart.setPayment(new UpiPayment());
+cart.checkout(500);                                       // Paid 500 by UPI
+cart.setPayment(new CardPayment());
+cart.checkout(800);                                       // Paid 800 by Card</code></pre></section>
+<section class="pat" id="template-method"><h2>10. Template Method</h2><p>A parent class fixes the steps of an algorithm. Child classes fill in only the steps that are different.</p><p><b>Real life:</b> Making a hot drink: boil water, brew, pour. Only the brewing is different for tea and coffee.</p><p class="use"><b>Use when:</b> Several classes follow the same steps but a few steps are different.</p><pre><code class="language-java">abstract class Beverage {
+    final void prepare() {                         // the template: fixed order
+        boilWater();
+        brew();
+        pour();
+    }
+    void boilWater() { System.out.println(&quot;Boil water&quot;); }
+    void pour()      { System.out.println(&quot;Pour in cup&quot;); }
+    abstract void brew();                          // children must write this step
+}
+
+class Tea    extends Beverage { void brew() { System.out.println(&quot;Steep tea leaves&quot;); } }
+class Coffee extends Beverage { void brew() { System.out.println(&quot;Drip coffee&quot;); } }
+
+new Tea().prepare();      // Boil water, Steep tea leaves, Pour in cup
+new Coffee().prepare();   // Boil water, Drip coffee, Pour in cup</code></pre></section>
+<section class="pat" id="visitor"><h2>11. Visitor</h2><p>Visitor lets you add a new operation to many classes without changing those classes. The operation lives in a separate visitor class.</p><p><b>Real life:</b> A tax officer visits different businesses (shop, factory) and calculates tax in a different way for each.</p><p class="use"><b>Use when:</b> You have a stable set of classes but you keep adding new operations on them.</p><pre><code class="language-java">interface Shape { void accept(Visitor v); }
+class Circle implements Shape { double r = 2; public void accept(Visitor v) { v.visit(this); } }
+class Square implements Shape { double s = 3; public void accept(Visitor v) { v.visit(this); } }
+
+interface Visitor {
+    void visit(Circle c);
+    void visit(Square s);
+}
+
+class AreaVisitor implements Visitor {             // new operation, shapes are untouched
+    public void visit(Circle c) { System.out.println(&quot;Circle area: &quot; + Math.PI * c.r * c.r); }
+    public void visit(Square s) { System.out.println(&quot;Square area: &quot; + s.s * s.s); }
+}
+
+Shape[] shapes = { new Circle(), new Square() };
+for (Shape sh : shapes) sh.accept(new AreaVisitor());</code></pre></section>
+<div class="np"><a href="/design-pattern/structural/">&larr; Structural</a><span></span></div>
+</article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

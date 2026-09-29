@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Creational Design Patterns in Java – Ashokka Tech</title>
+<meta name="description" content="Learn all 5 creational design patterns in Java with simple explanations, real life examples and code.">
+<link rel="canonical" href="https://ashokka.com/design-pattern/creational/">
+<meta property="og:title" content="Creational Design Patterns in Java – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/design-pattern/css/design-pattern.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/design-pattern/js/design-pattern.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Design pattern menu">
+<h2>Design Patterns</h2>
+<ul><li><a href="/design-pattern/creational/" aria-current="page">Creational Patterns</a></li><li><a href="/design-pattern/structural/">Structural Patterns</a></li><li><a href="/design-pattern/behavioral/">Behavioral Patterns</a></li></ul>
+<h3>Creational list</h3>
+<ul class="pl"><li><a href="#singleton">Singleton</a></li><li><a href="#factory-method">Factory Method</a></li><li><a href="#abstract-factory">Abstract Factory</a></li><li><a href="#builder">Builder</a></li><li><a href="#prototype">Prototype</a></li></ul>
+</nav>
+<article>
+<div class="crumbs"><a href="/">Home</a> / Design Pattern / Creational</div>
+<h1>Creational Design Patterns in Java</h1>
+<p>Creational patterns are about creating objects. They hide how objects are made, so your code stays flexible and easy to change. There are 5 creational patterns.</p>
+<section class="pat" id="singleton"><h2>1. Singleton</h2><p>Singleton makes sure a class has only one object. Everyone in the program uses that same object.</p><p><b>Real life:</b> A country has only one president. Everybody talks to the same person.</p><p class="use"><b>Use when:</b> You need exactly one shared object, such as a logger, app settings or a database connection.</p><pre><code class="language-java">class Logger {
+    private static Logger instance;        // the only object
+    private Logger() {}                    // nobody can write new Logger()
+
+    public static Logger getInstance() {
+        if (instance == null) {
+            instance = new Logger();       // created only the first time
+        }
+        return instance;
+    }
+    void log(String msg) { System.out.println(&quot;LOG: &quot; + msg); }
+}
+
+Logger a = Logger.getInstance();
+Logger b = Logger.getInstance();
+System.out.println(a == b);                // true, same object
+// Tip: for multi-threading, use an enum: enum Logger { INSTANCE }</code></pre></section>
+<section class="pat" id="factory-method"><h2>2. Factory Method</h2><p>A parent class has a method that creates an object. Each child class decides which object to create. The main code never says new Truck() or new Ship().</p><p><b>Real life:</b> A logistics company delivers by road or by sea. Each branch picks its own vehicle.</p><p class="use"><b>Use when:</b> You do not know in advance which exact class you will need, and you want subclasses to decide.</p><pre><code class="language-java">interface Transport { void deliver(); }
+class Truck implements Transport { public void deliver() { System.out.println(&quot;Deliver by road&quot;); } }
+class Ship  implements Transport { public void deliver() { System.out.println(&quot;Deliver by sea&quot;); } }
+
+abstract class Logistics {
+    abstract Transport createTransport();          // the factory method
+    void planDelivery() { createTransport().deliver(); }
+}
+class RoadLogistics extends Logistics { Transport createTransport() { return new Truck(); } }
+class SeaLogistics  extends Logistics { Transport createTransport() { return new Ship(); } }
+
+new SeaLogistics().planDelivery();                 // Deliver by sea</code></pre></section>
+<section class="pat" id="abstract-factory"><h2>3. Abstract Factory</h2><p>A factory that creates a whole family of related objects. All objects from one factory match each other.</p><p><b>Real life:</b> A furniture shop sells a Modern set or a Classic set. A sofa and a chair from the same set always match.</p><p class="use"><b>Use when:</b> You must create groups of objects that belong together, like dark theme and light theme widgets.</p><pre><code class="language-java">interface Button   { void draw(); }
+interface Checkbox { void draw(); }
+
+class DarkButton   implements Button   { public void draw() { System.out.println(&quot;Dark button&quot;); } }
+class DarkCheckbox implements Checkbox { public void draw() { System.out.println(&quot;Dark checkbox&quot;); } }
+class LightButton   implements Button   { public void draw() { System.out.println(&quot;Light button&quot;); } }
+class LightCheckbox implements Checkbox { public void draw() { System.out.println(&quot;Light checkbox&quot;); } }
+
+interface UIFactory { Button createButton(); Checkbox createCheckbox(); }
+class DarkFactory  implements UIFactory {
+    public Button createButton()     { return new DarkButton(); }
+    public Checkbox createCheckbox() { return new DarkCheckbox(); }
+}
+class LightFactory implements UIFactory {
+    public Button createButton()     { return new LightButton(); }
+    public Checkbox createCheckbox() { return new LightCheckbox(); }
+}
+
+UIFactory f = new DarkFactory();     // change this one line to switch the whole theme
+f.createButton().draw();             // Dark button
+f.createCheckbox().draw();           // Dark checkbox</code></pre></section>
+<section class="pat" id="builder"><h2>4. Builder</h2><p>Builder creates a big object step by step. You set only the parts you want, then call build().</p><p><b>Real life:</b> Ordering a pizza: you choose size, cheese and toppings one by one.</p><p class="use"><b>Use when:</b> A class has many optional fields and a constructor with many parameters would be confusing.</p><pre><code class="language-java">class Pizza {
+    private String size, cheese;
+    private boolean olives;
+    private Pizza(Builder b) { size = b.size; cheese = b.cheese; olives = b.olives; }
+
+    static class Builder {
+        private String size = &quot;medium&quot;, cheese = &quot;mozzarella&quot;;   // default values
+        private boolean olives;
+        Builder size(String s)    { size = s;   return this; }
+        Builder cheese(String c)  { cheese = c; return this; }
+        Builder olives(boolean o) { olives = o; return this; }
+        Pizza build() { return new Pizza(this); }
+    }
+}
+
+Pizza p = new Pizza.Builder().size(&quot;large&quot;).olives(true).build();</code></pre></section>
+<section class="pat" id="prototype"><h2>5. Prototype</h2><p>Instead of creating a new object from zero, you copy (clone) an existing object.</p><p><b>Real life:</b> Photocopying a filled form instead of writing it again.</p><p class="use"><b>Use when:</b> Creating an object is slow or costly, and a copy of an existing object is faster.</p><pre><code class="language-java">class Sheep implements Cloneable {
+    String name;
+    Sheep(String name) { this.name = name; }
+
+    public Sheep clone() {
+        try { return (Sheep) super.clone(); }        // copies the object
+        catch (CloneNotSupportedException e) { throw new AssertionError(); }
+    }
+}
+
+Sheep dolly = new Sheep(&quot;Dolly&quot;);
+Sheep copy = dolly.clone();
+copy.name = &quot;Dolly 2&quot;;                               // original is not changed
+// Note: super.clone() is a shallow copy. Copy inner objects yourself if needed.</code></pre></section>
+<div class="np"><span></span><a href="/design-pattern/structural/">Structural &rarr;</a></div>
+</article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>
