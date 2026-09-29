@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Chain of Responsibility Design Pattern in Java – Ashokka Tech</title>
+<meta name="description" content="Learn the Chain of Responsibility design pattern in Java with a simple explanation, real life example and code.">
+<link rel="canonical" href="https://ashokka.com/design-pattern/behavioral/chain-of-responsibility/">
+<meta property="og:title" content="Chain of Responsibility Design Pattern in Java – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/design-pattern/css/design-pattern.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/design-pattern/js/design-pattern.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Design pattern menu"><h2><a href="/design-pattern/">Design Patterns</a></h2><h3><a href="/design-pattern/creational/">Creational Patterns</a></h3><ul><li><a href="/design-pattern/creational/singleton/">Singleton</a></li><li><a href="/design-pattern/creational/factory-method/">Factory Method</a></li><li><a href="/design-pattern/creational/abstract-factory/">Abstract Factory</a></li><li><a href="/design-pattern/creational/builder/">Builder</a></li><li><a href="/design-pattern/creational/prototype/">Prototype</a></li></ul><h3><a href="/design-pattern/structural/">Structural Patterns</a></h3><ul><li><a href="/design-pattern/structural/adapter/">Adapter</a></li><li><a href="/design-pattern/structural/bridge/">Bridge</a></li><li><a href="/design-pattern/structural/composite/">Composite</a></li><li><a href="/design-pattern/structural/decorator/">Decorator</a></li><li><a href="/design-pattern/structural/facade/">Facade</a></li><li><a href="/design-pattern/structural/flyweight/">Flyweight</a></li><li><a href="/design-pattern/structural/proxy/">Proxy</a></li></ul><h3><a href="/design-pattern/behavioral/">Behavioral Patterns</a></h3><ul><li><a href="/design-pattern/behavioral/chain-of-responsibility/" aria-current="page">Chain of Responsibility</a></li><li><a href="/design-pattern/behavioral/command/">Command</a></li><li><a href="/design-pattern/behavioral/interpreter/">Interpreter</a></li><li><a href="/design-pattern/behavioral/iterator/">Iterator</a></li><li><a href="/design-pattern/behavioral/mediator/">Mediator</a></li><li><a href="/design-pattern/behavioral/memento/">Memento</a></li><li><a href="/design-pattern/behavioral/observer/">Observer</a></li><li><a href="/design-pattern/behavioral/state/">State</a></li><li><a href="/design-pattern/behavioral/strategy/">Strategy</a></li><li><a href="/design-pattern/behavioral/template-method/">Template Method</a></li><li><a href="/design-pattern/behavioral/visitor/">Visitor</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/design-pattern/">Design Pattern</a> / <a href="/design-pattern/behavioral/">Behavioral</a> / Chain of Responsibility</div>
+<h1>Chain of Responsibility Design Pattern in Java</h1><p>A request moves along a chain of handlers. Each handler either handles it or passes it to the next one.</p><h2>Real life example</h2><p>A leave request goes to the manager first. If the manager cannot approve, it goes to the director.</p><h2>When to use</h2><p class="use">More than one object can handle a request and you do not know which one in advance.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code>.</p><pre><code class="language-java">public class Main {
+    public static void main(String[] args) {
+        Handler m = new Manager();
+        m.setNext(new Director());
+        m.handle(500);      // Manager approved
+        m.handle(5000);     // Director approved
+        m.handle(50000);    // Rejected
+    }
+}
+
+abstract class Handler {
+    private Handler next;
+    Handler setNext(Handler n) { next = n; return n; }
+    void handle(int amount) {
+        if (next != null) next.handle(amount);      // pass forward
+        else System.out.println(&quot;Rejected&quot;);
+    }
+}
+class Manager extends Handler {
+    void handle(int a) { if (a &lt;= 1000) System.out.println(&quot;Manager approved&quot;); else super.handle(a); }
+}
+class Director extends Handler {
+    void handle(int a) { if (a &lt;= 10000) System.out.println(&quot;Director approved&quot;); else super.handle(a); }
+}</code></pre><h2>Output</h2><pre><code>Manager approved
+Director approved
+Rejected</code></pre><div class="np"><a href="/design-pattern/structural/proxy/">&larr; Proxy</a><a href="/design-pattern/behavioral/command/">Command &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

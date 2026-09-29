@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Strategy Design Pattern in Java – Ashokka Tech</title>
+<meta name="description" content="Learn the Strategy design pattern in Java with a simple explanation, real life example and code.">
+<link rel="canonical" href="https://ashokka.com/design-pattern/behavioral/strategy/">
+<meta property="og:title" content="Strategy Design Pattern in Java – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/design-pattern/css/design-pattern.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/design-pattern/js/design-pattern.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Design pattern menu"><h2><a href="/design-pattern/">Design Patterns</a></h2><h3><a href="/design-pattern/creational/">Creational Patterns</a></h3><ul><li><a href="/design-pattern/creational/singleton/">Singleton</a></li><li><a href="/design-pattern/creational/factory-method/">Factory Method</a></li><li><a href="/design-pattern/creational/abstract-factory/">Abstract Factory</a></li><li><a href="/design-pattern/creational/builder/">Builder</a></li><li><a href="/design-pattern/creational/prototype/">Prototype</a></li></ul><h3><a href="/design-pattern/structural/">Structural Patterns</a></h3><ul><li><a href="/design-pattern/structural/adapter/">Adapter</a></li><li><a href="/design-pattern/structural/bridge/">Bridge</a></li><li><a href="/design-pattern/structural/composite/">Composite</a></li><li><a href="/design-pattern/structural/decorator/">Decorator</a></li><li><a href="/design-pattern/structural/facade/">Facade</a></li><li><a href="/design-pattern/structural/flyweight/">Flyweight</a></li><li><a href="/design-pattern/structural/proxy/">Proxy</a></li></ul><h3><a href="/design-pattern/behavioral/">Behavioral Patterns</a></h3><ul><li><a href="/design-pattern/behavioral/chain-of-responsibility/">Chain of Responsibility</a></li><li><a href="/design-pattern/behavioral/command/">Command</a></li><li><a href="/design-pattern/behavioral/interpreter/">Interpreter</a></li><li><a href="/design-pattern/behavioral/iterator/">Iterator</a></li><li><a href="/design-pattern/behavioral/mediator/">Mediator</a></li><li><a href="/design-pattern/behavioral/memento/">Memento</a></li><li><a href="/design-pattern/behavioral/observer/">Observer</a></li><li><a href="/design-pattern/behavioral/state/">State</a></li><li><a href="/design-pattern/behavioral/strategy/" aria-current="page">Strategy</a></li><li><a href="/design-pattern/behavioral/template-method/">Template Method</a></li><li><a href="/design-pattern/behavioral/visitor/">Visitor</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/design-pattern/">Design Pattern</a> / <a href="/design-pattern/behavioral/">Behavioral</a> / Strategy</div>
+<h1>Strategy Design Pattern in Java</h1><p>Strategy keeps several ways (algorithms) to do one job in separate classes. You can switch between them while the program runs.</p><h2>Real life example</h2><p>Going to the office by car, bus or bike. The goal is same, the way is different.</p><h2>When to use</h2><p class="use">You have many ways to do the same task, like payment methods, sorting or discounts.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code>.</p><pre><code class="language-java">public class Main {
+    public static void main(String[] args) {
+        Cart cart = new Cart();
+        cart.setPayment(new UpiPayment());
+        cart.checkout(500);                                       // Paid 500 by UPI
+        cart.setPayment(new CardPayment());
+        cart.checkout(800);                                       // Paid 800 by Card
+    }
+}
+
+interface Payment { void pay(int amount); }
+
+class UpiPayment  implements Payment { public void pay(int a) { System.out.println(&quot;Paid &quot; + a + &quot; by UPI&quot;); } }
+class CardPayment implements Payment { public void pay(int a) { System.out.println(&quot;Paid &quot; + a + &quot; by Card&quot;); } }
+
+class Cart {
+    private Payment payment;
+    void setPayment(Payment p) { payment = p; }           // choose the strategy
+    void checkout(int amount)  { payment.pay(amount); }
+}</code></pre><h2>Output</h2><pre><code>Paid 500 by UPI
+Paid 800 by Card</code></pre><div class="np"><a href="/design-pattern/behavioral/state/">&larr; State</a><a href="/design-pattern/behavioral/template-method/">Template Method &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

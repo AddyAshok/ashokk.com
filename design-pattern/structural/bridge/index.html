@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Bridge Design Pattern in Java – Ashokka Tech</title>
+<meta name="description" content="Learn the Bridge design pattern in Java with a simple explanation, real life example and code.">
+<link rel="canonical" href="https://ashokka.com/design-pattern/structural/bridge/">
+<meta property="og:title" content="Bridge Design Pattern in Java – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/design-pattern/css/design-pattern.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/design-pattern/js/design-pattern.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Design pattern menu"><h2><a href="/design-pattern/">Design Patterns</a></h2><h3><a href="/design-pattern/creational/">Creational Patterns</a></h3><ul><li><a href="/design-pattern/creational/singleton/">Singleton</a></li><li><a href="/design-pattern/creational/factory-method/">Factory Method</a></li><li><a href="/design-pattern/creational/abstract-factory/">Abstract Factory</a></li><li><a href="/design-pattern/creational/builder/">Builder</a></li><li><a href="/design-pattern/creational/prototype/">Prototype</a></li></ul><h3><a href="/design-pattern/structural/">Structural Patterns</a></h3><ul><li><a href="/design-pattern/structural/adapter/">Adapter</a></li><li><a href="/design-pattern/structural/bridge/" aria-current="page">Bridge</a></li><li><a href="/design-pattern/structural/composite/">Composite</a></li><li><a href="/design-pattern/structural/decorator/">Decorator</a></li><li><a href="/design-pattern/structural/facade/">Facade</a></li><li><a href="/design-pattern/structural/flyweight/">Flyweight</a></li><li><a href="/design-pattern/structural/proxy/">Proxy</a></li></ul><h3><a href="/design-pattern/behavioral/">Behavioral Patterns</a></h3><ul><li><a href="/design-pattern/behavioral/chain-of-responsibility/">Chain of Responsibility</a></li><li><a href="/design-pattern/behavioral/command/">Command</a></li><li><a href="/design-pattern/behavioral/interpreter/">Interpreter</a></li><li><a href="/design-pattern/behavioral/iterator/">Iterator</a></li><li><a href="/design-pattern/behavioral/mediator/">Mediator</a></li><li><a href="/design-pattern/behavioral/memento/">Memento</a></li><li><a href="/design-pattern/behavioral/observer/">Observer</a></li><li><a href="/design-pattern/behavioral/state/">State</a></li><li><a href="/design-pattern/behavioral/strategy/">Strategy</a></li><li><a href="/design-pattern/behavioral/template-method/">Template Method</a></li><li><a href="/design-pattern/behavioral/visitor/">Visitor</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/design-pattern/">Design Pattern</a> / <a href="/design-pattern/structural/">Structural</a> / Bridge</div>
+<h1>Bridge Design Pattern in Java</h1><p>Bridge splits a class into two parts, what it is and how it works, so both can change on their own.</p><h2>Real life example</h2><p>A remote control (abstraction) works with any device: TV, radio, etc. (implementation).</p><h2>When to use</h2><p class="use">You have two things that can vary, like 3 remotes x 4 devices, and you do not want 12 classes.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code>.</p><pre><code class="language-java">public class Main {
+    public static void main(String[] args) {
+        new BasicRemote(new Tv()).press();                 // TV on
+        new BasicRemote(new Radio()).press();              // Radio on
+    }
+}
+
+interface Device { void on(); }
+class Tv    implements Device { public void on() { System.out.println(&quot;TV on&quot;); } }
+class Radio implements Device { public void on() { System.out.println(&quot;Radio on&quot;); } }
+
+abstract class Remote {
+    protected Device device;                       // this is the &quot;bridge&quot;
+    Remote(Device d) { device = d; }
+    abstract void press();
+}
+class BasicRemote extends Remote {
+    BasicRemote(Device d) { super(d); }
+    void press() { device.on(); }
+}</code></pre><h2>Output</h2><pre><code>TV on
+Radio on</code></pre><div class="np"><a href="/design-pattern/structural/adapter/">&larr; Adapter</a><a href="/design-pattern/structural/composite/">Composite &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

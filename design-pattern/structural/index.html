@@ -11,142 +11,14 @@
 <link rel="stylesheet" href="/design-pattern/css/design-pattern.css">
 <script src="/component/components.js" defer></script>
 <script src="/component/header.js" defer></script>
-<script src="/design-pattern/js/design-pattern.js" defer></script>
 </head>
 <body>
 <app-header></app-header>
 <div class="layout">
-<nav class="toc" aria-label="Design pattern menu">
-<h2>Design Patterns</h2>
-<ul><li><a href="/design-pattern/">All Patterns</a></li><li><a href="/design-pattern/creational/">Creational Patterns</a></li><li><a href="/design-pattern/structural/" aria-current="page">Structural Patterns</a></li><li><a href="/design-pattern/behavioral/">Behavioral Patterns</a></li></ul>
-<h3>Structural list</h3>
-<ul class="pl"><li><a href="#adapter">Adapter</a></li><li><a href="#bridge">Bridge</a></li><li><a href="#composite">Composite</a></li><li><a href="#decorator">Decorator</a></li><li><a href="#facade">Facade</a></li><li><a href="#flyweight">Flyweight</a></li><li><a href="#proxy">Proxy</a></li></ul>
-</nav>
-<article>
-<div class="crumbs"><a href="/">Home</a> / Design Pattern / Structural</div>
-<h1>Structural Design Patterns in Java</h1>
-<p>Structural patterns are about how classes and objects are joined together to make bigger structures. They keep the structure flexible and simple. There are 7 structural patterns.</p>
-<section class="pat" id="adapter"><h2>1. Adapter</h2><p>Adapter sits between two classes that do not fit together and translates one interface into the other.</p><p><b>Real life:</b> A phone charger adapter lets a 3-pin plug work in a 2-pin socket.</p><p class="use"><b>Use when:</b> You want to use an old or third-party class, but its methods do not match what your code expects.</p><pre><code class="language-java">class OldPrinter { void printText(String t) { System.out.println(t); } }   // cannot change this
-
-interface Printer { void print(String t); }                                 // what our app expects
-
-class PrinterAdapter implements Printer {
-    private OldPrinter old = new OldPrinter();
-    public void print(String t) { old.printText(t); }                        // translate the call
-}
-
-Printer p = new PrinterAdapter();
-p.print(&quot;Hello&quot;);</code></pre></section>
-<section class="pat" id="bridge"><h2>2. Bridge</h2><p>Bridge splits a class into two parts, what it is and how it works, so both can change on their own.</p><p><b>Real life:</b> A remote control (abstraction) works with any device: TV, radio, etc. (implementation).</p><p class="use"><b>Use when:</b> You have two things that can vary, like 3 remotes x 4 devices, and you do not want 12 classes.</p><pre><code class="language-java">interface Device { void on(); }
-class Tv    implements Device { public void on() { System.out.println(&quot;TV on&quot;); } }
-class Radio implements Device { public void on() { System.out.println(&quot;Radio on&quot;); } }
-
-abstract class Remote {
-    protected Device device;                       // this is the &quot;bridge&quot;
-    Remote(Device d) { device = d; }
-    abstract void press();
-}
-class BasicRemote extends Remote {
-    BasicRemote(Device d) { super(d); }
-    void press() { device.on(); }
-}
-
-new BasicRemote(new Tv()).press();                 // TV on
-new BasicRemote(new Radio()).press();              // Radio on</code></pre></section>
-<section class="pat" id="composite"><h2>3. Composite</h2><p>Composite lets you treat one object and a group of objects in the same way. Objects are arranged like a tree.</p><p><b>Real life:</b> A folder can hold files and other folders. You can ask any of them for its size.</p><p class="use"><b>Use when:</b> Your data is a tree (parts inside parts) and you want one simple way to work with all of it.</p><pre><code class="language-java">interface Item { int size(); }
-
-class File implements Item {
-    private int size;
-    File(int size) { this.size = size; }
-    public int size() { return size; }
-}
-
-class Folder implements Item {
-    private List&lt;Item&gt; items = new ArrayList&lt;&gt;();
-    void add(Item i) { items.add(i); }
-    public int size() {
-        int total = 0;
-        for (Item i : items) total += i.size();    // works for files and folders
-        return total;
-    }
-}
-
-Folder root = new Folder();
-root.add(new File(10));
-Folder sub = new Folder();
-sub.add(new File(5));
-root.add(sub);
-System.out.println(root.size());                   // 15</code></pre></section>
-<section class="pat" id="decorator"><h2>4. Decorator</h2><p>Decorator adds new features to an object by wrapping it, without changing its class.</p><p><b>Real life:</b> Adding milk and sugar to a coffee. Each extra changes the price, but it is still a coffee.</p><p class="use"><b>Use when:</b> You want to add features at run time and do not want a subclass for every combination.</p><pre><code class="language-java">interface Coffee { double cost(); }
-
-class SimpleCoffee implements Coffee { public double cost() { return 50; } }
-
-class Milk implements Coffee {
-    private Coffee coffee;
-    Milk(Coffee c) { coffee = c; }
-    public double cost() { return coffee.cost() + 10; }     // wrap and add
-}
-class Sugar implements Coffee {
-    private Coffee coffee;
-    Sugar(Coffee c) { coffee = c; }
-    public double cost() { return coffee.cost() + 5; }
-}
-
-Coffee c = new Sugar(new Milk(new SimpleCoffee()));
-System.out.println(c.cost());                               // 65.0</code></pre></section>
-<section class="pat" id="facade"><h2>5. Facade</h2><p>Facade gives one simple class in front of a complex system. You call one method and it does many steps inside.</p><p><b>Real life:</b> Pressing the power button on a computer. Many parts start, but you press only one button.</p><p class="use"><b>Use when:</b> A system has many classes and you want an easy way to use it.</p><pre><code class="language-java">class Cpu    { void start() { System.out.println(&quot;CPU started&quot;); } }
-class Memory { void load()  { System.out.println(&quot;Memory loaded&quot;); } }
-class Disk   { void read()  { System.out.println(&quot;Disk read&quot;); } }
-
-class Computer {                                   // the facade
-    private Cpu cpu = new Cpu();
-    private Memory memory = new Memory();
-    private Disk disk = new Disk();
-
-    void turnOn() {                                // one easy method
-        cpu.start();
-        memory.load();
-        disk.read();
-    }
-}
-
-new Computer().turnOn();</code></pre></section>
-<section class="pat" id="flyweight"><h2>6. Flyweight</h2><p>Flyweight saves memory by sharing objects that are the same, instead of creating thousands of copies.</p><p><b>Real life:</b> A game forest with 10,000 trees. All oak trees share one picture and only the position is different.</p><p class="use"><b>Use when:</b> Your program needs a huge number of similar objects and memory is a problem.</p><pre><code class="language-java">class TreeType {                                   // shared data
-    private String name;
-    TreeType(String name) { this.name = name; }
-    void draw(int x, int y) { System.out.println(name + &quot; at &quot; + x + &quot;,&quot; + y); }
-}
-
-class TreeFactory {
-    private static Map&lt;String, TreeType&gt; cache = new HashMap&lt;&gt;();
-    static TreeType get(String name) {
-        return cache.computeIfAbsent(name, TreeType::new);   // reuse if it exists
-    }
-}
-
-TreeFactory.get(&quot;Oak&quot;).draw(1, 2);
-TreeFactory.get(&quot;Oak&quot;).draw(5, 9);                 // same Oak object, only position changes</code></pre></section>
-<section class="pat" id="proxy"><h2>7. Proxy</h2><p>Proxy is a stand-in object that controls access to the real object. It can delay creation, check permission or add logging.</p><p><b>Real life:</b> A cheque is a proxy for cash in your bank account.</p><p class="use"><b>Use when:</b> The real object is heavy or secret, and you want to load it only when it is really needed (lazy loading).</p><pre><code class="language-java">interface Image { void show(); }
-
-class RealImage implements Image {
-    RealImage(String file) { System.out.println(&quot;Loading &quot; + file); }   // slow work
-    public void show() { System.out.println(&quot;Showing image&quot;); }
-}
-
-class ProxyImage implements Image {
-    private String file;
-    private RealImage real;
-    ProxyImage(String file) { this.file = file; }
-    public void show() {
-        if (real == null) real = new RealImage(file);   // load only on first use
-        real.show();
-    }
-}
-
-Image img = new ProxyImage(&quot;photo.jpg&quot;);            // nothing loaded yet
-img.show();                                         // now it loads and shows</code></pre></section>
-<div class="np"><a href="/design-pattern/creational/">&larr; Creational</a><a href="/design-pattern/behavioral/">Behavioral &rarr;</a></div>
-</article>
+<nav class="toc" aria-label="Design pattern menu"><h2><a href="/design-pattern/">Design Patterns</a></h2><h3><a href="/design-pattern/creational/">Creational Patterns</a></h3><ul><li><a href="/design-pattern/creational/singleton/">Singleton</a></li><li><a href="/design-pattern/creational/factory-method/">Factory Method</a></li><li><a href="/design-pattern/creational/abstract-factory/">Abstract Factory</a></li><li><a href="/design-pattern/creational/builder/">Builder</a></li><li><a href="/design-pattern/creational/prototype/">Prototype</a></li></ul><h3><a href="/design-pattern/structural/" aria-current="page">Structural Patterns</a></h3><ul><li><a href="/design-pattern/structural/adapter/">Adapter</a></li><li><a href="/design-pattern/structural/bridge/">Bridge</a></li><li><a href="/design-pattern/structural/composite/">Composite</a></li><li><a href="/design-pattern/structural/decorator/">Decorator</a></li><li><a href="/design-pattern/structural/facade/">Facade</a></li><li><a href="/design-pattern/structural/flyweight/">Flyweight</a></li><li><a href="/design-pattern/structural/proxy/">Proxy</a></li></ul><h3><a href="/design-pattern/behavioral/">Behavioral Patterns</a></h3><ul><li><a href="/design-pattern/behavioral/chain-of-responsibility/">Chain of Responsibility</a></li><li><a href="/design-pattern/behavioral/command/">Command</a></li><li><a href="/design-pattern/behavioral/interpreter/">Interpreter</a></li><li><a href="/design-pattern/behavioral/iterator/">Iterator</a></li><li><a href="/design-pattern/behavioral/mediator/">Mediator</a></li><li><a href="/design-pattern/behavioral/memento/">Memento</a></li><li><a href="/design-pattern/behavioral/observer/">Observer</a></li><li><a href="/design-pattern/behavioral/state/">State</a></li><li><a href="/design-pattern/behavioral/strategy/">Strategy</a></li><li><a href="/design-pattern/behavioral/template-method/">Template Method</a></li><li><a href="/design-pattern/behavioral/visitor/">Visitor</a></li></ul></nav>
+<article class="">
+<div class="crumbs"><a href="/">Home</a> / <a href="/design-pattern/">Design Pattern</a> / Structural</div>
+<h1>Structural Design Patterns in Java</h1><p>Structural patterns are about how classes and objects are joined together to make bigger structures. They keep the structure flexible and simple. There are 7 structural patterns.</p><section class="pat"><div class="cards"><a href="/design-pattern/structural/adapter/"><b>Adapter</b><span>Adapter sits between two classes that do not fit together and translates one interface into the other.</span></a><a href="/design-pattern/structural/bridge/"><b>Bridge</b><span>Bridge splits a class into two parts, what it is and how it works, so both can change on their own.</span></a><a href="/design-pattern/structural/composite/"><b>Composite</b><span>Composite lets you treat one object and a group of objects in the same way.</span></a><a href="/design-pattern/structural/decorator/"><b>Decorator</b><span>Decorator adds new features to an object by wrapping it, without changing its class.</span></a><a href="/design-pattern/structural/facade/"><b>Facade</b><span>Facade gives one simple class in front of a complex system.</span></a><a href="/design-pattern/structural/flyweight/"><b>Flyweight</b><span>Flyweight saves memory by sharing objects that are the same, instead of creating thousands of copies.</span></a><a href="/design-pattern/structural/proxy/"><b>Proxy</b><span>Proxy is a stand-in object that controls access to the real object.</span></a></div></section></article>
 </div>
 <app-footer></app-footer>
 </body>

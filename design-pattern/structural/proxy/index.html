@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Proxy Design Pattern in Java – Ashokka Tech</title>
+<meta name="description" content="Learn the Proxy design pattern in Java with a simple explanation, real life example and code.">
+<link rel="canonical" href="https://ashokka.com/design-pattern/structural/proxy/">
+<meta property="og:title" content="Proxy Design Pattern in Java – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/design-pattern/css/design-pattern.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/design-pattern/js/design-pattern.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Design pattern menu"><h2><a href="/design-pattern/">Design Patterns</a></h2><h3><a href="/design-pattern/creational/">Creational Patterns</a></h3><ul><li><a href="/design-pattern/creational/singleton/">Singleton</a></li><li><a href="/design-pattern/creational/factory-method/">Factory Method</a></li><li><a href="/design-pattern/creational/abstract-factory/">Abstract Factory</a></li><li><a href="/design-pattern/creational/builder/">Builder</a></li><li><a href="/design-pattern/creational/prototype/">Prototype</a></li></ul><h3><a href="/design-pattern/structural/">Structural Patterns</a></h3><ul><li><a href="/design-pattern/structural/adapter/">Adapter</a></li><li><a href="/design-pattern/structural/bridge/">Bridge</a></li><li><a href="/design-pattern/structural/composite/">Composite</a></li><li><a href="/design-pattern/structural/decorator/">Decorator</a></li><li><a href="/design-pattern/structural/facade/">Facade</a></li><li><a href="/design-pattern/structural/flyweight/">Flyweight</a></li><li><a href="/design-pattern/structural/proxy/" aria-current="page">Proxy</a></li></ul><h3><a href="/design-pattern/behavioral/">Behavioral Patterns</a></h3><ul><li><a href="/design-pattern/behavioral/chain-of-responsibility/">Chain of Responsibility</a></li><li><a href="/design-pattern/behavioral/command/">Command</a></li><li><a href="/design-pattern/behavioral/interpreter/">Interpreter</a></li><li><a href="/design-pattern/behavioral/iterator/">Iterator</a></li><li><a href="/design-pattern/behavioral/mediator/">Mediator</a></li><li><a href="/design-pattern/behavioral/memento/">Memento</a></li><li><a href="/design-pattern/behavioral/observer/">Observer</a></li><li><a href="/design-pattern/behavioral/state/">State</a></li><li><a href="/design-pattern/behavioral/strategy/">Strategy</a></li><li><a href="/design-pattern/behavioral/template-method/">Template Method</a></li><li><a href="/design-pattern/behavioral/visitor/">Visitor</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/design-pattern/">Design Pattern</a> / <a href="/design-pattern/structural/">Structural</a> / Proxy</div>
+<h1>Proxy Design Pattern in Java</h1><p>Proxy is a stand-in object that controls access to the real object. It can delay creation, check permission or add logging.</p><h2>Real life example</h2><p>A cheque is a proxy for cash in your bank account.</p><h2>When to use</h2><p class="use">The real object is heavy or secret, and you want to load it only when it is really needed (lazy loading).</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code>.</p><pre><code class="language-java">public class Main {
+    public static void main(String[] args) {
+        Image img = new ProxyImage(&quot;photo.jpg&quot;);            // nothing loaded yet
+        img.show();                                         // now it loads and shows
+    }
+}
+
+interface Image { void show(); }
+
+class RealImage implements Image {
+    RealImage(String file) { System.out.println(&quot;Loading &quot; + file); }   // slow work
+    public void show() { System.out.println(&quot;Showing image&quot;); }
+}
+
+class ProxyImage implements Image {
+    private String file;
+    private RealImage real;
+    ProxyImage(String file) { this.file = file; }
+    public void show() {
+        if (real == null) real = new RealImage(file);   // load only on first use
+        real.show();
+    }
+}</code></pre><h2>Output</h2><pre><code>Loading photo.jpg
+Showing image</code></pre><div class="np"><a href="/design-pattern/structural/flyweight/">&larr; Flyweight</a><a href="/design-pattern/behavioral/chain-of-responsibility/">Chain of Responsibility &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>
