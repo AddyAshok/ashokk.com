@@ -11,7 +11,7 @@ class CustomHeader extends HTMLElement {
                 z-index: 99999 !important;
             }
 
-            /* Main Header Bar - Ultra Compact Single Row */
+            /* Container & Backdrop */
             .header-nav-container {
                 background: rgba(15, 23, 42, 0.98);
                 backdrop-filter: blur(12px);
@@ -21,16 +21,10 @@ class CustomHeader extends HTMLElement {
                 width: 100%;
                 box-sizing: border-box;
                 box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-                padding: 0 12px;
-                animation: headerSlideDown 0.3s ease-out forwards;
+                padding: 0 8px;
             }
 
-            @keyframes headerSlideDown {
-                from { opacity: 0; transform: translateY(-8px); }
-                to { opacity: 1; transform: translateY(0); }
-            }
-
-            /* Animated Gradient Border at Top */
+            /* Animated Top Gradient Line */
             .header-nav-container::before {
                 content: '';
                 position: absolute;
@@ -48,14 +42,13 @@ class CustomHeader extends HTMLElement {
                 100% { background-position: 300% 0%; }
             }
 
-            /* Ultra-Slim Single Flex Row Layout */
+            /* Main Header Row */
             .single-row-nav {
-                max-width: 100%;
-                margin: 0 auto;
+                width: 100%;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 12px;
+                gap: 8px;
                 min-height: 44px;
             }
 
@@ -75,11 +68,6 @@ class CustomHeader extends HTMLElement {
                 display: inline-flex;
                 align-items: center;
                 white-space: nowrap;
-                transition: transform 0.2s ease;
-            }
-
-            .brand-logo:hover {
-                transform: scale(1.02);
             }
 
             .brand-logo span {
@@ -108,41 +96,65 @@ class CustomHeader extends HTMLElement {
                 background-color: #22c55e;
                 border-radius: 50%;
                 box-shadow: 0 0 6px #22c55e;
-                animation: pulseGlow 1.8s infinite ease-in-out;
             }
 
-            @keyframes pulseGlow {
-                0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-                70% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
-                100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+            /* Scroll Wrapper & Buttons */
+            .nav-scroll-wrapper {
+                display: flex;
+                align-items: center;
+                gap: 4px;
+                flex-grow: 1;
+                min-width: 0; /* Prevents flex overflow issue */
+                justify-content: flex-end;
             }
 
-            /* Inline Navigation Container */
+            .scroll-btn {
+                background: rgba(30, 41, 59, 0.8);
+                border: 1px solid rgba(56, 189, 248, 0.3);
+                color: #38bdf8;
+                font-size: 14px;
+                font-weight: bold;
+                width: 26px;
+                height: 26px;
+                border-radius: 50%;
+                cursor: pointer;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+                transition: all 0.2s ease;
+                user-select: none;
+            }
+
+            .scroll-btn:hover {
+                background: #38bdf8;
+                color: #0f172a;
+                box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+            }
+
+            /* Scrollable Navigation Bar */
             .categories-nav {
                 display: flex;
                 align-items: center;
-                gap: 2px;
+                gap: 3px;
                 overflow-x: auto;
                 white-space: nowrap;
                 scrollbar-width: none;
-                flex-grow: 1;
-                justify-content: flex-end;
+                scroll-behavior: smooth;
             }
 
             .categories-nav::-webkit-scrollbar {
                 display: none;
             }
 
-            /* Ultra Compact Animated Links */
             .categories-nav a {
                 color: #94a3b8;
                 text-decoration: none;
                 font-size: 11.5px;
                 font-weight: 600;
-                padding: 4px 7px;
+                padding: 4px 8px;
                 border-radius: 5px;
                 transition: all 0.2s ease;
-                position: relative;
                 display: inline-block;
                 border: 1px solid transparent;
                 flex-shrink: 0;
@@ -152,32 +164,12 @@ class CustomHeader extends HTMLElement {
                 color: #ffffff;
                 background: rgba(56, 189, 248, 0.12);
                 border-color: rgba(56, 189, 248, 0.25);
-                transform: translateY(-1px);
             }
 
             .categories-nav a.active {
                 color: #38bdf8;
                 background: rgba(56, 189, 248, 0.15);
                 border-color: rgba(56, 189, 248, 0.35);
-            }
-
-            /* Bottom Line Animation */
-            .categories-nav a::after {
-                content: '';
-                position: absolute;
-                bottom: 0px;
-                left: 50%;
-                width: 0;
-                height: 2px;
-                background: #38bdf8;
-                transition: all 0.2s ease;
-                transform: translateX(-50%);
-                border-radius: 2px;
-            }
-
-            .categories-nav a:hover::after,
-            .categories-nav a.active::after {
-                width: 65%;
             }
 
             /* Mobile Menu Button */
@@ -193,23 +185,24 @@ class CustomHeader extends HTMLElement {
                 font-weight: 600;
             }
 
-            /* RESPONSIVE DESIGN */
             @media (max-width: 1024px) {
                 .tech-badge {
                     display: none;
                 }
             }
 
-            @media (max-width: 850px) {
+            @media (max-width: 768px) {
+                .scroll-btn {
+                    display: none;
+                }
                 .menu-toggle {
                     display: block;
                 }
-                .categories-nav {
+                .nav-scroll-wrapper {
                     display: none;
                 }
-                .categories-nav.mobile-open {
+                .nav-scroll-wrapper.mobile-open {
                     display: flex;
-                    flex-direction: column;
                     position: absolute;
                     top: 100%;
                     left: 0;
@@ -217,23 +210,23 @@ class CustomHeader extends HTMLElement {
                     background: #020617;
                     padding: 8px;
                     border-bottom: 1px solid #1e293b;
+                }
+                .categories-nav {
+                    flex-direction: column;
+                    width: 100%;
                     align-items: stretch;
-                    gap: 3px;
                 }
                 .categories-nav a {
                     width: 100%;
                     box-sizing: border-box;
                     padding: 8px 10px;
                 }
-                .categories-nav a::after {
-                    display: none;
-                }
             }
         </style>
 
         <header class="header-nav-container">
             <div class="single-row-nav">
-                <!-- Brand Logo & Badge -->
+                <!-- Brand Logo & Status -->
                 <div class="logo-group">
                     <a class="brand-logo" href="/">
                         Ashokka<span>.com</span>
@@ -244,36 +237,57 @@ class CustomHeader extends HTMLElement {
                     </span>
                 </div>
 
-                <!-- All 15 Nav Items in Single Line -->
-                <nav class="categories-nav" id="categories-nav">
-                    <a href="/java/" class="active">Java</a>
-                    <a href="/">Spring Boot</a>
-                    <a href="/">Spring Security</a>
-                    <a href="/">Spring JPA</a>
-                    <a href="/">Microservices</a>
-                    <a href="/">Kafka</a>
-                    <a href="/">AWS Cloud</a>
-                    <a href="/">Redis & Caching</a>
-                    <a href="/design-pattern/">Design Pattern</a>
-                    <a href="/">System Design</a>
-                    <a href="/">SQL</a>
-                    <a href="/">Interview Question</a>
-                    <a href="/java8/">Java 8 Feature</a>
-                    <a href="/">Coding Question</a>
-                    <a href="/">Daily Blog</a>
-                </nav>
+                <!-- Nav Items with Left/Right Buttons -->
+                <div class="nav-scroll-wrapper" id="nav-wrapper">
+                    <button class="scroll-btn" id="scroll-left" aria-label="Scroll Left">❮</button>
+                    
+                    <nav class="categories-nav" id="categories-nav">
+                        <a href="/java/" class="active">Java</a>
+                        <a href="/">Spring Boot</a>
+                        <a href="/">Spring Security</a>
+                        <a href="/">Spring JPA</a>
+                        <a href="/">Microservices</a>
+                        <a href="/">Kafka</a>
+                        <a href="/">AWS Cloud</a>
+                        <a href="/">Redis & Caching</a>
+                        <a href="/design-pattern/">Design Pattern</a>
+                        <a href="/">System Design</a>
+                        <a href="/">SQL</a>
+                        <a href="/">Interview Question</a>
+                        <a href="/java8/">Java 8 Feature</a>
+                        <a href="/">Coding Question</a>
+                        <a href="/">Daily Blog</a>
+                    </nav>
+
+                    <button class="scroll-btn" id="scroll-right" aria-label="Scroll Right">❯</button>
+                </div>
 
                 <button class="menu-toggle" id="mobile-toggle-btn" aria-label="Toggle Navigation">☰ Menu</button>
             </div>
         </header>
         `;
 
-        // Mobile Menu Button Logic
+        // Scroll Buttons Logic
+        const navContainer = this.querySelector('#categories-nav');
+        const leftBtn = this.querySelector('#scroll-left');
+        const rightBtn = this.querySelector('#scroll-right');
+
+        if (navContainer && leftBtn && rightBtn) {
+            leftBtn.addEventListener('click', () => {
+                navContainer.scrollBy({ left: -200, behavior: 'smooth' });
+            });
+
+            rightBtn.addEventListener('click', () => {
+                navContainer.scrollBy({ left: 200, behavior: 'smooth' });
+            });
+        }
+
+        // Mobile Menu Logic
         const toggleBtn = this.querySelector('#mobile-toggle-btn');
-        const categoriesNav = this.querySelector('#categories-nav');
-        if (toggleBtn && categoriesNav) {
+        const navWrapper = this.querySelector('#nav-wrapper');
+        if (toggleBtn && navWrapper) {
             toggleBtn.addEventListener('click', () => {
-                categoriesNav.classList.toggle('mobile-open');
+                navWrapper.classList.toggle('mobile-open');
             });
         }
     }
