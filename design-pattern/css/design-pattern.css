@@ -28,4 +28,5 @@ code{font-family:ui-monospace,Consolas,monospace}
 .copy{position:absolute;top:6px;right:6px;border:1px solid var(--line);background:var(--bg);color:var(--text);border-radius:6px;padding:2px 10px;font-size:13px;cursor:pointer}
 .np{display:flex;justify-content:space-between;gap:12px;margin:40px 0}
 .np a{background:var(--brand);color:#fff;padding:8px 18px;border-radius:6px}
+.cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:12px;margin:12px 0 8px}.cards a{border:1px solid var(--line);border-radius:10px;padding:12px 14px;color:var(--text);display:block}.cards a b{color:var(--brandd);display:block}.cards a span{font-size:14px;color:var(--muted);line-height:1.4;display:block}
 @media(max-width:900px){.layout{grid-template-columns:1fr}.toc{position:static;min-height:0;max-height:none}.menus{display:none}h1{font-size:28px}article{padding:0 16px}}
