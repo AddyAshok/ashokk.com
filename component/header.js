@@ -11,32 +11,26 @@ class CustomHeader extends HTMLElement {
                 z-index: 99999 !important;
             }
 
-            /* Container & Glassmorphism Backdrop */
+            /* Main Header Bar - Ultra Compact Single Row */
             .header-nav-container {
                 background: rgba(15, 23, 42, 0.98);
-                backdrop-filter: blur(14px);
-                -webkit-backdrop-filter: blur(14px);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
                 border-bottom: 1px solid #1e293b;
                 position: relative;
                 width: 100%;
                 box-sizing: border-box;
-                box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6);
-                animation: headerSlideDown 0.4s ease-out forwards;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+                padding: 0 12px;
+                animation: headerSlideDown 0.3s ease-out forwards;
             }
 
-            /* Entrance Animation */
             @keyframes headerSlideDown {
-                from {
-                    opacity: 0;
-                    transform: translateY(-12px);
-                }
-                to {
-                    opacity: 1;
-                    transform: translateY(0);
-                }
+                from { opacity: 0; transform: translateY(-8px); }
+                to { opacity: 1; transform: translateY(0); }
             }
 
-            /* Top Animated Gradient Line */
+            /* Animated Gradient Border at Top */
             .header-nav-container::before {
                 content: '';
                 position: absolute;
@@ -54,32 +48,34 @@ class CustomHeader extends HTMLElement {
                 100% { background-position: 300% 0%; }
             }
 
-            /* --- ROW 1: TOP BRAND ROW --- */
-            .top-brand-row {
-                max-width: 1400px;
+            /* Ultra-Slim Single Flex Row Layout */
+            .single-row-nav {
+                max-width: 100%;
                 margin: 0 auto;
-                padding: 6px 16px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                box-sizing: border-box;
+                gap: 12px;
+                min-height: 44px;
             }
 
             .logo-group {
                 display: flex;
                 align-items: center;
-                gap: 12px;
+                gap: 8px;
+                flex-shrink: 0;
             }
 
             .brand-logo {
                 text-decoration: none;
                 font-weight: 800;
-                font-size: 22px;
+                font-size: 18px;
                 color: #ffffff;
                 letter-spacing: -0.5px;
                 display: inline-flex;
                 align-items: center;
-                transition: transform 0.25s ease;
+                white-space: nowrap;
+                transition: transform 0.2s ease;
             }
 
             .brand-logo:hover {
@@ -88,185 +84,168 @@ class CustomHeader extends HTMLElement {
 
             .brand-logo span {
                 color: #38bdf8;
-                text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+                text-shadow: 0 0 8px rgba(56, 189, 248, 0.5);
             }
 
-            /* Tech Status Badge */
+            /* Mini Tech Badge */
             .tech-badge {
-                font-size: 11px;
+                font-size: 10.5px;
                 color: #38bdf8;
                 background: rgba(56, 189, 248, 0.08);
-                border: 1px solid rgba(56, 189, 248, 0.25);
-                padding: 4px 10px;
-                border-radius: 20px;
+                border: 1px solid rgba(56, 189, 248, 0.2);
+                padding: 2px 7px;
+                border-radius: 12px;
                 font-weight: 600;
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
+                gap: 5px;
+                white-space: nowrap;
             }
 
             .badge-dot {
-                height: 7px;
-                width: 7px;
+                height: 6px;
+                width: 6px;
                 background-color: #22c55e;
                 border-radius: 50%;
-                box-shadow: 0 0 8px #22c55e;
+                box-shadow: 0 0 6px #22c55e;
                 animation: pulseGlow 1.8s infinite ease-in-out;
             }
 
             @keyframes pulseGlow {
                 0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
-                70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+                70% { box-shadow: 0 0 0 5px rgba(34, 197, 94, 0); }
                 100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
             }
 
-            /* Mobile Toggle Button */
+            /* Inline Navigation Container */
+            .categories-nav {
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                overflow-x: auto;
+                white-space: nowrap;
+                scrollbar-width: none;
+                flex-grow: 1;
+                justify-content: flex-end;
+            }
+
+            .categories-nav::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Ultra Compact Animated Links */
+            .categories-nav a {
+                color: #94a3b8;
+                text-decoration: none;
+                font-size: 11.5px;
+                font-weight: 600;
+                padding: 4px 7px;
+                border-radius: 5px;
+                transition: all 0.2s ease;
+                position: relative;
+                display: inline-block;
+                border: 1px solid transparent;
+                flex-shrink: 0;
+            }
+
+            .categories-nav a:hover {
+                color: #ffffff;
+                background: rgba(56, 189, 248, 0.12);
+                border-color: rgba(56, 189, 248, 0.25);
+                transform: translateY(-1px);
+            }
+
+            .categories-nav a.active {
+                color: #38bdf8;
+                background: rgba(56, 189, 248, 0.15);
+                border-color: rgba(56, 189, 248, 0.35);
+            }
+
+            /* Bottom Line Animation */
+            .categories-nav a::after {
+                content: '';
+                position: absolute;
+                bottom: 0px;
+                left: 50%;
+                width: 0;
+                height: 2px;
+                background: #38bdf8;
+                transition: all 0.2s ease;
+                transform: translateX(-50%);
+                border-radius: 2px;
+            }
+
+            .categories-nav a:hover::after,
+            .categories-nav a.active::after {
+                width: 65%;
+            }
+
+            /* Mobile Menu Button */
             .menu-toggle {
                 display: none;
                 background: #1e293b;
                 border: 1px solid #334155;
                 color: #38bdf8;
-                border-radius: 6px;
-                padding: 5px 12px;
+                border-radius: 4px;
+                padding: 4px 10px;
                 cursor: pointer;
-                font-size: 13px;
-                font-weight: 600;
-                transition: all 0.2s ease;
-            }
-
-            .menu-toggle:hover {
-                background: #334155;
-            }
-
-            /* --- ROW 2: CATEGORIES NAVIGATION BAR --- */
-            .categories-bar {
-                background: #090d16;
-                border-top: 1px solid rgba(30, 41, 59, 0.7);
-                padding: 4px 12px;
-                width: 100%;
-                box-sizing: border-box;
-            }
-
-            .categories-inner {
-                max-width: 1400px;
-                margin: 0 auto;
-                display: flex;
-                align-items: center;
-                justify-content: center; /* Subhi links centralize honge aur wrap ho payenge */
-                flex-wrap: wrap; /* Prevent cutting of last items */
-                gap: 3px 6px; /* Vertical and horizontal gap */
-                box-sizing: border-box;
-            }
-
-            /* Animated Navigation Items */
-            .categories-inner a {
-                color: #94a3b8;
-                text-decoration: none;
                 font-size: 12px;
                 font-weight: 600;
-                padding: 5px 9px;
-                border-radius: 6px;
-                transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-                position: relative;
-                display: inline-block;
-                border: 1px solid transparent;
-                white-space: nowrap;
             }
 
-            /* Hover Glow & Lift Effect */
-            .categories-inner a:hover {
-                color: #ffffff;
-                background: rgba(56, 189, 248, 0.12);
-                border-color: rgba(56, 189, 248, 0.3);
-                transform: translateY(-2px);
-                box-shadow: 0 4px 12px rgba(56, 189, 248, 0.2);
-            }
-
-            /* Active State */
-            .categories-inner a.active {
-                color: #38bdf8;
-                background: rgba(56, 189, 248, 0.15);
-                border-color: rgba(56, 189, 248, 0.4);
-                box-shadow: 0 0 10px rgba(56, 189, 248, 0.25);
-            }
-
-            /* Bottom Glow Indicator */
-            .categories-inner a::after {
-                content: '';
-                position: absolute;
-                bottom: 1px;
-                left: 50%;
-                width: 0;
-                height: 2px;
-                background: #38bdf8;
-                transition: all 0.25s ease;
-                transform: translateX(-50%);
-                border-radius: 2px;
-            }
-
-            .categories-inner a:hover::after,
-            .categories-inner a.active::after {
-                width: 70%;
-            }
-
-            /* RESPONSIVE DESIGN FOR SMALLER SCREENS */
-            @media (max-width: 900px) {
+            /* RESPONSIVE DESIGN */
+            @media (max-width: 1024px) {
                 .tech-badge {
                     display: none;
                 }
+            }
+
+            @media (max-width: 850px) {
                 .menu-toggle {
                     display: block;
                 }
-                .categories-bar {
+                .categories-nav {
                     display: none;
                 }
-                .categories-bar.mobile-open {
-                    display: block;
-                    background: #020617;
-                    padding: 10px 12px;
-                    animation: fadeIn 0.3s ease;
-                }
-                .categories-inner {
+                .categories-nav.mobile-open {
+                    display: flex;
                     flex-direction: column;
+                    position: absolute;
+                    top: 100%;
+                    left: 0;
+                    right: 0;
+                    background: #020617;
+                    padding: 8px;
+                    border-bottom: 1px solid #1e293b;
                     align-items: stretch;
-                    gap: 4px;
+                    gap: 3px;
                 }
-                .categories-inner a {
+                .categories-nav a {
                     width: 100%;
                     box-sizing: border-box;
-                    padding: 8px 12px;
-                    text-align: left;
+                    padding: 8px 10px;
                 }
-                .categories-inner a::after {
+                .categories-nav a::after {
                     display: none;
                 }
-            }
-
-            @keyframes fadeIn {
-                from { opacity: 0; transform: translateY(-5px); }
-                to { opacity: 1; transform: translateY(0); }
             }
         </style>
 
         <header class="header-nav-container">
-            <!-- Row 1: Logo & Status Badge -->
-            <div class="top-brand-row">
+            <div class="single-row-nav">
+                <!-- Brand Logo & Badge -->
                 <div class="logo-group">
                     <a class="brand-logo" href="/">
                         Ashokka<span>.com</span>
                     </a>
                     <span class="tech-badge">
                         <span class="badge-dot"></span>
-                        Java • Microservices • AWS • Kafka
+                        Java • AWS • Kafka
                     </span>
                 </div>
 
-                <button class="menu-toggle" id="mobile-toggle-btn" aria-label="Toggle Navigation">☰ Topics Menu</button>
-            </div>
-
-            <!-- Row 2: Fully Responsive Nav Bar -->
-            <nav class="categories-bar" id="categories-nav">
-                <div class="categories-inner">
+                <!-- All 15 Nav Items in Single Line -->
+                <nav class="categories-nav" id="categories-nav">
                     <a href="/java/" class="active">Java</a>
                     <a href="/">Spring Boot</a>
                     <a href="/">Spring Security</a>
@@ -282,12 +261,14 @@ class CustomHeader extends HTMLElement {
                     <a href="/java8/">Java 8 Feature</a>
                     <a href="/">Coding Question</a>
                     <a href="/">Daily Blog</a>
-                </div>
-            </nav>
+                </nav>
+
+                <button class="menu-toggle" id="mobile-toggle-btn" aria-label="Toggle Navigation">☰ Menu</button>
+            </div>
         </header>
         `;
 
-        // Mobile Navigation Toggle
+        // Mobile Menu Button Logic
         const toggleBtn = this.querySelector('#mobile-toggle-btn');
         const categoriesNav = this.querySelector('#categories-nav');
         if (toggleBtn && categoriesNav) {
