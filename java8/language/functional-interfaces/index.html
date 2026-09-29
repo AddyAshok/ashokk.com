@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Functional Interfaces in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn Functional Interfaces in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/language/functional-interfaces/">
+<meta property="og:title" content="Functional Interfaces in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/" aria-current="page">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/language/">Language Features</a> / Functional Interfaces</div>
+<h1>Functional Interfaces in Java 8</h1><p>A functional interface has exactly one abstract method. It can also have many default and static methods. Lambdas and method references work only with functional interfaces. Java 8 added the @FunctionalInterface annotation and the java.util.function package with ready-made interfaces.</p><h2>Key points</h2><ul><li>Predicate&lt;T&gt;: takes T, returns boolean (method test).</li><li>Function&lt;T,R&gt;: takes T, returns R (method apply).</li><li>Consumer&lt;T&gt;: takes T, returns nothing (method accept). Supplier&lt;T&gt;: takes nothing, returns T (method get).</li><li>Also available: BiFunction, UnaryOperator, BinaryOperator. Older ones like Runnable and Comparator are functional interfaces too.</li></ul><h2>Real life example</h2><p>A power socket that accepts one type of plug. Any device with that plug (any lambda with the right shape) fits.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.function.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Greeting g = name -&gt; &quot;Hello, &quot; + name;
+        Predicate&lt;Integer&gt; isEven = n -&gt; n % 2 == 0;
+        Function&lt;String, Integer&gt; length = s -&gt; s.length();
+        Consumer&lt;String&gt; printer = s -&gt; System.out.println(&quot;Consumed: &quot; + s);
+        Supplier&lt;Double&gt; pi = () -&gt; 3.14159;
+        UnaryOperator&lt;String&gt; upper = String::toUpperCase;
+        System.out.println(g.greet(&quot;Ram&quot;));
+        System.out.println(isEven.test(10));
+        System.out.println(isEven.negate().test(10));
+        System.out.println(length.apply(&quot;Java 8&quot;));
+        printer.accept(&quot;data&quot;);
+        System.out.println(pi.get());
+        System.out.println(upper.apply(&quot;abc&quot;));
+    }
+}
+
+@FunctionalInterface
+interface Greeting {
+    String greet(String name);
+}</code></pre><h2>Output</h2><pre><code>Hello, Ram
+true
+false
+6
+Consumed: data
+3.14159
+ABC</code></pre><p class="use"><b>Common mistake:</b> If you add a second abstract method, the interface is no longer functional and lambda assignments stop compiling. @FunctionalInterface makes the compiler warn you early.</p><div class="np"><a href="/java8/language/lambda-expressions/">&larr; Lambda Expressions</a><a href="/java8/language/method-references/">Method References &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

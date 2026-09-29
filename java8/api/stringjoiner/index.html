@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>StringJoiner and String.join in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn StringJoiner and String.join in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/api/stringjoiner/">
+<meta property="og:title" content="StringJoiner and String.join in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/" aria-current="page">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / StringJoiner and String.join</div>
+<h1>StringJoiner and String.join in Java 8</h1><p>StringJoiner builds a string from many parts with a delimiter, and an optional prefix and suffix. String.join is a quick one-line version.</p><h2>Key points</h2><ul><li>new StringJoiner(delimiter, prefix, suffix), then add() for each part.</li><li>setEmptyValue() gives a text to show when nothing was added.</li><li>String.join(delimiter, items) works with varargs and any Iterable.</li><li>Collectors.joining() does the same job inside streams.</li></ul><h2>Real life example</h2><p>Writing names with commas between them and brackets around the list.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        StringJoiner sj = new StringJoiner(&quot;, &quot;, &quot;[&quot;, &quot;]&quot;);
+        sj.add(&quot;Ram&quot;).add(&quot;Sita&quot;).add(&quot;Amit&quot;);
+        System.out.println(sj);
+        System.out.println(String.join(&quot;-&quot;, &quot;2024&quot;, &quot;03&quot;, &quot;15&quot;));
+        System.out.println(String.join(&quot;/&quot;, Arrays.asList(&quot;a&quot;, &quot;b&quot;, &quot;c&quot;)));
+        StringJoiner empty = new StringJoiner(&quot;,&quot;, &quot;{&quot;, &quot;}&quot;);
+        empty.setEmptyValue(&quot;NONE&quot;);
+        System.out.println(empty);
+        System.out.println(sj.length());
+    }
+}</code></pre><h2>Output</h2><pre><code>[Ram, Sita, Amit]
+2024-03-15
+a/b/c
+NONE
+17</code></pre><p class="use"><b>Common mistake:</b> Building such strings with += in a loop. It creates many temporary objects and leaves an extra delimiter at the end.</p><div class="np"><a href="/java8/api/comparator-improvements/">&larr; Comparator Improvements</a><a href="/java8/api/base64-encoding/">Base64 Encoding &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

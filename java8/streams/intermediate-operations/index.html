@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Intermediate Operations in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn Intermediate Operations in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/streams/intermediate-operations/">
+<meta property="og:title" content="Intermediate Operations in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/" aria-current="page">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/streams/">Stream API</a> / Intermediate Operations</div>
+<h1>Intermediate Operations in Java 8</h1><p>Intermediate operations return a new stream, so you can chain them. They are lazy: they do nothing until a terminal operation starts the pipeline.</p><h2>Key points</h2><ul><li>filter(Predicate): keeps matching elements.</li><li>map(Function): changes each element. flatMap(Function): turns many small streams into one stream.</li><li>sorted(), distinct(), limit(n), skip(n): sort, remove duplicates, take first n, skip first n.</li><li>peek(Consumer): look at elements while they pass, mainly for debugging.</li></ul><h2>Real life example</h2><p>Stations on a conveyor belt: one removes bad items, one paints, one sorts.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;String&gt; words = Arrays.asList(&quot;banana&quot;, &quot;apple&quot;, &quot;cherry&quot;, &quot;apple&quot;, &quot;date&quot;);
+        System.out.println(words.stream().filter(w -&gt; w.length() &gt; 4).collect(Collectors.toList()));
+        System.out.println(words.stream().map(String::toUpperCase).collect(Collectors.toList()));
+        System.out.println(words.stream().distinct().sorted().collect(Collectors.toList()));
+        System.out.println(words.stream().skip(1).limit(2).collect(Collectors.toList()));
+        List&lt;List&lt;Integer&gt;&gt; nested = Arrays.asList(Arrays.asList(1, 2), Arrays.asList(3, 4), Arrays.asList(5));
+        System.out.println(nested.stream().flatMap(List::stream).collect(Collectors.toList()));
+        List&lt;String&gt; a = words.stream().filter(w -&gt; w.startsWith(&quot;a&quot;))
+                .peek(w -&gt; System.out.println(&quot;peek: &quot; + w)).collect(Collectors.toList());
+        System.out.println(a);
+    }
+}</code></pre><h2>Output</h2><pre><code>[banana, apple, cherry, apple]
+[BANANA, APPLE, CHERRY, APPLE, DATE]
+[apple, banana, cherry, date]
+[apple, cherry]
+[1, 2, 3, 4, 5]
+peek: apple
+peek: apple
+[apple, apple]</code></pre><p class="use"><b>Common mistake:</b> Using peek() to change data or expecting it to run without a terminal operation.</p><div class="np"><a href="/java8/streams/stream-basics/">&larr; Stream API Basics</a><a href="/java8/streams/terminal-operations/">Terminal Operations &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

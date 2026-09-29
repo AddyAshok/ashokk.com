@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Comparator Improvements in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn Comparator Improvements in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/api/comparator-improvements/">
+<meta property="og:title" content="Comparator Improvements in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/" aria-current="page">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / Comparator Improvements</div>
+<h1>Comparator Improvements in Java 8</h1><p>Java 8 made sorting much easier with static and default methods on Comparator. You can build a sort rule from a getter and chain more rules on it.</p><h2>Key points</h2><ul><li>Comparator.comparing(keyExtractor): sort by one field.</li><li>thenComparing(): add a second rule when the first is equal.</li><li>reversed(): flips the order. naturalOrder() and reverseOrder() are also available.</li><li>nullsFirst() and nullsLast() handle null values safely.</li></ul><h2>Real life example</h2><p>Sorting students by marks, and if marks are equal, by name.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Person&gt; people = Arrays.asList(new Person(&quot;Sita&quot;, 25), new Person(&quot;Ram&quot;, 30),
+                new Person(&quot;Amit&quot;, 25), new Person(&quot;Neha&quot;, 30));
+        people.sort(Comparator.comparing(Person::getAge));
+        System.out.println(people);
+        people.sort(Comparator.comparing(Person::getAge).thenComparing(Person::getName));
+        System.out.println(people);
+        people.sort(Comparator.comparing(Person::getAge).reversed().thenComparing(Person::getName));
+        System.out.println(people);
+    }
+}
+
+class Person {
+    String name; int age;
+    Person(String n, int a) { name = n; age = a; }
+    String getName() { return name; }
+    int getAge() { return age; }
+    public String toString() { return name + &quot;(&quot; + age + &quot;)&quot;; }
+}</code></pre><h2>Output</h2><pre><code>[Sita(25), Amit(25), Ram(30), Neha(30)]
+[Amit(25), Sita(25), Neha(30), Ram(30)]
+[Neha(30), Ram(30), Amit(25), Sita(25)]</code></pre><p class="use"><b>Common mistake:</b> Writing (a, b) -&gt; a.age - b.age by hand. It can overflow for large numbers. Use Comparator.comparing.</p><div class="np"><a href="/java8/api/map-new-methods/">&larr; New Methods in Map</a><a href="/java8/api/stringjoiner/">StringJoiner and String.join &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

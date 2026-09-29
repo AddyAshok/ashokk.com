@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Terminal Operations in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn Terminal Operations in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/streams/terminal-operations/">
+<meta property="og:title" content="Terminal Operations in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/" aria-current="page">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/streams/">Stream API</a> / Terminal Operations</div>
+<h1>Terminal Operations in Java 8</h1><p>A terminal operation starts the pipeline, produces a result (or a side effect) and closes the stream. Only one terminal operation can be used per stream.</p><h2>Key points</h2><ul><li>reduce(identity, op): combines all elements into one value (sum, product).</li><li>count(), min(), max(): simple results. min and max return Optional.</li><li>anyMatch, allMatch, noneMatch: test a condition and return boolean. They stop early when the answer is known (short-circuit).</li><li>findFirst, findAny, forEach, toArray, collect are other common terminal operations.</li></ul><h2>Real life example</h2><p>The last button on the machine. Until you press it, nothing moves.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;Integer&gt; nums = Arrays.asList(4, 9, 2, 7, 5);
+        System.out.println(nums.stream().reduce(0, Integer::sum));
+        System.out.println(nums.stream().max(Integer::compare).get());
+        System.out.println(nums.stream().min(Integer::compare).get());
+        System.out.println(nums.stream().count());
+        System.out.println(nums.stream().anyMatch(n -&gt; n &gt; 8));
+        System.out.println(nums.stream().allMatch(n -&gt; n &gt; 1));
+        System.out.println(nums.stream().noneMatch(n -&gt; n &gt; 10));
+        System.out.println(nums.stream().filter(n -&gt; n &gt; 5).findFirst().get());
+        nums.stream().sorted().forEach(n -&gt; System.out.print(n + &quot; &quot;));
+        System.out.println();
+        System.out.println(Arrays.toString(nums.stream().mapToInt(Integer::intValue).toArray()));
+    }
+}</code></pre><h2>Output</h2><pre><code>27
+9
+2
+5
+true
+true
+true
+9
+2 4 5 7 9 
+[4, 9, 2, 7, 5]</code></pre><p class="use"><b>Common mistake:</b> Calling get() on the Optional from min/max/findFirst when the stream can be empty. Use orElse instead.</p><div class="np"><a href="/java8/streams/intermediate-operations/">&larr; Intermediate Operations</a><a href="/java8/streams/collectors/">Collectors &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Default and Static Methods in Interfaces in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn Default and Static Methods in Interfaces in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/language/default-static-interface-methods/">
+<meta property="og:title" content="Default and Static Methods in Interfaces in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/" aria-current="page">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/language/">Language Features</a> / Default and Static Methods in Interfaces</div>
+<h1>Default and Static Methods in Interfaces in Java 8</h1><p>Before Java 8 an interface could only have abstract methods, so adding a new method broke every class that implemented it. Java 8 allows default methods (with a body) and static methods in interfaces. This is how Java added stream() and forEach() to Collection without breaking old code.</p><h2>Key points</h2><ul><li>A default method uses the default keyword. Implementing classes may override it.</li><li>If a class implements two interfaces with the same default method, it must override it and can call Interface.super.method().</li><li>A static method belongs to the interface. Call it as InterfaceName.method(); it is not inherited.</li><li>Interfaces still cannot have instance fields or constructors.</li></ul><h2>Real life example</h2><p>A company adds a new rule to its handbook. Old employees follow a default version until they choose their own.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">public class Main {
+    public static void main(String[] args) {
+        new Tesla().start();
+        System.out.println(Vehicle.wheels());
+    }
+}
+
+interface Vehicle {
+    default void start() { System.out.println(&quot;Vehicle starting&quot;); }
+    static int wheels() { return 4; }
+}
+
+interface Electric {
+    default void start() { System.out.println(&quot;Electric starting&quot;); }
+}
+
+class Tesla implements Vehicle, Electric {
+    public void start() {                      // must resolve the conflict
+        Vehicle.super.start();
+        Electric.super.start();
+    }
+}</code></pre><h2>Output</h2><pre><code>Vehicle starting
+Electric starting
+4</code></pre><p class="use"><b>Common mistake:</b> Forgetting to resolve the conflict when two interfaces have the same default method gives a compile error.</p><div class="np"><a href="/java8/language/method-references/">&larr; Method References</a><a href="/java8/streams/stream-basics/">Stream API Basics &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>forEach, removeIf and replaceAll in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn forEach, removeIf and replaceAll in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/api/foreach-method/">
+<meta property="og:title" content="forEach, removeIf and replaceAll in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/" aria-current="page">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / forEach, removeIf and replaceAll</div>
+<h1>forEach, removeIf and replaceAll in Java 8</h1><p>Java 8 added new methods to collections. forEach(Consumer) loops over elements (internal iteration). removeIf(Predicate) deletes matching elements. replaceAll(UnaryOperator) changes every element of a List. Map also has forEach with a BiConsumer.</p><h2>Key points</h2><ul><li>forEach is defined in Iterable, so every collection has it.</li><li>Map.forEach((key, value) -&gt; ...) loops over entries.</li><li>removeIf and replaceAll change the list, so it must be modifiable (Arrays.asList lists are fixed-size).</li><li>A forEach loop cannot use break or continue.</li></ul><h2>Real life example</h2><p>Instead of visiting each room yourself, you give the cleaner one instruction and they do it in every room.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+
+public class Main {
+    public static void main(String[] args) {
+        List&lt;String&gt; fruits = Arrays.asList(&quot;Apple&quot;, &quot;Banana&quot;, &quot;Mango&quot;);
+        fruits.forEach(f -&gt; System.out.println(&quot;Fruit: &quot; + f));
+        Map&lt;String, Integer&gt; marks = new TreeMap&lt;&gt;();
+        marks.put(&quot;Ram&quot;, 80);
+        marks.put(&quot;Sita&quot;, 90);
+        marks.forEach((k, v) -&gt; System.out.println(k + &quot; -&gt; &quot; + v));
+        List&lt;Integer&gt; nums = new ArrayList&lt;&gt;(Arrays.asList(1, 2, 3, 4, 5, 6));
+        nums.removeIf(n -&gt; n % 2 == 0);
+        nums.replaceAll(n -&gt; n * 10);
+        System.out.println(nums);
+    }
+}</code></pre><h2>Output</h2><pre><code>Fruit: Apple
+Fruit: Banana
+Fruit: Mango
+Ram -&gt; 80
+Sita -&gt; 90
+[10, 30, 50]</code></pre><p class="use"><b>Common mistake:</b> Calling removeIf on Arrays.asList() or List.of(). It throws UnsupportedOperationException. Wrap the list in new ArrayList&lt;&gt;().</p><div class="np"><a href="/java8/api/date-time-api/">&larr; Date and Time API</a><a href="/java8/api/map-new-methods/">New Methods in Map &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

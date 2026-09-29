@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Lambda Expressions in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn Lambda Expressions in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/language/lambda-expressions/">
+<meta property="og:title" content="Lambda Expressions in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/" aria-current="page">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/language/">Language Features</a> / Lambda Expressions</div>
+<h1>Lambda Expressions in Java 8</h1><p>A lambda expression is a short way to write an anonymous function. It lets you pass code (behavior) as a value, so you write much less code than with anonymous inner classes. Syntax: (parameters) -&gt; expression, or (parameters) -&gt; { statements }.</p><h2>Key points</h2><ul><li>It can be used only where a functional interface is expected.</li><li>Parameter types are optional because Java infers them. With one parameter you can drop the brackets.</li><li>A lambda can use a local variable only if it is final or effectively final (never changed).</li><li>Inside a lambda, this means the enclosing class, not the lambda itself.</li></ul><h2>Real life example</h2><p>Telling a friend &quot;do this when you reach&quot; instead of building a whole helper class for one small instruction.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+import java.util.function.*;
+
+public class Main {
+    public static void main(String[] args) {
+        Runnable r = () -&gt; System.out.println(&quot;Hello from lambda&quot;);
+        r.run();
+        Comparator&lt;String&gt; byLength = (a, b) -&gt; a.length() - b.length();
+        List&lt;String&gt; names = Arrays.asList(&quot;Charlie&quot;, &quot;Al&quot;, &quot;Bob&quot;);
+        Collections.sort(names, byLength);
+        System.out.println(names);
+        BinaryOperator&lt;Integer&gt; add = (x, y) -&gt; x + y;
+        System.out.println(add.apply(3, 4));
+    }
+}</code></pre><h2>Output</h2><pre><code>Hello from lambda
+[Al, Bob, Charlie]
+7</code></pre><p class="use"><b>Common mistake:</b> Changing a local variable inside a lambda gives a compile error. If you really need a counter, use an array or AtomicInteger.</p><div class="np"><span></span><a href="/java8/language/functional-interfaces/">Functional Interfaces &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date and Time API in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn Date and Time API in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/api/date-time-api/">
+<meta property="og:title" content="Date and Time API in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/" aria-current="page">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/api/">New APIs</a> / Date and Time API</div>
+<h1>Date and Time API in Java 8</h1><p>Java 8 added the java.time package. The old Date and Calendar classes were mutable, not thread-safe and confusing (months started at 0). The new classes are immutable, thread-safe and clear.</p><h2>Key points</h2><ul><li>LocalDate (date), LocalTime (time), LocalDateTime (both), ZonedDateTime (with time zone), Instant (machine time).</li><li>Period measures days, months and years. Duration measures hours, minutes and seconds.</li><li>DateTimeFormatter formats and parses text.</li><li>Every change like plusDays() returns a new object. The original stays the same.</li></ul><h2>Real life example</h2><p>A calendar and a clock that never get scribbled on. Every change gives you a fresh copy.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.time.*;
+import java.time.format.*;
+
+public class Main {
+    public static void main(String[] args) {
+        LocalDate date = LocalDate.of(2024, 3, 15);
+        System.out.println(date);
+        System.out.println(date.plusDays(20));
+        System.out.println(date.getDayOfWeek());
+        System.out.println(date.isLeapYear());
+        LocalTime time = LocalTime.of(14, 30);
+        LocalDateTime dt = LocalDateTime.of(date, time);
+        System.out.println(dt.format(DateTimeFormatter.ofPattern(&quot;dd-MM-yyyy HH:mm&quot;)));
+        Period p = Period.between(LocalDate.of(2000, 1, 1), date);
+        System.out.println(p.getYears() + &quot; years, &quot; + p.getMonths() + &quot; months&quot;);
+        Duration d = Duration.between(LocalTime.of(9, 0), time);
+        System.out.println(d.toMinutes() + &quot; minutes&quot;);
+        System.out.println(LocalDate.parse(&quot;2025-01-01&quot;).getMonth());
+    }
+}</code></pre><h2>Output</h2><pre><code>2024-03-15
+2024-04-04
+FRIDAY
+true
+15-03-2024 14:30
+24 years, 2 months
+330 minutes
+JANUARY</code></pre><p class="use"><b>Common mistake:</b> Ignoring that objects are immutable. date.plusDays(5) alone does nothing; you must use the returned value.</p><div class="np"><a href="/java8/api/optional/">&larr; Optional</a><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Parallel Streams in Java 8 – Ashokka Tech</title>
+<meta name="description" content="Learn Parallel Streams in Java 8 with a simple explanation, key points, a complete example and output.">
+<link rel="canonical" href="https://ashokka.com/java8/streams/parallel-streams/">
+<meta property="og:title" content="Parallel Streams in Java 8 – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/java8/css/java8.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/java8/js/java8.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Java 8 menu"><h2><a href="/java8/">Java 8 Features</a></h2><h3><a href="/java8/language/">Language Features</a></h3><ul><li><a href="/java8/language/lambda-expressions/">Lambda Expressions</a></li><li><a href="/java8/language/functional-interfaces/">Functional Interfaces</a></li><li><a href="/java8/language/method-references/">Method References</a></li><li><a href="/java8/language/default-static-interface-methods/">Default and Static Methods in Interfaces</a></li></ul><h3><a href="/java8/streams/">Stream API</a></h3><ul><li><a href="/java8/streams/stream-basics/">Stream API Basics</a></li><li><a href="/java8/streams/intermediate-operations/">Intermediate Operations</a></li><li><a href="/java8/streams/terminal-operations/">Terminal Operations</a></li><li><a href="/java8/streams/collectors/">Collectors</a></li><li><a href="/java8/streams/parallel-streams/" aria-current="page">Parallel Streams</a></li></ul><h3><a href="/java8/api/">New APIs</a></h3><ul><li><a href="/java8/api/optional/">Optional</a></li><li><a href="/java8/api/date-time-api/">Date and Time API</a></li><li><a href="/java8/api/foreach-method/">forEach, removeIf and replaceAll</a></li><li><a href="/java8/api/map-new-methods/">New Methods in Map</a></li><li><a href="/java8/api/comparator-improvements/">Comparator Improvements</a></li><li><a href="/java8/api/stringjoiner/">StringJoiner and String.join</a></li><li><a href="/java8/api/base64-encoding/">Base64 Encoding</a></li><li><a href="/java8/api/completable-future/">CompletableFuture</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/java8/">Java 8</a> / <a href="/java8/streams/">Stream API</a> / Parallel Streams</div>
+<h1>Parallel Streams in Java 8</h1><p>A parallel stream splits the work across many threads (the ForkJoin common pool) so it can use all CPU cores. Use stream.parallel() or collection.parallelStream().</p><h2>Key points</h2><ul><li>Best for large data and CPU-heavy, independent tasks.</li><li>Not good for small data, I/O work, or tasks that change shared variables (not thread-safe).</li><li>forEach may print in any order. Use forEachOrdered to keep the order.</li><li>Always measure. Parallel is not always faster because splitting and merging cost time.</li></ul><h2>Real life example</h2><p>Ten people counting a big pile of coins together instead of one person counting alone.</p><h2>Complete Java example</h2><p>Save this as <code>Main.java</code>, then run <code>javac Main.java</code> and <code>java Main</code> (Java 8 or higher).</p><pre><code class="language-java">import java.util.*;
+import java.util.stream.*;
+
+public class Main {
+    public static void main(String[] args) {
+        long sum = IntStream.rangeClosed(1, 1000000).parallel().asLongStream().sum();
+        System.out.println(sum);
+        List&lt;Integer&gt; nums = Arrays.asList(1, 2, 3, 4, 5, 6);
+        System.out.println(nums.parallelStream().map(n -&gt; n * n).collect(Collectors.toList()));
+        nums.parallelStream().forEachOrdered(n -&gt; System.out.print(n + &quot; &quot;));
+        System.out.println();
+        System.out.println(nums.parallelStream().isParallel());
+    }
+}</code></pre><h2>Output</h2><pre><code>500000500000
+[1, 4, 9, 16, 25, 36]
+1 2 3 4 5 6 
+true</code></pre><p class="use"><b>Common mistake:</b> Modifying a shared list or counter inside a parallel stream gives wrong results. Use collect() or reduce() instead.</p><div class="np"><a href="/java8/streams/collectors/">&larr; Collectors</a><a href="/java8/api/optional/">Optional &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>
