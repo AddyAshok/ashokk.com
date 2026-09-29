@@ -293,4 +293,15 @@ class CustomHeader extends HTMLElement {
         }
     }
 }
+
+
+ if (!document.querySelector('link[rel="icon"]')) {
+        const favicon = document.createElement('link');
+
+        favicon.rel = 'icon';
+        favicon.type = 'image/svg+xml';
+        favicon.href = '/images/logo.svg';
+
+        document.head.appendChild(favicon);
+    }
 customElements.define('app-header', CustomHeader);
