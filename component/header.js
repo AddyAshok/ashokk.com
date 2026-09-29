@@ -225,6 +225,7 @@ class CustomHeader extends HTMLElement {
         </style>
 
         <header class="header-nav-container">
+        <link rel="icon" href="/images/logo.png">
             <div class="single-row-nav">
                 <!-- Brand Logo & Status -->
                 <div class="logo-group">
