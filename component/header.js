@@ -8,127 +8,102 @@ class CustomHeader extends HTMLElement {
                 max-width: 100%;
                 position: sticky;
                 top: 0;
-                z-index: 99999 !important; /* FIX 1: Ensures header stays above all page content */
+                z-index: 99999 !important;
             }
 
-            /* Main Header Styling - Clean Edutech Theme */
+            /* Container & Glassmorphism Backdrop */
             .header-nav-container {
-                background: #0f172a; /* Deep Slate Background */
+                background: rgba(15, 23, 42, 0.96);
+                backdrop-filter: blur(14px);
+                -webkit-backdrop-filter: blur(14px);
                 border-bottom: 1px solid #1e293b;
-                padding: 10px 20px;
                 position: relative;
                 width: 100%;
                 box-sizing: border-box;
-                overflow: visible; /* FIX 2: Prevents hiding elements inside header */
+                box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
             }
 
-            /* Neon Glow Animated Top Border */
+            /* Animated Gradient Border at Top */
             .header-nav-container::before {
                 content: '';
                 position: absolute;
                 top: 0;
-                left: -100%;
-                width: 100%;
+                left: 0;
+                right: 0;
                 height: 2px;
-                background: linear-gradient(90deg, transparent, #38bdf8, #818cf8, transparent);
-                animation: scanline 3.5s ease-in-out infinite;
+                background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc, #38bdf8);
+                background-size: 300% 100%;
+                animation: gradientMove 4s linear infinite;
             }
 
-            @keyframes scanline {
-                0% { left: -100%; }
-                50% { left: 0%; }
-                100% { left: 100%; }
+            @keyframes gradientMove {
+                0% { background-position: 0% 0%; }
+                100% { background-position: 300% 0%; }
             }
 
-            /* Inner Wrapper - Horizontal Layout */
-            .header-inner {
+            /* --- ROW 1: TOP BRAND ROW --- */
+            .top-brand-row {
                 max-width: 1400px;
                 margin: 0 auto;
+                padding: 12px 20px;
                 display: flex;
                 align-items: center;
                 justify-content: space-between;
-                gap: 20px;
-                width: 100%;
             }
 
-            /* Brand Logo & Tech Badges Group */
             .logo-group {
                 display: flex;
                 align-items: center;
-                gap: 12px;
-                white-space: nowrap;
+                gap: 14px;
             }
 
             .brand-logo {
                 text-decoration: none;
                 font-weight: 800;
-                font-size: 22px;
+                font-size: 24px;
                 color: #ffffff;
                 letter-spacing: -0.5px;
-            }
-            .brand-logo span {
-                color: #38bdf8;
+                display: inline-flex;
+                align-items: center;
+                transition: transform 0.25s ease;
             }
 
-            .tech-badge {
-                font-size: 11px;
+            .brand-logo:hover {
+                transform: scale(1.03);
+            }
+
+            .brand-logo span {
                 color: #38bdf8;
-                background: rgba(56, 189, 248, 0.1);
+                text-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+            }
+
+            /* Pulsing Tech Status Badge */
+            .tech-badge {
+                font-size: 12px;
+                color: #38bdf8;
+                background: rgba(56, 189, 248, 0.08);
                 border: 1px solid rgba(56, 189, 248, 0.25);
-                padding: 4px 10px;
+                padding: 5px 14px;
                 border-radius: 20px;
                 font-weight: 600;
                 display: inline-flex;
                 align-items: center;
-                gap: 6px;
+                gap: 8px;
             }
 
             .badge-dot {
-                height: 6px;
-                width: 6px;
+                height: 8px;
+                width: 8px;
                 background-color: #22c55e;
                 border-radius: 50%;
-                box-shadow: 0 0 6px #22c55e;
+                box-shadow: 0 0 8px #22c55e;
+                animation: pulseGlow 1.8s infinite ease-in-out;
             }
 
-            /* Desktop Navigation Bar */
-            .langs {
-                display: flex;
-                align-items: center;
-                gap: 4px;
-                margin: 0;
-                padding: 0;
-                overflow-x: auto;
-                scrollbar-width: none;
-            }
-
-            .langs::-webkit-scrollbar {
-                display: none;
-            }
-
-            /* Navigation Links Styling */
-            .langs a, .dropdown-btn {
-                color: #94a3b8;
-                text-decoration: none;
-                font-size: 13.5px;
-                font-weight: 600;
-                padding: 6px 12px;
-                border-radius: 6px;
-                transition: all 0.2s ease;
-                white-space: nowrap;
-                background: transparent;
-                border: none;
-                cursor: pointer;
-            }
-
-            .langs a:hover, .dropdown-btn:hover {
-                color: #ffffff;
-                background: #1e293b;
-            }
-
-            .langs a.active {
-                color: #38bdf8;
-                background: rgba(56, 189, 248, 0.1);
+            @keyframes pulseGlow {
+                0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+                70% { box-shadow: 0 0 0 8px rgba(34, 197, 94, 0); }
+                100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
             }
 
             /* Mobile Toggle Button */
@@ -138,82 +113,104 @@ class CustomHeader extends HTMLElement {
                 border: 1px solid #334155;
                 color: #38bdf8;
                 border-radius: 6px;
-                padding: 6px 12px;
+                padding: 6px 14px;
                 cursor: pointer;
                 font-size: 14px;
                 font-weight: 600;
+                transition: all 0.2s ease;
             }
 
-            /* DESKTOP VIEW */
-            @media (min-width: 900px) {
-                #java-dropdown {
-                    display: none !important;
-                }
-                #desktop-java-link {
-                    display: inline-flex !important;
-                }
+            .menu-toggle:hover {
+                background: #334155;
             }
 
-            /* MOBILE VIEW */
-            @media (max-width: 899px) {
-                #desktop-java-link {
-                    display: none !important;
-                }
+            /* --- ROW 2: CATEGORIES NAVIGATION BAR (NICHE WALI ROW) --- */
+            .categories-bar {
+                background: #090d16;
+                border-top: 1px solid rgba(30, 41, 59, 0.7);
+                padding: 6px 16px;
+                width: 100%;
+                box-sizing: border-box;
+            }
 
+            .categories-inner {
+                max-width: 1400px;
+                margin: 0 auto;
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                overflow-x: auto;
+                white-space: nowrap;
+                scrollbar-width: none;
+                padding: 2px 0;
+            }
+
+            .categories-inner::-webkit-scrollbar {
+                display: none;
+            }
+
+            /* Fantastic Animated Navigation Item Styling */
+            .categories-inner a {
+                color: #94a3b8;
+                text-decoration: none;
+                font-size: 13.5px;
+                font-weight: 600;
+                padding: 7px 14px;
+                border-radius: 8px;
+                transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+                position: relative;
+                display: inline-block;
+                border: 1px solid transparent;
+            }
+
+            .categories-inner a:hover {
+                color: #ffffff;
+                background: rgba(56, 189, 248, 0.12);
+                border-color: rgba(56, 189, 248, 0.3);
+                transform: translateY(-2px);
+                box-shadow: 0 6px 16px rgba(56, 189, 248, 0.2);
+            }
+
+            .categories-inner a.active {
+                color: #38bdf8;
+                background: rgba(56, 189, 248, 0.15);
+                border-color: rgba(56, 189, 248, 0.4);
+                box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+            }
+
+            /* RESPONSIVE DESIGN */
+            @media (max-width: 850px) {
                 .tech-badge {
                     display: none;
                 }
-
                 .menu-toggle {
                     display: block;
                 }
-
-                .langs {
+                .categories-bar {
                     display: none;
-                    flex-direction: column;
-                    width: 100%;
-                    gap: 6px;
-                    padding-top: 12px;
-                    margin-top: 10px;
-                    border-top: 1px solid #1e293b;
                 }
-
-                .langs.active {
-                    display: flex;
-                }
-
-                .langs a, .dropdown-container {
-                    width: 100%;
-                }
-
-                .dropdown-btn {
-                    width: 100%;
-                    justify-content: space-between;
-                }
-
-                .dropdown-menu {
-                    display: none;
-                    background: #020617;
-                    border-left: 2px solid #38bdf8;
-                    margin-left: 10px;
-                    padding-left: 6px;
-                }
-
-                .dropdown-menu a {
+                .categories-bar.mobile-open {
                     display: block;
-                    padding: 8px 12px;
-                    color: #94a3b8;
+                    background: #020617;
+                    padding: 12px 16px;
                 }
-
-                .dropdown-container.open .dropdown-menu {
-                    display: block !important;
+                .categories-inner {
+                    flex-direction: column;
+                    align-items: stretch;
+                    white-space: normal;
+                    gap: 8px;
+                }
+                .categories-inner a {
+                    width: 100%;
+                    box-sizing: border-box;
+                    padding: 10px 14px;
                 }
             }
         </style>
 
         <header class="header-nav-container">
-            <div class="header-inner">
-                <!-- Left: Corrected Brand Logo & Tech Badges -->
+            <!-- Row 1: Logo & Status Badge -->
+            <div class="top-brand-row">
                 <div class="logo-group">
                     <a class="brand-logo" href="/">
                         Ashokka<span>.com</span>
@@ -224,65 +221,39 @@ class CustomHeader extends HTMLElement {
                     </span>
                 </div>
 
-                <!-- Right: Navigation Bar -->
-                <nav class="langs" id="nav-links" aria-label="Main Navigation">
-                    <a href="/java/" id="desktop-java-link">Java</a>
-
-                    <div class="dropdown-container" id="java-dropdown">
-                        <button class="dropdown-btn" type="button">Java ▾</button>
-                        <div class="dropdown-menu">
-                            <a href="/java/">Java Overview</a>
-                            <a href="/">OOPs Concepts</a>
-                            <a href="/">Exception Handling</a>
-                            <a href="/">Multithreading & Concurrency</a>
-                            <a href="/">Collections Framework</a>
-                            <a href="/">JVM & Memory Management</a>
-                        </div>
-                    </div>
-
-                    <a href="/">Spring Boot</a>
-                    <a href="/">Spring Security</a>
-                    <a href="/">Spring JPA</a>
-                    <a href="/">Microservices</a>
-                    <a href="/">Kafka</a>
-                    <a href="/">AWS Cloud</a>
-                    <a href="/">Redis & Caching</a>
-                    <a href="/design-pattern/">Design Pattern</a>
-                    <a href="/">System Design</a>
-                    <a href="/">SQL</a>
-                    <a href="/">Interview Question</a>
-                    <a href="/java8">Java 8 Feature</a>
-                    <a href="/">Coding Question</a>
-                    <a href="/">Daily Blog</a>
-                </nav>
-
-                <!-- Mobile Menu Button -->
-                <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle Menu">☰ Menu</button>
+                <button class="menu-toggle" id="mobile-toggle-btn" aria-label="Toggle Navigation">☰ Topics Menu</button>
             </div>
+
+            <!-- Row 2: Full Nav Items Exactly Under Logo Row -->
+            <nav class="categories-bar" id="categories-nav">
+                <div class="categories-inner">
+                    <a href="/java/" class="active">Java</a>
+                    <a href="/spring-boot/">Spring Boot</a>
+                    <a href="/spring-security/">Spring Security</a>
+                    <a href="/spring-jpa/">Spring JPA</a>
+                    <a href="/microservices/">Microservices</a>
+                    <a href="/kafka/">Kafka</a>
+                    <a href="/aws/">AWS Cloud</a>
+                    <a href="/redis/">Redis & Caching</a>
+                    <a href="/design-pattern/">Design Pattern</a>
+                    <a href="/system-design/">System Design</a>
+                    <a href="/sql/">SQL</a>
+                    <a href="/interview-questions/">Interview Question</a>
+                    <a href="/java8/">Java 8 Feature</a>
+                    <a href="/coding-questions/">Coding Question</a>
+                    <a href="/blog/">Daily Blog</a>
+                </div>
+            </nav>
         </header>
         `;
 
-        // Mobile Menu Toggle
-        const toggleBtn = this.querySelector('#mobile-menu-btn');
-        const navLinks = this.querySelector('#nav-links');
-        if (toggleBtn && navLinks) {
+        // Mobile Menu Button Functionality
+        const toggleBtn = this.querySelector('#mobile-toggle-btn');
+        const categoriesNav = this.querySelector('#categories-nav');
+        if (toggleBtn && categoriesNav) {
             toggleBtn.addEventListener('click', () => {
-                navLinks.classList.toggle('active');
+                categoriesNav.classList.toggle('mobile-open');
             });
-        }
-
-        // Mobile Accordion Toggle
-        const javaDropdown = this.querySelector('#java-dropdown');
-        if (javaDropdown) {
-            const javaBtn = javaDropdown.querySelector('.dropdown-btn');
-            if (javaBtn) {
-                javaBtn.addEventListener('click', (e) => {
-                    if (window.innerWidth <= 899) {
-                        e.preventDefault();
-                        javaDropdown.classList.toggle('open');
-                    }
-                });
-            }
         }
     }
 }
