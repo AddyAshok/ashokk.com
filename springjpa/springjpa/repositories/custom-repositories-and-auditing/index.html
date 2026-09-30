@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Custom Repositories, Base Class, Domain Events and Auditing – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="When generated methods are not enough, extend repositories with your own code: fragments for one repository, a custom base class for all, domain events published from aggregates, and auditing fields filled automatically..">
+    <link rel="canonical" href="https://ashokka.com/springjpa/repositories/custom-repositories-and-auditing/">
+    <meta property="og:title" content="Custom Repositories, Base Class, Domain Events and Auditing – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/" aria-current="page">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/repositories/">Spring Data Repositories</a> / Custom Repositories, Base Class, Domain Events and Auditing</div>
+<h1>Custom Repositories, Base Class, Domain Events and Auditing</h1><p>When generated methods are not enough, extend repositories with your own code: fragments for one repository, a custom base class for all, domain events published from aggregates, and auditing fields filled automatically.</p><h2>Three levels of customization</h2><table><thead><tr><th>Need</th><th>Solution</th></tr></thead><tbody><tr><td>Extra method for one repository</td><td>Custom fragment interface + Impl class</td></tr><tr><td>Extra method for ALL repositories</td><td>Custom base class with repositoryBaseClass</td></tr><tr><td>Change save/delete logic for all</td><td>Override in the custom base class</td></tr><tr><td>React to changes (events)</td><td>AbstractAggregateRoot / @DomainEvents, or JPA entity listeners</td></tr><tr><td>created/updated who and when</td><td>Spring Data auditing</td></tr></tbody></table><h2>Fragment for one repository</h2><pre><code class="language-java">public interface ProductRepositoryCustom {
+    List&lt;Product&gt; findLowStock(int threshold);
+    int applyDiscount(String category, BigDecimal percent);
+}
+
+public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {     // name: fragment interface + &quot;Impl&quot;
+
+    @PersistenceContext private EntityManager em;
+
+    @Override
+    public List&lt;Product&gt; findLowStock(int threshold) {
+        return em.createQuery(&quot;select p from Product p where p.stock &lt; :t order by p.stock&quot;, Product.class)
+                 .setParameter(&quot;t&quot;, threshold).getResultList();
+    }
+
+    @Override @Transactional
+    public int applyDiscount(String category, BigDecimal percent) {
+        return em.createQuery(&quot;update Product p set p.price = p.price * :f where p.category = :c&quot;)
+                 .setParameter(&quot;f&quot;, BigDecimal.ONE.subtract(percent.movePointLeft(2))).setParameter(&quot;c&quot;, category).executeUpdate();
+    }
+}
+
+public interface ProductRepository extends JpaRepository&lt;Product, Long&gt;, ProductRepositoryCustom { }</code></pre><h2>Custom base class for all repositories</h2><pre><code class="language-java">@NoRepositoryBean
+public interface ShopRepository&lt;T, ID&gt; extends JpaRepository&lt;T, ID&gt; {
+    void refresh(T entity);
+    List&lt;T&gt; findAllActive();
+}
+
+public class ShopRepositoryImpl&lt;T, ID&gt; extends SimpleJpaRepository&lt;T, ID&gt; implements ShopRepository&lt;T, ID&gt; {
+
+    private final EntityManager em;
+    private final JpaEntityInformation&lt;T, ?&gt; info;
+
+    public ShopRepositoryImpl(JpaEntityInformation&lt;T, ?&gt; entityInformation, EntityManager entityManager) {
+        super(entityInformation, entityManager);
+        this.em = entityManager; this.info = entityInformation;
+    }
+
+    @Override @Transactional public void refresh(T entity) { em.refresh(entity); }
+
+    @Override
+    public List&lt;T&gt; findAllActive() {
+        return em.createQuery(&quot;select e from &quot; + info.getEntityName() + &quot; e where e.active = true&quot;, info.getJavaType()).getResultList();
+    }
+}
+
+@EnableJpaRepositories(basePackages = &quot;com.example&quot;, repositoryBaseClass = ShopRepositoryImpl.class)
+class RepoConfig { }
+
+public interface ProductRepository extends ShopRepository&lt;Product, Long&gt; { }      // now has refresh and findAllActive</code></pre><h2>Auditing: who and when</h2><pre><code class="language-java">@Configuration
+@EnableJpaAuditing(auditorAwareRef = &quot;auditorProvider&quot;, dateTimeProviderRef = &quot;utcNow&quot;)
+class AuditConfig {
+    @Bean AuditorAware&lt;String&gt; auditorProvider() {
+        return () -&gt; Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+                .filter(Authentication::isAuthenticated).map(Authentication::getName).or(() -&gt; Optional.of(&quot;system&quot;));
+    }
+    @Bean DateTimeProvider utcNow() { return () -&gt; Optional.of(Instant.now()); }
+}
+
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public abstract class Auditable {
+    @CreatedDate @Column(updatable = false) private Instant createdAt;
+    @LastModifiedDate private Instant updatedAt;
+    @CreatedBy @Column(updatable = false) private String createdBy;
+    @LastModifiedBy private String updatedBy;
+}
+// Filled inside the flush by the AuditingEntityListener (a JPA @PrePersist/@PreUpdate callback). Bulk @Modifying queries do NOT trigger it.</code></pre><h2>Domain events from aggregates</h2><pre><code class="language-java">@Entity
+public class OrderEntity extends AbstractAggregateRoot&lt;OrderEntity&gt; {
+
+    @Id @GeneratedValue private Long id;
+    private OrderStatus status = OrderStatus.NEW;
+
+    public OrderEntity pay() {
+        this.status = OrderStatus.PAID;
+        registerEvent(new OrderPaid(id));            // collected in the entity, published when repository.save(order) is called
+        return this;
+    }
+}
+
+@Component
+class InvoiceListener {
+    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)      // only after a successful commit
+    void on(OrderPaid event) { /* create invoice, send message */ }
+}
+// Only save(), saveAll(), delete() publish the events. Changes made by dirty checking without save() do NOT publish.</code></pre><h2>JPA entity listeners and callbacks</h2><pre><code class="language-java">public class SearchIndexListener {
+    @PostPersist @PostUpdate void index(Object entity) { /* schedule indexing */ }
+    @PostRemove void remove(Object entity) { }
+}
+@Entity @EntityListeners(SearchIndexListener.class)
+public class Product { }
+// Callbacks run in the middle of the flush: do not run queries or change other entities there. Publish an event or write an outbox row instead.</code></pre><p class="use"><b>Common mistake:</b> Doing real work (calling other repositories, HTTP calls) inside JPA callbacks like @PostPersist. They run during flush, the transaction may still roll back and modifying the persistence context there corrupts the flush. Publish an event and handle it after commit.</p><h2>Interview questions</h2><h3>Where do I put a method that needs the EntityManager?</h3><p>In a custom fragment (ProductRepositoryCustomImpl) and inject the EntityManager with @PersistenceContext or constructor injection.</p><h3>Why are my audit fields not set by bulk updates?</h3><p>Auditing works through JPA entity callbacks on managed entities. A JPQL update statement bypasses entities, so set the audit columns in the statement.</p><h3>Why is my domain event not published?</h3><p>Events registered with AbstractAggregateRoot are published when the repository&#x27;s save or delete is called. Dirty checking alone does not call them.</p><div class="np"><a href="/springjpa/repositories/specifications-and-query-by-example/">&larr; Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

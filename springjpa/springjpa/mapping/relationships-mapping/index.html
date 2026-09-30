@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Relationship Mapping: One-to-One, One-to-Many, Many-to-Many – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Relationships are the source of most JPA bugs and performance problems.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/mapping/relationships-mapping/">
+    <meta property="og:title" content="Relationship Mapping: One-to-One, One-to-Many, Many-to-Many – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/" aria-current="page">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/mapping/">Entity Mapping</a> / Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</div>
+<h1>Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</h1><p>Relationships are the source of most JPA bugs and performance problems. This page shows every mapping with the SQL it produces, which side owns the foreign key, how to keep both sides in sync, and the correct cascade and orphan settings.</p><h2>Key ideas</h2><table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody><tr><td>Owning side</td><td>The side that has the @JoinColumn (foreign key column). Only changes on the owning side are written to the database</td></tr><tr><td>Inverse side</td><td>The side with mappedBy. Read only for the database, but you must keep it in sync in memory</td></tr><tr><td>Unidirectional</td><td>Only one entity knows the other (Order has customer). Simpler, fewer bugs</td></tr><tr><td>Bidirectional</td><td>Both entities have a reference. Needs helper methods to stay in sync</td></tr><tr><td>Cascade</td><td>Apply persist, merge, remove, refresh, detach from parent to children</td></tr><tr><td>orphanRemoval</td><td>Delete a child when it is removed from the parent&#x27;s collection</td></tr></tbody></table><h2>Many-to-one (the most common and best mapping)</h2><pre><code class="language-java">@Entity @Table(name = &quot;orders&quot;)
+public class OrderEntity {
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE) private Long id;
+
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)          // EAGER is the default for ToOne: always write LAZY
+    @JoinColumn(name = &quot;customer_id&quot;, nullable = false, foreignKey = @ForeignKey(name = &quot;fk_orders_customer&quot;))
+    private Customer customer;
+}
+// SQL: orders(id, customer_id FK)   Many orders point to one customer.</code></pre><h2>One-to-many, bidirectional, with helper methods</h2><pre><code class="language-java">@Entity
+public class Customer {
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE) private Long id;
+    private String name;
+
+    @OneToMany(mappedBy = &quot;customer&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+    private List&lt;OrderEntity&gt; orders = new ArrayList&lt;&gt;();
+
+    public void addOrder(OrderEntity o) { orders.add(o); o.setCustomer(this); }        // both sides
+    public void removeOrder(OrderEntity o) { orders.remove(o); o.setCustomer(null); }
+    public List&lt;OrderEntity&gt; getOrders() { return Collections.unmodifiableList(orders); }   // force use of the helpers
+}</code></pre><p>A unidirectional @OneToMany without mappedBy (only the parent knows children) makes Hibernate use a join table, or extra UPDATE statements for the foreign key: avoid it. Prefer @ManyToOne on the child, and add the @OneToMany side only when you really navigate from the parent.</p><h2>One-to-one</h2><pre><code class="language-java">// Foreign key in the owner table
+@Entity public class User {
+    @Id @GeneratedValue private Long id;
+    @OneToOne(fetch = FetchType.LAZY, cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = &quot;profile_id&quot;)
+    private Profile profile;
+}
+
+// Shared primary key (best: no extra column, load by id)
+@Entity public class Profile {
+    @Id private Long id;
+    @OneToOne(fetch = FetchType.LAZY) @MapsId @JoinColumn(name = &quot;id&quot;)
+    private User user;
+}</code></pre><p>The inverse side of a @OneToOne (mappedBy) cannot be lazy in practice: Hibernate has to query the other table to know whether the row exists (null or proxy). Use the shared primary key mapping and load the profile by id when needed.</p><h2>Many-to-many</h2><pre><code class="language-java">@Entity public class Student {
+    @Id @GeneratedValue private Long id;
+    @ManyToMany
+    @JoinTable(name = &quot;student_course&quot;, joinColumns = @JoinColumn(name = &quot;student_id&quot;), inverseJoinColumns = @JoinColumn(name = &quot;course_id&quot;))
+    private Set&lt;Course&gt; courses = new HashSet&lt;&gt;();                  // use SET: a List (bag) deletes and reinserts ALL rows on change
+
+    public void enroll(Course c) { courses.add(c); c.getStudents().add(this); }
+}
+@Entity public class Course {
+    @Id @GeneratedValue private Long id;
+    @ManyToMany(mappedBy = &quot;courses&quot;) private Set&lt;Student&gt; students = new HashSet&lt;&gt;();
+    public Set&lt;Student&gt; getStudents() { return students; }
+}
+// NEVER use CascadeType.REMOVE or ALL on @ManyToMany: deleting a student would delete shared courses.</code></pre><p>When the relationship has its own data (date, grade, status), model it as a third entity (Enrollment) with two @ManyToOne, see the advanced mapping page.</p><h2>Cascade types</h2><table><thead><tr><th>Type</th><th>Effect on children</th><th>Typical use</th></tr></thead><tbody><tr><td>PERSIST</td><td>persist(parent) also persists new children</td><td>Owned children</td></tr><tr><td>MERGE</td><td>merge(parent) also merges children</td><td>Owned children</td></tr><tr><td>REMOVE</td><td>remove(parent) removes children</td><td>Owned children only (order lines)</td></tr><tr><td>REFRESH / DETACH</td><td>Propagate refresh and detach</td><td>Rare</td></tr><tr><td>ALL</td><td>All of the above</td><td>Composition: child cannot live without the parent</td></tr><tr><td>orphanRemoval = true</td><td>Removing a child from the collection deletes its row</td><td>Composition</td></tr></tbody></table><h2>What SQL does adding a child produce?</h2><pre><code class="language-java">@Transactional
+public void addOrder(Long customerId) {
+    Customer c = customers.findById(customerId).orElseThrow();       // select customer
+    c.addOrder(new OrderEntity(&quot;Laptop&quot;));                            // orders.add(...): the collection is initialized first!  select orders where customer_id=?
+}                                                                     // flush: insert into orders (customer_id, item)  (cascade PERSIST)
+// Loading a big collection just to add one child is wasteful. Better: orders.save(new OrderEntity(customers.getReferenceById(id), &quot;Laptop&quot;)) : no select of the collection</code></pre><h2>Design rules</h2><ul><li>All ToOne relations LAZY. Collections are lazy by default.</li><li>Prefer unidirectional @ManyToOne. Add the collection side only when needed, then keep both sides in sync.</li><li>Use Set for @ManyToMany. Use List for ordered @OneToMany with @OrderBy or @OrderColumn.</li><li>Cascade only for real ownership (composition).</li><li>Do not expose entities in the API: bidirectional relations create infinite JSON recursion.</li></ul><p class="use"><b>Common mistake:</b> Marking a @ManyToMany with CascadeType.ALL or REMOVE. Deleting one side deletes the shared other side and its links. Cascade REMOVE and orphanRemoval belong to parent-child ownership only.</p><h2>Interview questions</h2><h3>Which side owns a bidirectional relationship?</h3><p>The side without mappedBy, the one that has the @JoinColumn (the @ManyToOne side for one-to-many). Only that side updates the foreign key.</p><h3>Why is List a problem in @ManyToMany?</h3><p>A List without an order column is a bag. When an element is removed, Hibernate deletes all link rows and reinserts the remaining ones. A Set only deletes the removed row.</p><h3>Why is my lazy @OneToOne loaded eagerly?</h3><p>The inverse side (mappedBy) must check for existence, so Hibernate loads it at once. Put the foreign key or @MapsId on the side you load, or fetch it with a query.</p><div class="np"><a href="/springjpa/mapping/primary-key-generation/">&larr; Primary Keys and ID Generation Strategies</a><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

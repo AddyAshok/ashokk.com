@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Setup and Configuration: Every Important Property Explained – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Getting JPA running takes minutes, but the configuration properties decide performance and safety.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/fundamentals/jpa-setup-and-configuration/">
+    <meta property="og:title" content="Setup and Configuration: Every Important Property Explained – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/" aria-current="page">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/fundamentals/">Fundamentals and Setup</a> / Setup and Configuration: Every Important Property Explained</div>
+<h1>Setup and Configuration: Every Important Property Explained</h1><p>Getting JPA running takes minutes, but the configuration properties decide performance and safety. This page lists the dependencies, the properties you will use, how Spring Boot names tables and columns, and how to see the SQL and the bound parameters.</p><h2>Dependencies</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;     &lt;!-- Spring Data JPA + Hibernate + HikariCP + spring-tx --&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.postgresql&lt;/groupId&gt;
+    &lt;artifactId&gt;postgresql&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;                                                     &lt;!-- optional: in-memory database for development and tests --&gt;
+    &lt;groupId&gt;com.h2database&lt;/groupId&gt;
+    &lt;artifactId&gt;h2&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre><h2>Recommended application.yml</h2><pre><code class="language-yaml">spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shop
+    username: app
+    password: ${DB_PASSWORD}
+    hikari:
+      maximum-pool-size: 10
+  jpa:
+    open-in-view: false                       # do not keep the session open during view rendering
+    hibernate:
+      ddl-auto: validate                      # Flyway changes the schema, Hibernate only checks it
+    properties:
+      hibernate:
+        format_sql: true
+        jdbc.batch_size: 50
+        order_inserts: true
+        order_updates: true
+        default_batch_fetch_size: 50
+        query.in_clause_parameter_padding: true
+        jdbc.time_zone: UTC
+logging:
+  level:
+    org.hibernate.SQL: DEBUG                  # the SQL text
+    org.hibernate.orm.jdbc.bind: TRACE        # bound parameter values (Hibernate 6)</code></pre><table><thead><tr><th>Property</th><th>Meaning</th><th>Advice</th></tr></thead><tbody><tr><td>spring.jpa.hibernate.ddl-auto</td><td>none, validate, update, create, create-drop: what Hibernate does with the schema at startup</td><td>validate or none in production. create-drop only for tests</td></tr><tr><td>spring.jpa.show-sql</td><td>Print SQL to standard output</td><td>Prefer the logger org.hibernate.SQL (goes through your logging setup)</td></tr><tr><td>spring.jpa.open-in-view</td><td>Keep the EntityManager open until the response is rendered (default TRUE)</td><td>Set false. Otherwise lazy loading works in controllers and hides N+1 and holds connections</td></tr><tr><td>spring.jpa.properties.hibernate.jdbc.batch_size</td><td>Statements grouped in one JDBC batch</td><td>20 to 100 for write heavy code</td></tr><tr><td>hibernate.order_inserts / order_updates</td><td>Sort statements so equal ones can be batched</td><td>true when batching</td></tr><tr><td>hibernate.default_batch_fetch_size</td><td>Load lazy associations for many parents in one query</td><td>16 to 100, a cheap N+1 defense</td></tr><tr><td>hibernate.query.in_clause_parameter_padding</td><td>Pads IN lists to powers of two to reuse query plans</td><td>true</td></tr><tr><td>spring.jpa.database-platform</td><td>Dialect</td><td>Not needed with Hibernate 6: it detects the dialect from the driver</td></tr><tr><td>hibernate.generate_statistics</td><td>Collect counts (statements, cache hits)</td><td>Development and tests</td></tr><tr><td>spring.jpa.defer-datasource-initialization</td><td>Run data.sql after Hibernate creates the schema</td><td>Only for demos</td></tr></tbody></table><h2>What ddl-auto does</h2><table><thead><tr><th>Value</th><th>Effect</th><th>Use</th></tr></thead><tbody><tr><td>none</td><td>Nothing</td><td>Production with migrations</td></tr><tr><td>validate</td><td>Compares entities with the schema and fails at startup on differences (missing table or column, wrong type)</td><td>Production with Flyway/Liquibase</td></tr><tr><td>update</td><td>Adds missing tables and columns. Never drops or renames</td><td>Prototype only: cannot rename, no history, no data changes</td></tr><tr><td>create</td><td>Drops and recreates at startup</td><td>Integration tests</td></tr><tr><td>create-drop</td><td>create at startup, drop at shutdown</td><td>Embedded test databases</td></tr></tbody></table><h2>Table and column naming</h2><pre class="dia"><code>Java                          Spring Boot default naming (CamelCaseToUnderscoresNamingStrategy)
+class ProductCategory    ─►   table product_category
+field createdAt          ─►   column created_at
+@Table(name = &quot;Products&quot;)      ─►   table products      (the naming strategy still lowercases and converts)
+Change it:  spring.jpa.hibernate.naming.physical-strategy=org.hibernate.boot.model.naming.PhysicalNamingStrategyStandardImpl   (exact names)
+Reserved words: an entity named Order or User breaks SQL on many databases (&quot;order&quot; is a keyword). Use @Table(name = &quot;orders&quot;).</code></pre><h2>See exactly what runs</h2><pre><code class="language-text">select p1_0.id,p1_0.name,p1_0.price from products p1_0 where p1_0.name=?          &lt;- org.hibernate.SQL
+binding parameter (1:VARCHAR) &lt;- [Pen]                                                     &lt;- org.hibernate.orm.jdbc.bind</code></pre><pre><code class="language-java">// Count statements in a test (Hibernate statistics)
+@Autowired EntityManagerFactory emf;
+
+Statistics stats = emf.unwrap(SessionFactory.class).getStatistics();
+stats.clear();
+service.loadDashboard();
+assertThat(stats.getPrepareStatementCount()).as(&quot;too many SQL statements&quot;).isLessThanOrEqualTo(3);</code></pre><h2>Where your entities are found</h2><pre><code class="language-java">@SpringBootApplication                        // @EntityScan and @EnableJpaRepositories default to the package of this class and below
+public class ShopApplication { }
+
+@EntityScan(&quot;com.example.shop.domain&quot;)           // only when entities live outside the main package
+@EnableJpaRepositories(&quot;com.example.shop.persistence&quot;)
+class JpaConfig { }</code></pre><p class="use"><b>Common mistake:</b> Leaving spring.jpa.open-in-view at its default (true) and ddl-auto=update in production. The first hides N+1 problems and holds database connections while rendering, the second changes your schema silently. Set open-in-view false and use validate with migrations.</p><h2>Interview questions</h2><h3>Why does Boot log a warning about open-in-view at startup?</h3><p>Because it is enabled by default, and it keeps the EntityManager open for the whole web request, which allows lazy loading in controllers and views but can hurt scalability.</p><h3>Do I need to set the Hibernate dialect?</h3><p>No. Hibernate 6 detects it from the JDBC connection metadata. Set it only for special versions or to force behavior.</p><div class="np"><a href="/springjpa/fundamentals/jpa-overview/">&larr; JPA, Hibernate and Spring Data JPA: The Big Picture</a><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

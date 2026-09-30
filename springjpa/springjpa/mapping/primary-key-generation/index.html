@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Primary Keys and ID Generation Strategies – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="How an entity gets its id affects batching, memory, concurrency and even whether save() runs an extra SELECT.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/mapping/primary-key-generation/">
+    <meta property="og:title" content="Primary Keys and ID Generation Strategies – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/" aria-current="page">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/mapping/">Entity Mapping</a> / Primary Keys and ID Generation Strategies</div>
+<h1>Primary Keys and ID Generation Strategies</h1><p>How an entity gets its id affects batching, memory, concurrency and even whether save() runs an extra SELECT. This page explains every strategy with its internal behavior, composite keys, and the isNew trap for assigned ids.</p><h2>Strategies compared</h2><table><thead><tr><th>Strategy</th><th>How the id is created</th><th>INSERT timing</th><th>JDBC batching</th><th>Use for</th></tr></thead><tbody><tr><td>IDENTITY</td><td>Database auto increment column (serial, AUTO_INCREMENT)</td><td>Immediately at persist(), because the id is only known after the INSERT</td><td>DISABLED for inserts</td><td>Simple apps, MySQL</td></tr><tr><td>SEQUENCE</td><td>Hibernate reads the next value from a database sequence (pooled in blocks)</td><td>At flush (id is known before)</td><td>Works</td><td>PostgreSQL, Oracle, H2: best default</td></tr><tr><td>TABLE</td><td>A table simulates a sequence</td><td>At flush</td><td>Works, but slow and locks</td><td>Databases without sequences, avoid</td></tr><tr><td>UUID</td><td>Generated in Java (UUID.randomUUID or a time-ordered UUID)</td><td>At flush</td><td>Works</td><td>Distributed systems, ids created before insert</td></tr><tr><td>AUTO</td><td>Hibernate picks: SEQUENCE if the database supports it (Hibernate 6), UUID for UUID types</td><td></td><td></td><td>OK when you accept the default</td></tr><tr><td>Assigned (no @GeneratedValue)</td><td>You set the id yourself</td><td>At flush</td><td>Works</td><td>Natural keys, ids from other systems</td></tr></tbody></table><h2>SEQUENCE with the pooled optimizer</h2><pre><code class="language-java">@Entity
+public class Invoice {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = &quot;invoice_seq&quot;)
+    @SequenceGenerator(name = &quot;invoice_seq&quot;, sequenceName = &quot;invoice_seq&quot;, allocationSize = 50)
+    private Long id;
+}
+// The database sequence must be created with INCREMENT BY 50 (Flyway):  CREATE SEQUENCE invoice_seq START 1 INCREMENT 50;</code></pre><pre class="dia"><code>allocationSize = 50, pooled optimizer:
+ first persist:   SELECT nextval(&#x27;invoice_seq&#x27;)  ─► 51    Hibernate now owns the ids 1..50 in memory (no more database calls)
+ next 49 persists: ids 2, 3, 4 ... 50 are handed out from memory, ZERO extra queries
+ the 51st persist: SELECT nextval  ─► 101  ─► ids 51..100
+Result: 1 sequence call for 50 inserts, and all INSERTs can be batched.
+If the database increment does not match allocationSize (sequence +1, allocationSize 50) Hibernate warns or produces duplicate ids: keep them equal.</code></pre><h2>IDENTITY and its price</h2><pre><code class="language-java">@Id @GeneratedValue(strategy = GenerationType.IDENTITY)
+private Long id;
+// persist(order): Hibernate MUST run INSERT right now to read the generated id.
+// Inserting 1000 entities = 1000 separate INSERT round trips, no batching, even with hibernate.jdbc.batch_size set.
+// Fine for low volume. For bulk inserts choose SEQUENCE.</code></pre><h2>UUID keys</h2><pre><code class="language-java">@Id
+@GeneratedValue(strategy = GenerationType.UUID)                  // Jakarta Persistence 3.1, Hibernate 6.2+
+private UUID id;
+
+// Better index locality with time-ordered UUIDs (version 7, or Hibernate&#x27;s @UuidGenerator(style = TIME))
+@Id
+@GeneratedValue
+@UuidGenerator(style = UuidGenerator.Style.TIME)
+private UUID id;</code></pre><table><thead><tr><th>UUID</th><th>Pros</th><th>Cons</th></tr></thead><tbody><tr><td>Random (v4)</td><td>No coordination, safe to expose, ids known before insert</td><td>16 bytes, random inserts fragment the primary key B-tree index, slower inserts on big tables</td></tr><tr><td>Time-ordered (v1 style, v7)</td><td>Same benefits, sequential-like inserts</td><td>Reveals creation time</td></tr><tr><td>Long sequence</td><td>Small, fast, ordered</td><td>Guessable (add authorization checks), needs the database for allocation</td></tr></tbody></table><h2>Composite keys</h2><pre><code class="language-java">// Option 1: @EmbeddedId (recommended)
+@Embeddable
+public class OrderLineId implements Serializable {
+    private Long orderId;
+    private Integer lineNo;
+    protected OrderLineId() { }
+    public OrderLineId(Long orderId, Integer lineNo) { this.orderId = orderId; this.lineNo = lineNo; }
+    @Override public boolean equals(Object o) { return o instanceof OrderLineId x &amp;&amp; Objects.equals(orderId, x.orderId) &amp;&amp; Objects.equals(lineNo, x.lineNo); }
+    @Override public int hashCode() { return Objects.hash(orderId, lineNo); }
+}
+
+@Entity
+public class OrderLine {
+    @EmbeddedId private OrderLineId id;
+    private int quantity;
+}
+public interface OrderLineRepository extends JpaRepository&lt;OrderLine, OrderLineId&gt; { List&lt;OrderLine&gt; findByIdOrderId(Long orderId); }
+
+// Option 2: @IdClass (fields stay in the entity)
+@Entity @IdClass(OrderLineId.class)
+public class OrderLine2 { @Id private Long orderId; @Id private Integer lineNo; }</code></pre><h2>The isNew trap with assigned ids</h2><p>SimpleJpaRepository.save() decides between persist and merge with isNew(). For an entity with a generated id, id == null means new. For an assigned id (you always set it), id is never null, so Spring Data thinks the entity is NOT new and calls merge(). merge() first runs a SELECT to see whether the row exists, then INSERT: two statements and a copy of the object.</p><pre><code class="language-java">@Entity
+public class Country implements Persistable&lt;String&gt; {
+
+    @Id private String code;                        // assigned natural key
+    private String name;
+
+    @Transient private boolean isNew = true;        // not stored
+
+    protected Country() { }
+    public Country(String code, String name) { this.code = code; this.name = name; }
+
+    @Override public String getId() { return code; }
+    @Override public boolean isNew() { return isNew; }
+
+    @PostPersist @PostLoad void markNotNew() { this.isNew = false; }       // after save or load it is an existing row
+}
+// Alternative: add @Version Long version. A null version means new, and save() calls persist without the extra SELECT.</code></pre><h2>Natural vs surrogate keys</h2><ul><li>Surrogate key (generated number or UUID): stable, small, no business meaning. Recommended as primary key.</li><li>Natural key (email, ISBN, SKU): often changes or is not unique in practice. Keep it as a UNIQUE column, and in Hibernate mark it with @NaturalId for fast lookups.</li><li>Never expose database ids as the only protection of a resource: always check authorization.</li></ul><p class="use"><b>Common mistake:</b> Using GenerationType.IDENTITY for tables that receive bulk inserts, then wondering why hibernate.jdbc.batch_size has no effect. Use SEQUENCE with allocationSize equal to the sequence increment.</p><h2>Interview questions</h2><h3>Why is batch insert not working with IDENTITY?</h3><p>Hibernate needs the generated id right after each INSERT, so it executes every INSERT immediately and cannot group them. SEQUENCE ids are known in advance, so INSERTs are grouped at flush.</p><h3>Why does save() run a SELECT before INSERT?</h3><p>The entity has an assigned id and no @Version, so Spring Data treats it as existing and uses merge(), which loads the row first. Implement Persistable or add @Version.</p><h3>Which UUID version should I use?</h3><p>Prefer time-ordered UUIDs (v7 or Hibernate TIME style) for large tables, because random v4 keys fragment the index.</p><div class="np"><a href="/springjpa/mapping/entity-mapping-basics/">&larr; Entity Mapping Basics: @Entity, @Column, Types and Converters</a><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

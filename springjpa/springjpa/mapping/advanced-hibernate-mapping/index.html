@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Hibernate offers many mapping features beyond JPA.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/mapping/advanced-hibernate-mapping/">
+    <meta property="og:title" content="Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/" aria-current="page">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/mapping/">Entity Mapping</a> / Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</div>
+<h1>Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</h1><p>Hibernate offers many mapping features beyond JPA. They solve real problems: computed fields, business keys, soft delete, read-only views, multi-tenancy and batch loading. Use them on purpose.</p><h2>Overview</h2><table><thead><tr><th>Feature</th><th>Annotation</th><th>Use for</th></tr></thead><tbody><tr><td>Computed column</td><td>@Formula(&quot;...sql...&quot;)</td><td>Read only value computed by SQL</td></tr><tr><td>Business key lookup</td><td>@NaturalId</td><td>Fast lookup by email or sku with a cached mapping to id</td></tr><tr><td>Soft delete</td><td>@SQLDelete + @SQLRestriction</td><td>Mark as deleted instead of removing rows</td></tr><tr><td>Filter by parameter</td><td>@FilterDef + @Filter</td><td>Multi-tenancy, active data only, switchable per session</td></tr><tr><td>Discriminator tenant</td><td>@TenantId (Hibernate 6.0+)</td><td>Row level multi-tenancy</td></tr><tr><td>Read only entity</td><td>@Immutable</td><td>Reference data, views. No dirty checking, no updates</td></tr><tr><td>Entity on a query</td><td>@Subselect</td><td>Map a SQL query as a read only entity</td></tr><tr><td>Update only changed columns</td><td>@DynamicUpdate</td><td>Wide tables, avoid overwriting concurrent changes</td></tr><tr><td>Insert only set columns</td><td>@DynamicInsert</td><td>Let database defaults apply</td></tr><tr><td>Batch load associations</td><td>@BatchSize(size = 25)</td><td>Defend against N+1</td></tr><tr><td>Fetch mode</td><td>@Fetch(FetchMode.SUBSELECT)</td><td>Load all collections of the loaded parents in one query</td></tr><tr><td>Database generated value</td><td>@Generated / @CurrentTimestamp</td><td>Values computed by the database</td></tr><tr><td>JSON attribute</td><td>@JdbcTypeCode(SqlTypes.JSON)</td><td>Store objects as json or jsonb</td></tr></tbody></table><h2>@Formula</h2><pre><code class="language-java">@Entity
+public class Customer {
+    @Id @GeneratedValue private Long id;
+
+    @Formula(&quot;(select count(*) from orders o where o.customer_id = id)&quot;)
+    private Long orderCount;                                     // computed when the customer is loaded (extra subquery each time)
+
+    @Formula(&quot;concat(first_name, &#x27; &#x27;, last_name)&quot;)
+    private String fullName;
+}</code></pre><h2>@NaturalId: fast business key lookup</h2><pre><code class="language-java">@Entity
+public class User {
+    @Id @GeneratedValue private Long id;
+    @NaturalId @Column(nullable = false, unique = true) private String email;      // immutable by default
+}
+
+Optional&lt;User&gt; user = em.unwrap(Session.class).bySimpleNaturalId(User.class).loadOptional(&quot;ram@example.com&quot;);
+// Uses a cache from natural id to primary key in the persistence context: repeated lookups need no SQL</code></pre><h2>Soft delete</h2><pre><code class="language-java">@Entity
+@SQLDelete(sql = &quot;update customer set deleted = true, deleted_at = now() where id = ? and version = ?&quot;)
+@SQLRestriction(&quot;deleted = false&quot;)                                // Hibernate 6.3+, older: @Where(clause = &quot;deleted = false&quot;)
+public class Customer {
+    @Id @GeneratedValue private Long id;
+    @Version private Long version;
+    private boolean deleted;
+    private Instant deletedAt;
+}
+// repository.delete(customer)  ─► UPDATE. All selects add &quot;and deleted = false&quot;.
+// Native queries and unique constraints ignore the restriction: use a partial unique index (where deleted = false).</code></pre><h2>Filters: switchable conditions</h2><pre><code class="language-java">@Entity
+@FilterDef(name = &quot;tenantFilter&quot;, parameters = @ParamDef(name = &quot;tenantId&quot;, type = Long.class), defaultCondition = &quot;tenant_id = :tenantId&quot;)
+@Filter(name = &quot;tenantFilter&quot;)
+public class Invoice {
+    @Id @GeneratedValue private Long id;
+    @Column(name = &quot;tenant_id&quot;) private Long tenantId;
+}
+
+// enable per transaction (AOP or a transaction callback)
+@Transactional
+public List&lt;Invoice&gt; invoicesFor(long tenantId) {
+    em.unwrap(Session.class).enableFilter(&quot;tenantFilter&quot;).setParameter(&quot;tenantId&quot;, tenantId);
+    return em.createQuery(&quot;select i from Invoice i&quot;, Invoice.class).getResultList();
+}
+// Filters apply to queries, NOT to em.find(id) by primary key.</code></pre><h2>@TenantId: row level tenant column</h2><pre><code class="language-java">@Entity
+public class Order {
+    @Id @GeneratedValue private Long id;
+    @TenantId private String tenantId;                 // set automatically on insert, added to every query
+}
+
+@Component
+public class TenantResolver implements CurrentTenantIdentifierResolver&lt;String&gt; {
+    @Override public String resolveCurrentTenantIdentifier() { return TenantContext.current(); }
+    @Override public boolean validateExistingCurrentSessions() { return true; }
+}
+// register: spring.jpa.properties.hibernate.tenant_identifier_resolver=com.example.TenantResolver</code></pre><h2>Read only data: @Immutable and @Subselect</h2><pre><code class="language-java">@Entity @Immutable
+@Table(name = &quot;country&quot;)
+public class Country { @Id private String code; private String name; }         // never updated, skipped by dirty checking
+
+@Entity @Immutable
+@Subselect(&quot;select c.id as id, c.name as name, count(o.id) as orders from customer c left join orders o on o.customer_id = c.id group by c.id, c.name&quot;)
+@Synchronize({ &quot;customer&quot;, &quot;orders&quot; })                                          // flush pending changes of these tables before querying this entity
+public class CustomerSummary { @Id private Long id; private String name; private long orders; }</code></pre><h2>Enable batch loading for one association</h2><pre><code class="language-java">@OneToMany(mappedBy = &quot;customer&quot;)
+@BatchSize(size = 25)                       // load orders of up to 25 customers with one &quot;where customer_id in (?, ?, ... )&quot;
+private List&lt;OrderEntity&gt; orders = new ArrayList&lt;&gt;();
+
+@Entity @BatchSize(size = 50) public class Country { }      // proxies of Country are initialized 50 at a time</code></pre><h2>Bytecode enhancement (optional)</h2><p>With the hibernate-enhance-maven-plugin you can enable lazy loading of basic attributes (@Basic(fetch = LAZY) for a big description column), bytecode based dirty tracking (no snapshot comparison) and lazy one-to-one on the inverse side. It changes the build, so use it only when profiling shows a need.</p><p class="use"><b>Common mistake:</b> Using @Formula with an expensive subquery on a popular entity. The subquery runs every time the entity is loaded, even in lists where the value is not needed. Compute it in a projection query for the screens that need it.</p><h2>Interview questions</h2><h3>What is the difference between @Where and @Filter?</h3><p>@Where (@SQLRestriction) is always applied and cannot be turned off. @Filter can be enabled or disabled per session and takes parameters, so it fits multi-tenancy.</p><h3>Does soft delete affect em.find()?</h3><p>@SQLRestriction is added to entity loading, including find by id in Hibernate. Native queries ignore it.</p><h3>When would I choose @DynamicUpdate?</h3><p>For very wide tables, or when different transactions change different columns of the same row and you want to avoid overwriting untouched columns. It costs a new SQL string per combination of changed columns.</p><div class="np"><a href="/springjpa/mapping/collections-mapping/">&larr; Collections: Bag, Set, List with Order, Map and @ElementCollection</a><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

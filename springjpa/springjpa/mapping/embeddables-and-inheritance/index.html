@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Embeddables, @MappedSuperclass and Inheritance Strategies – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Reuse fields with embeddables and mapped superclasses, and choose an inheritance strategy for class hierarchies.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/mapping/embeddables-and-inheritance/">
+    <meta property="og:title" content="Embeddables, @MappedSuperclass and Inheritance Strategies – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/" aria-current="page">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/mapping/">Entity Mapping</a> / Embeddables, @MappedSuperclass and Inheritance Strategies</div>
+<h1>Embeddables, @MappedSuperclass and Inheritance Strategies</h1><p>Reuse fields with embeddables and mapped superclasses, and choose an inheritance strategy for class hierarchies. Each choice has a different table layout, query cost and constraints.</p><h2>@Embeddable: value objects inside an entity</h2><pre><code class="language-java">@Embeddable
+public class Address {
+    private String street;
+    private String city;
+    @Column(name = &quot;zip_code&quot;, length = 10) private String zipCode;
+    protected Address() { }
+    public Address(String street, String city, String zipCode) { this.street = street; this.city = city; this.zipCode = zipCode; }
+}
+
+@Entity
+public class Customer {
+    @Id @GeneratedValue private Long id;
+
+    @Embedded private Address billing;
+
+    @Embedded
+    @AttributeOverrides({
+        @AttributeOverride(name = &quot;street&quot;,  column = @Column(name = &quot;ship_street&quot;)),
+        @AttributeOverride(name = &quot;city&quot;,    column = @Column(name = &quot;ship_city&quot;)),
+        @AttributeOverride(name = &quot;zipCode&quot;, column = @Column(name = &quot;ship_zip&quot;)) })
+    private Address shipping;                        // the same class twice, with different column names
+}
+// One table: customer(id, street, city, zip_code, ship_street, ship_city, ship_zip). No id and no separate lifecycle.
+// If ALL embedded columns are null, Hibernate loads the embedded object as null.</code></pre><h2>@MappedSuperclass: share fields, no table</h2><pre><code class="language-java">@MappedSuperclass
+public abstract class BaseEntity {
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE) private Long id;
+    @Version private Long version;
+    @CreationTimestamp @Column(updatable = false) private Instant createdAt;
+    @UpdateTimestamp private Instant updatedAt;
+
+    @Override public boolean equals(Object o) { return this == o || (o instanceof BaseEntity b &amp;&amp; id != null &amp;&amp; id.equals(b.id)); }
+    @Override public int hashCode() { return getClass().hashCode(); }
+}
+
+@Entity public class Product extends BaseEntity { private String name; }
+@Entity public class Customer extends BaseEntity { private String email; }
+// Every entity gets id, version and timestamps. BaseEntity cannot be queried or used in a relationship.</code></pre><h2>Inheritance strategies</h2><pre class="dia"><code>abstract class Payment { id, amount }       class CardPayment extends Payment { cardNumber }     class UpiPayment extends Payment { vpa }
+
+SINGLE_TABLE                       JOINED                                TABLE_PER_CLASS
+payment                            payment(id, amount)                   card_payment(id, amount, card_number)
+(id, amount, dtype,                card_payment(id FK, card_number)      upi_payment(id, amount, vpa)
+ card_number, vpa)                 upi_payment(id FK, vpa)               (no parent table)
+one table, NULLs for unused        joins to load a subclass              UNION for polymorphic queries</code></pre><pre><code class="language-java">@Entity
+@Inheritance(strategy = InheritanceType.SINGLE_TABLE)              // default
+@DiscriminatorColumn(name = &quot;payment_type&quot;, discriminatorType = DiscriminatorType.STRING)
+public abstract class Payment {
+    @Id @GeneratedValue private Long id;
+    private BigDecimal amount;
+}
+
+@Entity @DiscriminatorValue(&quot;CARD&quot;)
+public class CardPayment extends Payment { private String cardLast4; }
+
+@Entity @DiscriminatorValue(&quot;UPI&quot;)
+public class UpiPayment extends Payment { private String vpa; }
+
+// polymorphic query: all payments (any subtype)           select p from Payment p
+// only one type:                                           select p from CardPayment p
+// filter by type in JPQL:                                  select p from Payment p where type(p) = CardPayment</code></pre><table><thead><tr><th>Strategy</th><th>Pros</th><th>Cons</th><th>Choose when</th></tr></thead><tbody><tr><td>SINGLE_TABLE</td><td>Fastest (no joins), simple queries</td><td>Subclass columns must be nullable, wide sparse table, no NOT NULL constraints for subclass fields</td><td>Few subclasses with few extra fields (default choice)</td></tr><tr><td>JOINED</td><td>Normalized, NOT NULL constraints possible</td><td>Joins on every query, slower inserts (several tables)</td><td>Many subclass fields, data integrity matters</td></tr><tr><td>TABLE_PER_CLASS</td><td>No joins for single type queries</td><td>Polymorphic queries use UNION, ids must be unique across tables (no IDENTITY)</td><td>Rarely. Avoid</td></tr><tr><td>@MappedSuperclass</td><td>Simple reuse</td><td>Parent is not an entity: no polymorphic queries or relations to it</td><td>Shared audit and id fields</td></tr></tbody></table><ul><li>Prefer composition over deep hierarchies. A payment with a type column and a JSON or embedded detail is often simpler than five subclasses.</li><li>Relations to abstract parents (ManyToOne Payment) work with SINGLE_TABLE and JOINED.</li><li>Loading a lazy ManyToOne to a hierarchy returns a proxy of the PARENT class, so instanceof CardPayment fails. Use Hibernate.unproxy(x) or the visitor pattern.</li></ul><p class="use"><b>Common mistake:</b> Using SINGLE_TABLE with many subclasses and expecting NOT NULL constraints. All subclass columns must allow null, so the database cannot protect your data. Use JOINED or a different model when constraints matter.</p><h2>Interview questions</h2><h3>@Embeddable or a separate entity?</h3><p>Use an embeddable for a value object that has no identity and lives and dies with its owner (address, money). Use an entity when it has its own id, lifecycle or is shared.</p><h3>What is the default inheritance strategy?</h3><p>SINGLE_TABLE with a DTYPE discriminator column.</p><h3>Why does instanceof fail on a lazy relation to a subclass?</h3><p>The proxy is a subclass of the declared parent type, not of the real subtype. Unproxy the object or avoid type checks.</p><div class="np"><a href="/springjpa/mapping/relationships-mapping/">&larr; Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

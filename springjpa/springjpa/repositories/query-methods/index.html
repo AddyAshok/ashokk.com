@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Query Methods: Derived Queries, @Query, Native, Named and Modifying – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Spring Data can create queries from method names, from JPQL or SQL strings, or from named queries.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/repositories/query-methods/">
+    <meta property="og:title" content="Query Methods: Derived Queries, @Query, Native, Named and Modifying – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/" aria-current="page">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/repositories/">Spring Data Repositories</a> / Query Methods: Derived Queries, @Query, Native, Named and Modifying</div>
+<h1>Query Methods: Derived Queries, @Query, Native, Named and Modifying</h1><p>Spring Data can create queries from method names, from JPQL or SQL strings, or from named queries. This page covers every kind, all return types, parameters, SpEL, hints and the traps of modifying queries.</p><h2>Derived queries: the method name grammar</h2><pre class="dia"><code>findTop3 DistinctBy Category And PriceGreaterThan OrderBy PriceDesc
+ │    │        │     │        │   │                │
+ │    │        │     │        │   └ property + operator   └ sorting
+ │    │        │     └ property (may be nested: CustomerAddressCity)
+ │    │        └ &quot;By&quot; starts the predicate
+ │    └ Distinct
+ └ subject prefix: find, read, get, query, search, stream, count, exists, delete, remove   (+ Top / First N)</code></pre><table><thead><tr><th>Keyword</th><th>JPQL fragment</th><th>Keyword</th><th>JPQL fragment</th></tr></thead><tbody><tr><td>And, Or</td><td>and, or</td><td>Between</td><td>between ?1 and ?2</td></tr><tr><td>LessThan, LessThanEqual</td><td>&lt;, &lt;=</td><td>GreaterThan, GreaterThanEqual</td><td>&gt;, &gt;=</td></tr><tr><td>IsNull, IsNotNull</td><td>is null / is not null</td><td>In, NotIn</td><td>in (?1)</td></tr><tr><td>Like, NotLike</td><td>like ?1 (you add %)</td><td>StartingWith, EndingWith, Containing</td><td>like ?1% / %?1 / %?1%</td></tr><tr><td>IgnoreCase, AllIgnoreCase</td><td>upper(x) = upper(?1)</td><td>True, False</td><td>= true / = false</td></tr><tr><td>Not</td><td>&lt;&gt; ?1</td><td>OrderBy...Asc/Desc</td><td>order by</td></tr><tr><td>Top, First, Distinct</td><td>limit, distinct</td><td>Nested (Customer_Address_City)</td><td>join. The underscore removes ambiguity</td></tr></tbody></table><pre><code class="language-java">public interface ProductRepository extends JpaRepository&lt;Product, Long&gt; {
+
+    Optional&lt;Product&gt; findBySku(String sku);                                        // Optional: max one result
+    List&lt;Product&gt; findByCategoryAndPriceGreaterThanOrderByPriceDesc(String category, BigDecimal min);
+    List&lt;Product&gt; findByNameContainingIgnoreCase(String text);
+    List&lt;Product&gt; findByCategoryIn(Collection&lt;String&gt; categories);
+    List&lt;Product&gt; findTop5ByStatusOrderByCreatedAtDesc(ProductStatus status);
+    boolean existsBySku(String sku);
+    long countByCategory(String category);
+    List&lt;Product&gt; findByCustomer_Address_City(String city);                         // nested property with joins
+    Stream&lt;Product&gt; streamByCategory(String category);                              // needs an open transaction, close it!
+    void deleteByStatus(ProductStatus status);                                      // loads entities, deletes one by one
+    CompletableFuture&lt;List&lt;Product&gt;&gt; findByCategory(String category, Pageable p);   // needs @Async
+}</code></pre><h2>Return types</h2><table><thead><tr><th>Return type</th><th>Behavior</th></tr></thead><tbody><tr><td>T, Optional&lt;T&gt;</td><td>Single result. More than one row: IncorrectResultSizeDataAccessException. Zero rows: null or Optional.empty</td></tr><tr><td>List&lt;T&gt;, Collection&lt;T&gt;, Set&lt;T&gt;</td><td>All rows</td></tr><tr><td>Stream&lt;T&gt;</td><td>Lazy cursor. Needs @Transactional and try-with-resources</td></tr><tr><td>Page&lt;T&gt;</td><td>Content + total count query + page info</td></tr><tr><td>Slice&lt;T&gt;</td><td>Content + hasNext, no count query (fetches size + 1 rows)</td></tr><tr><td>Window&lt;T&gt;</td><td>Scroll result with offset or keyset positions (Spring Data 3.1)</td></tr><tr><td>long, boolean, int</td><td>count, exists, modifying rows count</td></tr><tr><td>Projection interface / record / Tuple</td><td>Only selected columns</td></tr><tr><td>CompletableFuture, Future</td><td>Async execution with @Async</td></tr></tbody></table><h2>@Query with JPQL</h2><pre><code class="language-java">@Query(&quot;select p from Product p where p.category = :category and p.price between :min and :max order by p.price&quot;)
+List&lt;Product&gt; inRange(@Param(&quot;category&quot;) String category, @Param(&quot;min&quot;) BigDecimal min, @Param(&quot;max&quot;) BigDecimal max);
+
+@Query(&quot;select p from Product p left join fetch p.tags where p.id = :id&quot;)                // fetch join
+Optional&lt;Product&gt; findWithTags(@Param(&quot;id&quot;) Long id);
+
+@Query(&quot;select new com.example.dto.CategoryStat(p.category, count(p), avg(p.price)) from Product p group by p.category&quot;)
+List&lt;CategoryStat&gt; stats();
+
+@Query(&quot;select p from Product p where lower(p.name) like lower(concat(&#x27;%&#x27;, :text, &#x27;%&#x27;))&quot;)   // safe: parameter is bound
+List&lt;Product&gt; search(@Param(&quot;text&quot;) String text);
+
+@Query(&quot;select p from Product p where p.owner = ?#{principal.username}&quot;)                  // SpEL with Spring Security extension bean</code></pre><h2>Native queries</h2><pre><code class="language-java">@Query(value = &quot;select * from products where category = :category order by price limit 5&quot;, nativeQuery = true)
+List&lt;Product&gt; topFiveNative(@Param(&quot;category&quot;) String category);
+
+// Paging a native query needs an explicit count query
+@Query(value = &quot;select * from products where category = :c&quot;, countQuery = &quot;select count(*) from products where category = :c&quot;, nativeQuery = true)
+Page&lt;Product&gt; pageNative(@Param(&quot;c&quot;) String c, Pageable pageable);
+
+// interface projection with a native query: aliases must match getter names
+interface NameAndPrice { String getName(); BigDecimal getPrice(); }
+@Query(value = &quot;select name as name, price as price from products&quot;, nativeQuery = true)
+List&lt;NameAndPrice&gt; namesAndPrices();</code></pre><h2>Modifying queries</h2><pre><code class="language-java">@Modifying(clearAutomatically = true, flushAutomatically = true)
+@Query(&quot;update Product p set p.price = p.price * :factor where p.category = :category&quot;)
+int raisePrices(@Param(&quot;category&quot;) String category, @Param(&quot;factor&quot;) BigDecimal factor);   // needs a transaction (add @Transactional in the service)
+
+@Modifying
+@Query(&quot;delete from Product p where p.status = &#x27;ARCHIVED&#x27; and p.updatedAt &lt; :before&quot;)
+int purge(@Param(&quot;before&quot;) Instant before);</code></pre><ul><li>A bulk update or delete goes STRAIGHT to the database. Entities already loaded in the persistence context still hold the old values, and version columns are not incremented.</li><li>flushAutomatically = true flushes pending changes BEFORE the query. clearAutomatically = true clears the persistence context AFTER it, so you do not read stale entities.</li><li>Bulk queries skip cascades, callbacks and orphan removal.</li></ul><h2>Named queries, hints, entity graphs</h2><pre><code class="language-java">@Entity
+@NamedQuery(name = &quot;Product.findExpensive&quot;, query = &quot;select p from Product p where p.price &gt; :limit&quot;)
+public class Product { }
+
+public interface ProductRepository extends JpaRepository&lt;Product, Long&gt; {
+    List&lt;Product&gt; findExpensive(@Param(&quot;limit&quot;) BigDecimal limit);          // method name = Product.findExpensive
+
+    @QueryHints({ @QueryHint(name = &quot;org.hibernate.readOnly&quot;, value = &quot;true&quot;),          // no dirty checking for the result
+                  @QueryHint(name = &quot;jakarta.persistence.query.timeout&quot;, value = &quot;3000&quot;),
+                  @QueryHint(name = &quot;org.hibernate.fetchSize&quot;, value = &quot;500&quot;) })
+    List&lt;Product&gt; findByCategory(String category);
+
+    @EntityGraph(attributePaths = { &quot;tags&quot;, &quot;supplier&quot; })                    // fetch join without writing JPQL
+    List&lt;Product&gt; findByStatus(ProductStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)                                    // select ... for update
+    Optional&lt;Product&gt; findWithLockById(Long id);
+}</code></pre><h2>Parameters</h2><table><thead><tr><th>Style</th><th>Example</th><th>Note</th></tr></thead><tbody><tr><td>Positional</td><td>?1, ?2</td><td>Fragile when you reorder parameters</td></tr><tr><td>Named</td><td>:category with @Param</td><td>Recommended (Boot compiles with -parameters, so @Param is optional)</td></tr><tr><td>Collection</td><td>in :ids</td><td>Large lists: split, or use a temp table. hibernate.query.in_clause_parameter_padding helps the plan cache</td></tr><tr><td>Like patterns</td><td>concat(&#x27;%&#x27;, :t, &#x27;%&#x27;)</td><td>Escape % and _ from user input if literal matching is required</td></tr><tr><td>Pageable / Sort</td><td>Method parameter</td><td>Sort is appended to JPQL: only allow known property names</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Building the sort from a user string in a native query or with unchecked property names. Sort by user input opens injection paths (order by expressions). Allow only a fixed set of sortable fields.</p><h2>Interview questions</h2><h3>Why does a derived delete run many DELETE statements?</h3><p>deleteBy... loads all matching entities first and deletes them one by one (to honor cascades and callbacks). For bulk deletion write a @Modifying @Query.</p><h3>Why do I still see old values after my @Modifying query?</h3><p>The persistence context still holds the previously loaded entities. Use clearAutomatically = true or reload the entities in a new transaction.</p><h3>Page or Slice?</h3><p>Page runs an extra count query, which can be expensive on big tables. Use Slice (or Window) when you only need to know whether a next page exists.</p><div class="np"><a href="/springjpa/repositories/repository-abstraction/">&larr; Spring Data Repository Abstraction: Interfaces and Methods</a><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

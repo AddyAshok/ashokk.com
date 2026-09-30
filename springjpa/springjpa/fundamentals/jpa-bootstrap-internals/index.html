@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Before your first repository call, Spring Boot and Hibernate do a lot of work at startup.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/fundamentals/jpa-bootstrap-internals/">
+    <meta property="og:title" content="JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/" aria-current="page">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/fundamentals/">Fundamentals and Setup</a> / JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</div>
+<h1>JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</h1><p>Before your first repository call, Spring Boot and Hibernate do a lot of work at startup. Knowing the objects involved (EntityManagerFactory, EntityManager, Session, shared EntityManager proxy) explains thread safety, lifecycle and why some errors appear at startup.</p><h2>Startup workflow</h2><pre class="dia"><code>Spring Boot startup
+  1. DataSourceAutoConfiguration       ─► HikariDataSource bean
+  2. HibernateJpaAutoConfiguration     ─► JpaProperties, HibernateProperties, JpaVendorAdapter (HibernateJpaVendorAdapter)
+  3. LocalContainerEntityManagerFactoryBean  (Spring&#x27;s FactoryBean, needs DataSource + packagesToScan)
+        ├─ scans packages for @Entity, @Embeddable, @MappedSuperclass  (PersistenceUnitInfo, no persistence.xml needed)
+        └─ asks Hibernate to build the SessionFactory:
+              a. read annotations ─► Metadata (entities, tables, columns, relations, generators)
+              b. resolve dialect, types, naming strategies
+              c. build query plans for @NamedQuery and validate them
+              d. run schema tool per ddl-auto (validate / update / create ...)
+              e. prepare proxies (ByteBuddy), caches, event listeners
+        Result: EntityManagerFactory (= SessionFactory)      ONE per database, thread safe, expensive, lives as long as the application
+  4. JpaTransactionManager             ─► bound to the EntityManagerFactory
+  5. JpaRepositoriesAutoConfiguration  ─► repository proxies (next topics)
+Errors at startup: unknown property in @Query or query method, wrong mapping, missing column with ddl-auto=validate.</code></pre><table><thead><tr><th>Object</th><th>Lifetime</th><th>Thread safe?</th><th>Hibernate name</th><th>Role</th></tr></thead><tbody><tr><td>EntityManagerFactory</td><td>Application</td><td>Yes</td><td>SessionFactory</td><td>Metadata, caches, connection provider, creates EntityManagers</td></tr><tr><td>EntityManager</td><td>One unit of work (usually one transaction)</td><td>NO</td><td>Session</td><td>The persistence context: loads and tracks entities, runs queries</td></tr><tr><td>Persistence context</td><td>Same as its EntityManager</td><td>No</td><td>Session internals (PersistenceContext)</td><td>Map of managed entities (first level cache) and snapshots</td></tr><tr><td>EntityTransaction / JDBC Transaction</td><td>Transaction</td><td>No</td><td>Transaction</td><td>Begin, commit, rollback on the JDBC connection</td></tr></tbody></table><h2>Why can I inject one EntityManager into a singleton?</h2><p>An EntityManager is not thread safe, but a Spring singleton is shared by all threads. Spring solves this with a shared EntityManager proxy: @PersistenceContext (or constructor injection of EntityManager) injects a proxy created by SharedEntityManagerCreator. Each method call on the proxy looks up the EntityManager bound to the CURRENT transaction (thread) and delegates to it.</p><pre class="dia"><code>@Service class ReportService { @PersistenceContext EntityManager em; }     em is a PROXY (same object for all threads)
+
+thread A: @Transactional method ─► JpaTransactionManager opens Session A and binds it to thread A (TransactionSynchronizationManager)
+          em.find(...)  ─► proxy asks &quot;which EntityManager is bound to my thread?&quot;  ─► Session A
+thread B: @Transactional method ─► Session B ...
+No transaction active: the proxy creates a temporary EntityManager for ONE call and closes it afterwards.
+   So entities returned outside a transaction are DETACHED at once, and lazy loading fails.</code></pre><pre><code class="language-java">@Service
+public class ProductQueryService {
+
+    private final EntityManager em;                             // constructor injection works too (Spring provides the shared proxy)
+
+    public ProductQueryService(EntityManager em) { this.em = em; }
+
+    @Transactional(readOnly = true)
+    public List&lt;Product&gt; cheap(BigDecimal max) {
+        return em.createQuery(&quot;select p from Product p where p.price &lt; :max&quot;, Product.class)
+                 .setParameter(&quot;max&quot;, max)
+                 .getResultList();
+    }
+}</code></pre><h2>Get the Hibernate Session when you need Hibernate features</h2><pre><code class="language-java">Session session = em.unwrap(Session.class);                 // Hibernate API behind the JPA API
+session.setDefaultReadOnly(true);                             // stop dirty checking for everything loaded in this session
+session.enableFilter(&quot;tenantFilter&quot;).setParameter(&quot;tenantId&quot;, 7L);
+SessionFactory sf = emf.unwrap(SessionFactory.class);         // statistics, cache management</code></pre><h2>Transaction and EntityManager scope: the modes</h2><table><thead><tr><th>Mode</th><th>How</th><th>Notes</th></tr></thead><tbody><tr><td>Transaction-scoped (Spring default)</td><td>EntityManager lives for the transaction. Detached after commit</td><td>Recommended</td></tr><tr><td>Extended (open-in-view)</td><td>EntityManager kept open for the whole HTTP request</td><td>spring.jpa.open-in-view=true. Hides lazy problems. Avoid</td></tr><tr><td>Application-managed</td><td>emf.createEntityManager() and you close it yourself</td><td>Batch tools, special cases. You must handle transactions and close it</td></tr></tbody></table><pre><code class="language-java">// Application-managed EntityManager (rare): you own the lifecycle
+EntityManager em = emf.createEntityManager();
+EntityTransaction tx = em.getTransaction();
+try {
+    tx.begin();
+    em.persist(new Product(&quot;Pen&quot;, BigDecimal.TEN, &quot;office&quot;));
+    tx.commit();
+} catch (RuntimeException e) {
+    if (tx.isActive()) tx.rollback();
+    throw e;
+} finally {
+    em.close();
+}</code></pre><p class="use"><b>Common mistake:</b> Storing an EntityManager (or entities loaded from it) in a field of a singleton or passing it to another thread. The shared proxy is safe, but a real Session is not thread safe. Never use a Session or managed entities across threads.</p><h2>Interview questions</h2><h3>Is EntityManagerFactory expensive to create?</h3><p>Yes. It parses all mappings and builds metadata, so it is created once at startup and shared. EntityManagers are cheap and short lived.</p><h3>What does @PersistenceContext really inject?</h3><p>A shared EntityManager proxy. It delegates to the EntityManager of the current transaction, or to a temporary one if no transaction is active.</p><h3>Why do entities become detached after the service method?</h3><p>The transaction-scoped EntityManager is closed at commit. The objects survive as plain Java objects, but changes are no longer tracked and lazy fields cannot load.</p><div class="np"><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">&larr; Setup and Configuration: Every Important Property Explained</a><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

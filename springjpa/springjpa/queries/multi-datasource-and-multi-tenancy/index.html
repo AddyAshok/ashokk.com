@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Multiple Databases, Read Replicas and Multi-Tenancy – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Real systems have more than one database: separate schemas for reporting, read replicas for scale, or one database per customer.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/queries/multi-datasource-and-multi-tenancy/">
+    <meta property="og:title" content="Multiple Databases, Read Replicas and Multi-Tenancy – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/" aria-current="page">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/queries/">Queries and Multiple Databases</a> / Multiple Databases, Read Replicas and Multi-Tenancy</div>
+<h1>Multiple Databases, Read Replicas and Multi-Tenancy</h1><p>Real systems have more than one database: separate schemas for reporting, read replicas for scale, or one database per customer. This page shows how to configure several EntityManagerFactories, route reads to replicas, and the three multi-tenancy models.</p><h2>Two databases with two persistence units</h2><pre class="dia"><code>Package layout (each unit has its own entities and repositories):
+com.example.orders.domain, com.example.orders.repo     ─► DataSource ordersDs ─► EntityManagerFactory ordersEmf ─► TransactionManager ordersTx
+com.example.reports.domain, com.example.reports.repo   ─► DataSource reportsDs ─► EntityManagerFactory reportsEmf ─► TransactionManager reportsTx
+@Transactional(&quot;ordersTx&quot;) picks the manager. A transaction NEVER spans both databases (no XA by default).</code></pre><pre><code class="language-java">@Configuration
+@EnableJpaRepositories(basePackages = &quot;com.example.orders.repo&quot;, entityManagerFactoryRef = &quot;ordersEmf&quot;, transactionManagerRef = &quot;ordersTx&quot;)
+public class OrdersJpaConfig {
+
+    @Bean @Primary @ConfigurationProperties(&quot;app.datasource.orders&quot;)
+    DataSourceProperties ordersProps() { return new DataSourceProperties(); }
+
+    @Bean @Primary
+    DataSource ordersDs(@Qualifier(&quot;ordersProps&quot;) DataSourceProperties p) { return p.initializeDataSourceBuilder().type(HikariDataSource.class).build(); }
+
+    @Bean @Primary
+    LocalContainerEntityManagerFactoryBean ordersEmf(EntityManagerFactoryBuilder builder, @Qualifier(&quot;ordersDs&quot;) DataSource ds) {
+        return builder.dataSource(ds).packages(&quot;com.example.orders.domain&quot;).persistenceUnit(&quot;orders&quot;)
+                .properties(Map.of(&quot;hibernate.hbm2ddl.auto&quot;, &quot;validate&quot;)).build();
+    }
+
+    @Bean @Primary
+    PlatformTransactionManager ordersTx(@Qualifier(&quot;ordersEmf&quot;) EntityManagerFactory emf) { return new JpaTransactionManager(emf); }
+}
+// Repeat for reports with other names (without @Primary) and other packages.</code></pre><p>Flyway or Liquibase needs one configuration per datasource too (a FlywayMigrationInitializer bean per unit, or run migrations from separate modules).</p><h2>Read replicas: route by transaction type</h2><pre><code class="language-java">public class ReplicaRoutingDataSource extends AbstractRoutingDataSource {
+    @Override
+    protected Object determineCurrentLookupKey() {
+        return TransactionSynchronizationManager.isCurrentTransactionReadOnly() ? &quot;replica&quot; : &quot;primary&quot;;
+    }
+}
+
+@Configuration
+class RoutingConfig {
+    @Bean
+    DataSource dataSource(@Qualifier(&quot;primaryDs&quot;) DataSource primary, @Qualifier(&quot;replicaDs&quot;) DataSource replica) {
+        ReplicaRoutingDataSource routing = new ReplicaRoutingDataSource();
+        routing.setTargetDataSources(Map.of(&quot;primary&quot;, primary, &quot;replica&quot;, replica));
+        routing.setDefaultTargetDataSource(primary);
+        return new LazyConnectionDataSourceProxy(routing);          // REQUIRED: delay getting the connection until the first SQL,
+    }                                                               // after Spring has set the read-only flag of the transaction
+}
+
+@Transactional(readOnly = true)     // goes to the replica
+public List&lt;ProductView&gt; list() { return repository.findViews(); }
+@Transactional                      // goes to the primary
+public void update() { }</code></pre><ul><li>Replicas are eventually consistent: a read right after a write may not see it (replication lag). Keep read-your-own-write flows on the primary.</li><li>Without LazyConnectionDataSourceProxy Spring acquires the connection before the readOnly flag is known and everything goes to the same database.</li><li>Size the pools separately and monitor the replication lag.</li></ul><h2>Multi-tenancy models</h2><table><thead><tr><th>Model</th><th>Isolation</th><th>Cost</th><th>How in Hibernate/Spring</th></tr></thead><tbody><tr><td>Database per tenant</td><td>Strongest</td><td>Highest: many pools and migrations</td><td>MultiTenantConnectionProvider + CurrentTenantIdentifierResolver, one DataSource per tenant</td></tr><tr><td>Schema per tenant</td><td>Strong</td><td>Medium: migrations per schema</td><td>Same providers, set search_path or schema per connection</td></tr><tr><td>Discriminator column (shared tables)</td><td>Logical only: a bug leaks data</td><td>Lowest</td><td>@TenantId (Hibernate 6) or @Filter</td></tr></tbody></table><pre><code class="language-java">// Schema per tenant (PostgreSQL)
+@Component
+public class SchemaMultiTenantConnectionProvider implements MultiTenantConnectionProvider&lt;String&gt; {
+    private final DataSource dataSource;
+    public SchemaMultiTenantConnectionProvider(DataSource dataSource) { this.dataSource = dataSource; }
+
+    @Override public Connection getAnyConnection() throws SQLException { return dataSource.getConnection(); }
+    @Override public void releaseAnyConnection(Connection c) throws SQLException { c.close(); }
+
+    @Override
+    public Connection getConnection(String tenantId) throws SQLException {
+        Connection c = dataSource.getConnection();
+        try (Statement st = c.createStatement()) { st.execute(&quot;set search_path to \&quot;&quot; + sanitize(tenantId) + &quot;\&quot;&quot;); }
+        return c;
+    }
+    @Override
+    public void releaseConnection(String tenantId, Connection c) throws SQLException {
+        try (Statement st = c.createStatement()) { st.execute(&quot;set search_path to public&quot;); }
+        c.close();
+    }
+    @Override public boolean supportsAggressiveRelease() { return false; }
+    @Override public boolean isUnwrappableAs(Class&lt;?&gt; type) { return false; }
+    @Override public &lt;T&gt; T unwrap(Class&lt;T&gt; type) { return null; }
+
+    private static String sanitize(String t) {
+        if (!t.matches(&quot;[a-z0-9_]{1,30}&quot;)) throw new IllegalArgumentException(&quot;bad tenant&quot;);      // never build SQL from unchecked input
+        return t;
+    }
+}
+// register: spring.jpa.properties.hibernate.multi_tenant_connection_provider = ...   and tenant_identifier_resolver = ...
+// The tenant id is set per request (filter reading a header or JWT claim into a TenantContext ThreadLocal, cleared in finally).</code></pre><ul><li>Where the tenant id comes from must be trusted: take it from the authenticated token, not from a header the client controls.</li><li>Cache keys, file paths and background jobs must include the tenant too, or data leaks across tenants.</li><li>Test with two tenants that one can never read the other&#x27;s rows.</li></ul><p class="use"><b>Common mistake:</b> Taking the tenant id from a client controlled header without verifying it against the authenticated user. Any user could read another tenant&#x27;s data by changing the header. Derive the tenant from the authenticated identity.</p><h2>Interview questions</h2><h3>Can one @Transactional cover two databases?</h3><p>Not with plain JPA transaction managers: each manager handles one database. Use eventual consistency (outbox, events), or XA/JTA only when unavoidable.</p><h3>Why does my read replica routing not work?</h3><p>Usually LazyConnectionDataSourceProxy is missing, so the connection is taken before the read-only flag is set, or readOnly is not set on the transaction.</p><h3>Which multi-tenancy model should I choose?</h3><p>Shared tables with @TenantId for many small tenants, schema per tenant for medium isolation needs, database per tenant for the strongest isolation and big tenants.</p><div class="np"><a href="/springjpa/queries/native-queries-and-procedures/">&larr; Native SQL, Result Mapping and Stored Procedures</a><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

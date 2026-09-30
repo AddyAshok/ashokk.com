@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Native SQL, Result Mapping and Stored Procedures – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="JPQL cannot express everything: window functions, database specific features, recursive queries, bulk moves.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/queries/native-queries-and-procedures/">
+    <meta property="og:title" content="Native SQL, Result Mapping and Stored Procedures – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/" aria-current="page">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/queries/">Queries and Multiple Databases</a> / Native SQL, Result Mapping and Stored Procedures</div>
+<h1>Native SQL, Result Mapping and Stored Procedures</h1><p>JPQL cannot express everything: window functions, database specific features, recursive queries, bulk moves. JPA lets you run native SQL and map the result, and call stored procedures. This page shows all mapping options and the risks.</p><h2>Native query returning entities or values</h2><pre><code class="language-java">// entity result: SELECT must return ALL columns of the entity
+List&lt;Product&gt; products = em.createNativeQuery(&quot;select * from products where category = :c limit 10&quot;, Product.class)
+        .setParameter(&quot;c&quot;, &quot;books&quot;).getResultList();
+
+// scalar result: Object[] per row (or Tuple)
+List&lt;Object[]&gt; rows = em.createNativeQuery(&quot;select category, count(*) from products group by category&quot;).getResultList();
+
+// Hibernate 6: direct DTO mapping with Tuple and aliases
+List&lt;Tuple&gt; tuples = em.createNativeQuery(&quot;select category as category, count(*) as cnt from products group by category&quot;, Tuple.class).getResultList();
+tuples.forEach(t -&gt; System.out.println(t.get(&quot;category&quot;, String.class) + &quot; &quot; + t.get(&quot;cnt&quot;, Long.class)));</code></pre><h2>Native queries in repositories</h2><pre><code class="language-java">public interface ProductRepository extends JpaRepository&lt;Product, Long&gt; {
+
+    @Query(value = &quot;select * from products p where p.tsv @@ plainto_tsquery(:q)&quot;, nativeQuery = true)          // PostgreSQL full text search
+    List&lt;Product&gt; fullText(@Param(&quot;q&quot;) String q);
+
+    @Query(value = &quot;select p.category as category, p.name as name, p.price as price, &quot;
+                 + &quot;rank() over (partition by p.category order by p.price desc) as rank &quot;
+                 + &quot;from products p&quot;, nativeQuery = true)                                                        // window function
+    List&lt;RankedProduct&gt; ranked();
+    interface RankedProduct { String getCategory(); String getName(); BigDecimal getPrice(); Integer getRank(); }
+
+    @Modifying
+    @Transactional
+    @Query(value = &quot;insert into product_archive select * from products where status = &#x27;ARCHIVED&#x27;&quot;, nativeQuery = true)
+    int archive();
+}</code></pre><h2>Recursive query (tree data)</h2><pre><code class="language-java">@Query(value = &quot;with recursive tree as (&quot;
+             + &quot; select id, name, parent_id, 0 as depth from category where id = :root&quot;
+             + &quot; union all&quot;
+             + &quot; select c.id, c.name, c.parent_id, t.depth + 1 from category c join tree t on c.parent_id = t.id) &quot;
+             + &quot;select id as id, name as name, depth as depth from tree order by depth, name&quot;, nativeQuery = true)
+List&lt;CategoryNode&gt; subtree(@Param(&quot;root&quot;) Long root);</code></pre><h2>Native query cautions</h2><ul><li>Native queries are not portable across databases.</li><li>A native SELECT does not know about changes still pending in the persistence context. Hibernate flushes only the tables it knows: use query.addSynchronizedEntityClass(...), or call em.flush() before the query.</li><li>Entities returned by native queries are managed like any other. Use projections or Tuple for read-only data.</li><li>Sorting and paging: Spring Data cannot add Sort to a native query. Write order by yourself and give a countQuery for Page results.</li><li>Always use bound parameters, never string concatenation (SQL injection).</li></ul><h2>@SqlResultSetMapping (JPA standard)</h2><pre><code class="language-java">@SqlResultSetMapping(name = &quot;CategoryStatMapping&quot;,
+    classes = @ConstructorResult(targetClass = CategoryStat.class,
+        columns = { @ColumnResult(name = &quot;category&quot;, type = String.class), @ColumnResult(name = &quot;cnt&quot;, type = Long.class) }))
+@NamedNativeQuery(name = &quot;Product.categoryStats&quot;,
+    query = &quot;select category, count(*) as cnt from products group by category&quot;,
+    resultSetMapping = &quot;CategoryStatMapping&quot;)
+@Entity public class Product { }
+
+List&lt;CategoryStat&gt; stats = em.createNamedQuery(&quot;Product.categoryStats&quot;, CategoryStat.class).getResultList();</code></pre><h2>Stored procedures and functions</h2><pre><code class="language-java">// Repository style
+public interface OrderRepository extends JpaRepository&lt;OrderEntity, Long&gt; {
+    @Procedure(procedureName = &quot;calculate_tax&quot;)                 // CALL calculate_tax(?)  with one OUT parameter as return value
+    BigDecimal calculateTax(@Param(&quot;order_id&quot;) Long orderId);
+}
+
+// Named procedure with IN and OUT parameters
+@NamedStoredProcedureQuery(name = &quot;OrderEntity.close&quot;, procedureName = &quot;close_order&quot;,
+    parameters = { @StoredProcedureParameter(mode = ParameterMode.IN, name = &quot;p_id&quot;, type = Long.class),
+                   @StoredProcedureParameter(mode = ParameterMode.OUT, name = &quot;p_status&quot;, type = String.class) })
+@Entity public class OrderEntity { }
+
+StoredProcedureQuery q = em.createNamedStoredProcedureQuery(&quot;OrderEntity.close&quot;);
+q.setParameter(&quot;p_id&quot;, 42L);
+q.execute();
+String status = (String) q.getOutputParameterValue(&quot;p_status&quot;);
+// PostgreSQL functions returning a table are usually easier with a native SELECT: select * from my_function(:p)</code></pre><h2>Mixing JPA and JdbcTemplate in one transaction</h2><pre><code class="language-java">@Service
+public class MixedService {
+    private final ProductRepository products;          // JPA
+    private final JdbcTemplate jdbc;                   // plain SQL
+
+    @Transactional                                     // JpaTransactionManager exposes the SAME JDBC connection to JdbcTemplate
+    public void archive() {
+        products.flush();                              // make pending JPA changes visible to the JDBC statement
+        jdbc.update(&quot;insert into audit_log(action) values (&#x27;archive&#x27;)&quot;);
+        // both use the same connection and the same transaction (JpaDialect supports it)
+    }
+}</code></pre><p class="use"><b>Common mistake:</b> Running a native query right after changing entities in the same transaction and expecting to see the changes. Hibernate may not flush pending inserts before a native query. Call flush() first (or synchronize the entity classes).</p><h2>Interview questions</h2><h3>Can I paginate a native query with Pageable?</h3><p>Yes, but you must provide a countQuery for Page results and write the ORDER BY yourself, because Spring Data cannot rewrite native SQL safely.</p><h3>Do JPA and JdbcTemplate share a transaction?</h3><p>Yes with JpaTransactionManager. It binds the JDBC connection to the thread, and JdbcTemplate uses it. Flush the persistence context first if the JDBC code must see the entity changes.</p><h3>When should I choose native SQL over JPQL?</h3><p>For database specific features (window functions, full-text search, recursive queries, bulk moves) and reports. Keep the rest in JPQL for portability and type safety.</p><div class="np"><a href="/springjpa/queries/jpql-and-criteria/">&larr; JPQL and Criteria API in Depth</a><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

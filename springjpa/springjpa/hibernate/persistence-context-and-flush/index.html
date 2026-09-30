@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Hibernate Internals: Persistence Context, Dirty Checking and Flush – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Most JPA bugs come from not understanding the persistence context.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/hibernate/persistence-context-and-flush/">
+    <meta property="og:title" content="Hibernate Internals: Persistence Context, Dirty Checking and Flush – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/" aria-current="page">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/hibernate/">Hibernate Internals</a> / Hibernate Internals: Persistence Context, Dirty Checking and Flush</div>
+<h1>Hibernate Internals: Persistence Context, Dirty Checking and Flush</h1><p>Most JPA bugs come from not understanding the persistence context. This page explains entity states, the first-level cache, when SQL is really executed, and how Hibernate detects changes, so that transactions, lazy loading and batch processing stop being magic.</p><h2>Entity states</h2><pre class="dia"><code>            new Product()                          em.find() / query
+                 │                                        │
+            ┌────▼─────┐   persist()/save()          ┌────▼─────┐   remove()   ┌──────────┐
+            │ TRANSIENT│ ───────────────────────────►│ MANAGED  │ ────────────►│ REMOVED  │
+            │ (no id,  │                             │ (tracked │              │ (delete  │
+            │ unknown) │◄──── garbage collected      │ by the   │◄─ persist ───│ at flush)│
+            └──────────┘                             │ context) │              └──────────┘
+                                                     └────┬─────┘
+                                       detach(), clear(), │  ▲ merge()
+                                       close, tx ends     ▼  │
+                                                     ┌──────────┐
+                                                     │ DETACHED │  has id, but changes are NOT tracked
+                                                     └──────────┘</code></pre><h2>Persistence context = first-level cache</h2><p>Inside a transaction, the EntityManager keeps a map of all loaded entities (key = entity type and id). If you ask for the same id again, Hibernate returns the same Java object without a new SQL query. It also keeps a snapshot of each entity as it was loaded, for dirty checking.</p><pre><code class="language-java">@Service
+public class DemoService {
+
+    @PersistenceContext
+    private EntityManager em;
+
+    @Transactional
+    public void demo() {
+        Product a = em.find(Product.class, 1L);      // SQL: select ... where id=1
+        Product b = em.find(Product.class, 1L);      // NO SQL, from the persistence context
+        System.out.println(a == b);                  // true (same object)
+
+        a.setName(&quot;New name&quot;);                       // just change the object
+        // no save() call. At commit Hibernate compares a with its snapshot,
+        // sees the difference and runs: update products set name=? where id=?
+    }
+}</code></pre><h2>When is SQL executed? Flush</h2><p>persist() or setters do not run SQL immediately. Hibernate collects changes in an action queue and sends them to the database at flush time. With FlushMode AUTO (default), a flush happens: (1) before a query that could be affected by pending changes, (2) before the transaction commits, and (3) when you call flush() yourself.</p><pre class="dia"><code>@Transactional method
+   em.persist(order)          ─► queued INSERT (may run at once for IDENTITY ids)
+   order.setStatus(&quot;PAID&quot;)    ─► change detected later
+   em.createQuery(&quot;select o from Order o ...&quot;)   ─► AUTO FLUSH first, so the query sees the changes
+   ...
+   method returns ─► flush ─► COMMIT
+
+Flush order inside Hibernate: inserts, updates, collection changes, deletes.
+The database only makes changes visible to other transactions after COMMIT.</code></pre><h2>Dirty checking in detail</h2><ul><li>At load time Hibernate stores a copy of the property values (snapshot).</li><li>At flush it compares every managed entity with its snapshot (cost grows with the number of managed entities).</li><li>Only changed entities generate UPDATE. By default all columns are updated. @DynamicUpdate updates only changed columns.</li><li>Read-only work: use @Transactional(readOnly = true) or query hints so Hibernate skips snapshots and dirty checking, or use DTO projections.</li></ul><h2>persist vs merge vs save</h2><table><thead><tr><th>Method</th><th>Behavior</th></tr></thead><tbody><tr><td>persist(entity)</td><td>Makes a NEW entity managed. The same object becomes managed. Fails for detached entities</td></tr><tr><td>merge(entity)</td><td>Copies the state of a detached (or new) object into a managed instance and RETURNS the managed instance. The passed object stays detached</td></tr><tr><td>save() of Spring Data</td><td>Calls persist if the entity is new (id null or version null), otherwise merge. Always use the returned object</td></tr><tr><td>saveAndFlush()</td><td>save + flush immediately</td></tr></tbody></table><h2>ID generation and batching</h2><table><thead><tr><th>Strategy</th><th>How</th><th>Batch inserts?</th></tr></thead><tbody><tr><td>IDENTITY</td><td>Database auto increment. The INSERT must run immediately to get the id</td><td>No. JDBC batching is disabled for inserts</td></tr><tr><td>SEQUENCE</td><td>Hibernate takes ids from a database sequence, in blocks (allocationSize, default 50)</td><td>Yes. Recommended for PostgreSQL and Oracle</td></tr><tr><td>UUID</td><td>Generated in the application</td><td>Yes, but random UUID keys hurt index locality</td></tr></tbody></table><pre><code class="language-java">@Entity
+public class Invoice {
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE, generator = &quot;invoice_seq&quot;)
+    @SequenceGenerator(name = &quot;invoice_seq&quot;, sequenceName = &quot;invoice_seq&quot;, allocationSize = 50)
+    private Long id;
+}</code></pre><pre><code class="language-properties">spring.jpa.properties.hibernate.jdbc.batch_size=50
+spring.jpa.properties.hibernate.order_inserts=true
+spring.jpa.properties.hibernate.order_updates=true</code></pre><pre><code class="language-java">@Transactional
+public void importInvoices(List&lt;InvoiceDto&gt; dtos) {
+    int i = 0;
+    for (InvoiceDto dto : dtos) {
+        em.persist(new Invoice(dto));
+        if (++i % 50 == 0) {
+            em.flush();        // send the batch
+            em.clear();        // detach everything so memory does not grow
+        }
+    }
+}</code></pre><h2>Lazy loading and proxies</h2><ul><li>A LAZY association is a proxy object. Its fields are loaded with an extra SELECT the first time you access them, and only while the session is open.</li><li>getReferenceById(id) returns a proxy without SQL. It is useful to set a foreign key: order.setCustomer(customerRepo.getReferenceById(5L)).</li><li>Accessing a lazy field after the transaction ends throws LazyInitializationException.</li></ul><h2>Second-level cache (optional)</h2><p>The first-level cache lives for one transaction. A second-level cache is shared across sessions and needs a provider (Ehcache, Caffeine through JCache, Infinispan). It helps for read-mostly reference data such as countries or currencies. It adds complexity (invalidation, clusters), so use it only after measuring.</p><pre><code class="language-java">@Entity
+@org.hibernate.annotations.Cache(usage = CacheConcurrencyStrategy.READ_ONLY)
+@Cacheable
+public class Country {
+    @Id private String code;
+    private String name;
+}
+// spring.jpa.properties.hibernate.cache.use_second_level_cache=true
+// spring.jpa.properties.hibernate.cache.region.factory_class=jcache</code></pre><p class="use"><b>Common mistake:</b> Loading millions of rows in one transaction and calling save() in a loop. The persistence context keeps every entity (memory grows) and dirty checking becomes slower each time. Process data in chunks and call flush() and clear(), or use bulk queries and JDBC batching.</p><h2>Interview questions</h2><h3>Why did my entity change get saved without calling save()?</h3><p>The entity is managed inside the transaction. Hibernate detected the change by dirty checking and issued an UPDATE at flush time.</p><h3>Why is my JDBC batch insert not batching?</h3><p>Typical reasons: GenerationType.IDENTITY, hibernate.jdbc.batch_size not set, or entities with different types not ordered (set order_inserts=true).</p><h3>What is the N+1 problem in terms of the persistence context?</h3><p>Each lazy access on an unloaded association runs a separate SELECT because the data is not in the first-level cache yet. Loading it together with a fetch join or entity graph fixes it.</p><div class="np"><a href="/springjpa/repositories/custom-repositories-and-auditing/">&larr; Custom Repositories, Base Class, Domain Events and Auditing</a><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

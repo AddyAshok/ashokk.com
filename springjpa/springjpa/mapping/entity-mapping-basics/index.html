@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Entity Mapping Basics: @Entity, @Column, Types and Converters – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Mapping tells Hibernate how a class corresponds to a table.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/mapping/entity-mapping-basics/">
+    <meta property="og:title" content="Entity Mapping Basics: @Entity, @Column, Types and Converters – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/" aria-current="page">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/mapping/">Entity Mapping</a> / Entity Mapping Basics: @Entity, @Column, Types and Converters</div>
+<h1>Entity Mapping Basics: @Entity, @Column, Types and Converters</h1><p>Mapping tells Hibernate how a class corresponds to a table. This page covers the annotations you use every day, how Java types map to SQL types, enums, dates, large objects and converters, plus the rules an entity class must follow.</p><h2>Rules for an entity class</h2><ul><li>Annotated with @Entity and has an identifier (@Id).</li><li>Has a no-argument constructor (public or protected). Hibernate creates instances by reflection.</li><li>Not final, and no final methods that Hibernate should override: proxies for lazy loading are subclasses.</li><li>Fields are not final (Hibernate sets them). Records cannot be entities (they are final and immutable).</li><li>Access type is decided by where @Id is placed: on a field means field access (recommended), on a getter means property access.</li></ul><pre><code class="language-java">@Entity
+@Table(name = &quot;products&quot;,
+       uniqueConstraints = @UniqueConstraint(name = &quot;uk_products_sku&quot;, columnNames = &quot;sku&quot;),
+       indexes = { @Index(name = &quot;idx_products_category&quot;, columnList = &quot;category&quot;),
+                   @Index(name = &quot;idx_products_created&quot;, columnList = &quot;created_at&quot;) })
+public class Product {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.SEQUENCE)
+    private Long id;
+
+    @Column(name = &quot;sku&quot;, nullable = false, length = 40, updatable = false)
+    private String sku;
+
+    @Column(nullable = false, length = 120)
+    private String name;
+
+    @Column(nullable = false, precision = 12, scale = 2)          // money: BigDecimal, never double
+    private BigDecimal price;
+
+    @Enumerated(EnumType.STRING)                                  // store the NAME. ORDINAL breaks when constants are reordered
+    @Column(nullable = false, length = 20)
+    private ProductStatus status = ProductStatus.DRAFT;
+
+    @Lob                                                          // large text (CLOB); use sparingly and lazily
+    private String description;
+
+    @Transient                                                    // not persisted
+    private BigDecimal priceWithTax;
+
+    @Column(name = &quot;created_at&quot;, nullable = false, updatable = false)
+    private Instant createdAt = Instant.now();
+
+    protected Product() { }                                       // for Hibernate
+    public Product(String sku, String name, BigDecimal price) { this.sku = sku; this.name = name; this.price = price; }
+
+    // getters, setters only where needed
+}</code></pre><h2>Java type to SQL type</h2><table><thead><tr><th>Java type</th><th>Default column type (PostgreSQL)</th><th>Note</th></tr></thead><tbody><tr><td>String</td><td>varchar(255)</td><td>Set length. Unbounded text: @Column(length = 4000) or columnDefinition text</td></tr><tr><td>int, Integer / long, Long</td><td>integer / bigint</td><td>Use wrapper types for nullable columns</td></tr><tr><td>BigDecimal</td><td>numeric(38,2)</td><td>Set precision and scale for money</td></tr><tr><td>boolean</td><td>boolean</td><td></td></tr><tr><td>LocalDate / LocalTime / LocalDateTime</td><td>date / time / timestamp(6)</td><td>No @Temporal needed with java.time</td></tr><tr><td>Instant / OffsetDateTime</td><td>timestamp with time zone (Hibernate 6)</td><td>Store instants in UTC (hibernate.jdbc.time_zone=UTC)</td></tr><tr><td>UUID</td><td>uuid</td><td>Native on PostgreSQL</td></tr><tr><td>enum + @Enumerated(STRING)</td><td>varchar</td><td>Or a database enum type with @JdbcTypeCode</td></tr><tr><td>byte[] / @Lob</td><td>bytea / oid or bytea</td><td>Avoid large blobs in the entity, store files elsewhere</td></tr><tr><td>Map / object with @JdbcTypeCode(SqlTypes.JSON)</td><td>jsonb</td><td>Hibernate 6 JSON support</td></tr></tbody></table><h2>AttributeConverter: custom types</h2><pre><code class="language-java">@Converter(autoApply = false)
+public class TagsConverter implements AttributeConverter&lt;Set&lt;String&gt;, String&gt; {
+    @Override
+    public String convertToDatabaseColumn(Set&lt;String&gt; tags) {
+        return tags == null || tags.isEmpty() ? null : String.join(&quot;,&quot;, new TreeSet&lt;&gt;(tags));
+    }
+    @Override
+    public Set&lt;String&gt; convertToEntityAttribute(String db) {
+        return db == null ? new HashSet&lt;&gt;() : new HashSet&lt;&gt;(Arrays.asList(db.split(&quot;,&quot;)));
+    }
+}
+
+@Convert(converter = TagsConverter.class)
+@Column(length = 500)
+private Set&lt;String&gt; tags = new HashSet&lt;&gt;();
+
+// value object stored as one column
+@Converter(autoApply = true)                                      // applied to EVERY Money attribute automatically
+public class MoneyConverter implements AttributeConverter&lt;Money, BigDecimal&gt; {
+    public BigDecimal convertToDatabaseColumn(Money m) { return m == null ? null : m.amount(); }
+    public Money convertToEntityAttribute(BigDecimal v) { return v == null ? null : new Money(v); }
+}</code></pre><p>Converters cannot be used on ids, versions or relations, and queries on converted values compare the database value. Keep them simple.</p><h2>JSON column (Hibernate 6)</h2><pre><code class="language-java">@JdbcTypeCode(SqlTypes.JSON)
+@Column(columnDefinition = &quot;jsonb&quot;)
+private Map&lt;String, Object&gt; attributes = new HashMap&lt;&gt;();
+
+@JdbcTypeCode(SqlTypes.JSON)
+private ShippingInfo shipping;                                   // any Jackson-serializable class or record
+// query: select p from Product p where function(&#x27;jsonb_extract_path_text&#x27;, p.attributes, &#x27;color&#x27;) = &#x27;red&#x27;   (or a native query)</code></pre><h2>Readable timestamps without writing code</h2><pre><code class="language-java">@CreationTimestamp @Column(updatable = false) private Instant createdAt;      // Hibernate sets it on insert
+@UpdateTimestamp private Instant updatedAt;                                     // Hibernate sets it on every update
+// Spring Data alternative with @CreatedDate / @LastModifiedDate needs @EnableJpaAuditing (see the auditing page)</code></pre><h2>Entity lifecycle callbacks</h2><pre><code class="language-java">@PrePersist  void onCreate() { if (sku == null) sku = &quot;SKU-&quot; + UUID.randomUUID(); }
+@PreUpdate   void onUpdate() { this.updatedAt = Instant.now(); }
+@PostLoad    void afterLoad() { this.priceWithTax = price.multiply(new BigDecimal(&quot;1.18&quot;)); }
+@PreRemove   void beforeDelete() { }
+// Callbacks run inside the flush. Do not call repositories or start queries from them.</code></pre><table><thead><tr><th>Annotation</th><th>Purpose</th></tr></thead><tbody><tr><td>@Table(name, schema, uniqueConstraints, indexes)</td><td>Table name, constraints and indexes (used by schema generation)</td></tr><tr><td>@Column(nullable, length, precision, scale, unique, updatable, insertable)</td><td>Column details</td></tr><tr><td>@Transient</td><td>Not persistent</td></tr><tr><td>@Lob</td><td>Large object</td></tr><tr><td>@Enumerated</td><td>STRING or ORDINAL</td></tr><tr><td>@Convert</td><td>Custom conversion</td></tr><tr><td>@Basic(fetch = LAZY)</td><td>Lazy basic attribute (needs bytecode enhancement)</td></tr><tr><td>@Access</td><td>Field or property access</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Using EnumType.ORDINAL (the default!) or double for money. Inserting a new enum constant in the middle silently changes the meaning of existing rows, and double produces rounding errors. Use EnumType.STRING and BigDecimal.</p><h2>Interview questions</h2><h3>Can a Java record be an entity?</h3><p>No. Entities need a no-arg constructor, non-final classes and mutable fields for Hibernate. Use records for DTOs and projections. (Records can be @Embeddable in Hibernate 6.2 and newer.)</p><h3>Why should entities not be final?</h3><p>Hibernate creates lazy proxies as subclasses of your entity. A final class cannot be extended, so lazy loading of that entity would not work.</p><h3>Field access or property access?</h3><p>Field access (@Id on a field). It does not force public getters, and Hibernate does not call your getters and setters (which may contain logic).</p><div class="np"><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">&larr; JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

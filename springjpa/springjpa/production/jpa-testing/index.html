@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Testing JPA: @DataJpaTest, Testcontainers and Query Counting – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Repository and mapping code must be tested against a real database of the same type as production.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/production/jpa-testing/">
+    <meta property="og:title" content="Testing JPA: @DataJpaTest, Testcontainers and Query Counting – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/" aria-current="page">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/production/">Production, Testing and Interviews</a> / Testing JPA: @DataJpaTest, Testcontainers and Query Counting</div>
+<h1>Testing JPA: @DataJpaTest, Testcontainers and Query Counting</h1><p>Repository and mapping code must be tested against a real database of the same type as production. This page shows the slice test, Testcontainers setup, test data strategies, transaction behavior in tests, and tests that fail on N+1 problems.</p><h2>@DataJpaTest: the slice</h2><pre class="dia"><code>@DataJpaTest starts only:  DataSource (embedded by default), EntityManagerFactory, entities, Spring Data repositories, TestEntityManager, Flyway if present
+It does NOT start:  controllers, services, security, Kafka ...
+Every test method runs inside a transaction that is ROLLED BACK at the end (data does not leak between tests).
+By default it replaces your DataSource with an embedded H2 database: dangerous when production uses PostgreSQL (different SQL, types, locking).</code></pre><pre><code class="language-java">@DataJpaTest
+class ProductRepositoryTest {
+
+    @Autowired ProductRepository repository;
+    @Autowired TestEntityManager em;
+
+    @Test
+    void findsProductsInRange() {
+        em.persist(new Product(&quot;A&quot;, new BigDecimal(&quot;10&quot;), &quot;books&quot;));
+        em.persist(new Product(&quot;B&quot;, new BigDecimal(&quot;50&quot;), &quot;books&quot;));
+        em.persist(new Product(&quot;C&quot;, new BigDecimal(&quot;90&quot;), &quot;toys&quot;));
+        em.flush();                                                    // send SQL now
+        em.clear();                                                    // empty the persistence context: force a real SELECT
+
+        List&lt;Product&gt; result = repository.inRange(&quot;books&quot;, new BigDecimal(&quot;20&quot;), new BigDecimal(&quot;60&quot;));
+
+        assertThat(result).extracting(Product::getSku).containsExactly(&quot;B&quot;);
+    }
+}</code></pre><p>Always flush() and clear() before the query under test. Otherwise the query may return the objects from the first level cache and hide mapping or SQL errors.</p><h2>Use the real database with Testcontainers</h2><pre><code class="language-java">@DataJpaTest
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)      // keep the real DataSource
+@Testcontainers
+class ProductRepositoryPostgresTest {
+
+    @Container
+    @ServiceConnection                                                              // Boot wires the datasource to the container
+    static PostgreSQLContainer&lt;?&gt; postgres = new PostgreSQLContainer&lt;&gt;(&quot;postgres:16&quot;);
+
+    @Autowired ProductRepository repository;
+
+    @Test
+    void jsonbAndConstraintsWorkLikeInProduction() { /* ... */ }
+}
+// Share ONE container between test classes: put it in an abstract base class or use a singleton container / reuse to keep the build fast.</code></pre><pre><code class="language-properties"># src/test/resources/application-test.properties
+spring.jpa.hibernate.ddl-auto=validate          # Flyway creates the schema, the test proves that entities match it
+spring.flyway.enabled=true
+spring.jpa.properties.hibernate.generate_statistics=true</code></pre><h2>Test data: @Sql and builders</h2><pre><code class="language-java">@Test
+@Sql(scripts = &quot;/sql/products.sql&quot;, executionPhase = Sql.ExecutionPhase.BEFORE_TEST_METHOD)
+@Sql(statements = &quot;delete from products&quot;, executionPhase = Sql.ExecutionPhase.AFTER_TEST_METHOD)
+void withSqlData() { }
+
+// Builder for readable tests
+Product p = ProductBuilder.aProduct().named(&quot;Pen&quot;).priced(&quot;10&quot;).inCategory(&quot;office&quot;).build();</code></pre><h2>Transactions in tests</h2><table><thead><tr><th>Situation</th><th>Behavior</th></tr></thead><tbody><tr><td>@DataJpaTest / @Transactional test</td><td>One transaction per test, rollback at the end. Commit-time behavior (constraint checks, afterCommit, flush errors) is NOT exercised unless you flush()</td></tr><tr><td>@SpringBootTest without @Transactional</td><td>Each repository call commits. You must clean up data yourself</td></tr><tr><td>MockMvc test with @Transactional</td><td>Same thread: controller and test share the transaction. Not so with RANDOM_PORT clients</td></tr><tr><td>@Commit / @Rollback(false)</td><td>Keep the data of a test</td></tr></tbody></table><pre><code class="language-java">@Test
+void uniqueConstraintIsEnforced() {
+    repository.saveAndFlush(new Product(&quot;SKU-1&quot;, &quot;A&quot;, BigDecimal.ONE));
+    assertThrows(DataIntegrityViolationException.class,
+            () -&gt; repository.saveAndFlush(new Product(&quot;SKU-1&quot;, &quot;B&quot;, BigDecimal.TEN)));       // flush is needed to hit the database
+}</code></pre><h2>Make N+1 a test failure</h2><pre><code class="language-java">@DataJpaTest
+@Import(QueryCounter.class)
+class OrderQueryCountTest {
+    @Autowired OrderRepository orders;
+    @Autowired TestEntityManager em;
+    @Autowired EntityManagerFactory emf;
+
+    @Test
+    void listWithCustomerNeedsOneQuery() {
+        // arrange 20 orders with different customers ...
+        em.flush(); em.clear();
+        Statistics stats = emf.unwrap(SessionFactory.class).getStatistics();
+        stats.setStatisticsEnabled(true);
+        stats.clear();
+
+        orders.findAllWithCustomer().forEach(o -&gt; o.getCustomer().getName());
+
+        assertThat(stats.getPrepareStatementCount()).isEqualTo(1);           // a lazy N+1 would be 21
+    }
+}</code></pre><h2>Test the mapping and schema itself</h2><ul><li>With ddl-auto=validate and Flyway, every test start proves that entities match the migrations.</li><li>Test that a delete with cascade removes children and orphans, and that soft delete filters work.</li><li>Test optimistic locking with two transactions (two threads or two EntityManagers) expecting ObjectOptimisticLockingFailureException.</li><li>Test custom queries with edge data: nulls, empty collections, duplicates, big pages.</li></ul><p class="use"><b>Common mistake:</b> Testing repositories only against H2 while production runs PostgreSQL or MySQL. Differences in SQL dialect, types, locking and constraints show up only in production. Use Testcontainers with the same database type.</p><h2>Interview questions</h2><h3>Why did my repository test pass but the query fails in production?</h3><p>Probably H2 hides a difference, or the first level cache returned objects without running the query. Use a real database and call flush() and clear() before the assertion.</p><h3>Why does @DataJpaTest roll back my data?</h3><p>Each test runs in a transaction that is rolled back at the end, to keep tests independent. Use @Commit or @Rollback(false) only when needed.</p><h3>How do I speed up Testcontainers tests?</h3><p>Share one container across test classes (static singleton or base class), enable container reuse locally, and keep slice tests small.</p><div class="np"><a href="/springjpa/production/datasource-pool-and-migrations/">&larr; Connection Pool (HikariCP) and Flyway Migrations for JPA</a><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

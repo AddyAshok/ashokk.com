@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="When two users change the same row, someone must lose or wait.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/transactions/locking-and-concurrency/">
+    <meta property="og:title" content="Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/" aria-current="page">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/transactions/">Transactions and Concurrency</a> / Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</div>
+<h1>Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</h1><p>When two users change the same row, someone must lose or wait. JPA gives you optimistic locking with a version column, pessimistic database locks, and lock modes. Choose the right one, and handle the failures correctly.</p><h2>The problem: lost update</h2><pre class="dia"><code>stock = 10.  Two requests each: read stock, subtract 1, write.
+ T1 read 10                T2 read 10
+ T1 write 9  COMMIT        T2 write 9  COMMIT      ◄── result 9, should be 8: one update is LOST
+Locking, atomic SQL or a higher isolation level is required.</code></pre><h2>Optimistic locking with @Version</h2><pre><code class="language-java">@Entity
+public class Product {
+    @Id @GeneratedValue private Long id;
+    @Version private Long version;                 // Hibernate increments it on every update
+    private int stock;
+}
+// update product set stock=?, version=4 where id=? and version=3     (the version in the WHERE clause)
+// 0 rows updated ─► the row was changed by someone else ─► ObjectOptimisticLockingFailureException</code></pre><pre class="dia"><code>T1: load (version 3)                        T2: load (version 3)
+T1: stock 10 -&gt; 9, flush: UPDATE ... WHERE version = 3  ─► 1 row, version now 4   COMMIT
+                                                     T2: stock 10 -&gt; 9, flush: UPDATE ... WHERE version = 3 ─► 0 rows
+                                                     ─► OptimisticLockException ─► T2 rolls back ─► retry: reload (version 4), apply again</code></pre><pre><code class="language-java">@Service
+public class StockService {
+
+    @Retryable(retryFor = ObjectOptimisticLockingFailureException.class, maxAttempts = 3, backoff = @Backoff(delay = 50, multiplier = 2))
+    @Transactional
+    public void reserve(Long productId, int quantity) {
+        Product p = productRepository.findById(productId).orElseThrow();
+        if (p.getStock() &lt; quantity) throw new OutOfStockException(productId);
+        p.setStock(p.getStock() - quantity);                    // version check happens at flush/commit
+    }
+}   // @Retryable (spring-retry, or Spring Framework 7 @Retryable): every attempt runs in a NEW transaction because the annotation is OUTSIDE @Transactional
+
+@RestControllerAdvice
+class ConflictHandler {
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    ProblemDetail conflict() { return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, &quot;The data was changed by someone else. Reload and try again.&quot;); }
+}</code></pre><p>For REST APIs send the version as an ETag and require If-Match on PUT: the client updates only the version it saw. That turns optimistic locking into a contract with the client.</p><h2>Atomic SQL: the best fix for counters</h2><pre><code class="language-java">@Modifying
+@Query(&quot;update Product p set p.stock = p.stock - :qty where p.id = :id and p.stock &gt;= :qty&quot;)
+int reserve(@Param(&quot;id&quot;) Long id, @Param(&quot;qty&quot;) int qty);       // returns 0 when there was not enough stock. No read, no lock held across statements</code></pre><h2>Pessimistic locking</h2><pre><code class="language-java">public interface AccountRepository extends JpaRepository&lt;Account, Long&gt; {
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)                      // select ... for update
+    @QueryHints(@QueryHint(name = &quot;jakarta.persistence.lock.timeout&quot;, value = &quot;3000&quot;))     // wait max 3 s
+    @Query(&quot;select a from Account a where a.id = :id&quot;)
+    Optional&lt;Account&gt; lockById(@Param(&quot;id&quot;) Long id);
+}
+
+@Transactional
+public void transfer(Long from, Long to, BigDecimal amount) {
+    Long first = Math.min(from, to), second = Math.max(from, to);          // ALWAYS lock in the same order: avoids deadlocks
+    Account a = accounts.lockById(first).orElseThrow();
+    Account b = accounts.lockById(second).orElseThrow();
+    // ... move the money. Locks are released at commit or rollback
+}</code></pre><table><thead><tr><th>Lock mode</th><th>SQL</th><th>Effect</th></tr></thead><tbody><tr><td>OPTIMISTIC (READ)</td><td>Version check at commit</td><td>Fails if the row was changed by someone else even though this transaction only READ it</td></tr><tr><td>OPTIMISTIC_FORCE_INCREMENT (WRITE)</td><td>Version incremented at commit</td><td>Force a version change for aggregate roots when only children changed</td></tr><tr><td>PESSIMISTIC_READ</td><td>select ... for share</td><td>Others can read but not write</td></tr><tr><td>PESSIMISTIC_WRITE</td><td>select ... for update</td><td>Others cannot read with lock or write until commit</td></tr><tr><td>PESSIMISTIC_FORCE_INCREMENT</td><td>for update + version increment</td><td>Rare</td></tr></tbody></table><h2>Job queue with SKIP LOCKED</h2><pre><code class="language-java">// Many workers take different jobs without blocking each other
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+@QueryHints(@QueryHint(name = &quot;jakarta.persistence.lock.timeout&quot;, value = &quot;-2&quot;))      // -2 = SKIP LOCKED (Hibernate)
+@Query(&quot;select j from Job j where j.status = &#x27;NEW&#x27; order by j.createdAt&quot;)
+List&lt;Job&gt; nextJobs(Pageable limit);            // PageRequest.of(0, 10)</code></pre><h2>Isolation levels and anomalies</h2><table><thead><tr><th>Isolation</th><th>Dirty read</th><th>Non-repeatable read</th><th>Phantom</th><th>Default in</th></tr></thead><tbody><tr><td>READ_UNCOMMITTED</td><td>Possible</td><td>Possible</td><td>Possible</td><td>-</td></tr><tr><td>READ_COMMITTED</td><td>No</td><td>Possible</td><td>Possible</td><td>PostgreSQL, Oracle, SQL Server</td></tr><tr><td>REPEATABLE_READ</td><td>No</td><td>No</td><td>Possible (not in PostgreSQL)</td><td>MySQL InnoDB</td></tr><tr><td>SERIALIZABLE</td><td>No</td><td>No</td><td>No</td><td>Rarely used: needs retry on serialization failure</td></tr></tbody></table><p>Hibernate&#x27;s first level cache already gives repeatable reads for entities loaded by id in one transaction. Isolation levels matter for queries and for concurrent writers. Prefer optimistic locking and atomic SQL over raising the isolation level.</p><h2>Deadlocks</h2><pre class="dia"><code>T1: lock row A ─► wants row B          T2: lock row B ─► wants row A          both wait forever ─► the database kills one (deadlock detected)
+Rules: lock rows in a consistent order (by id), keep transactions short, do not call remote services while holding locks,
+       catch CannotAcquireLockException / PessimisticLockingFailureException and retry the whole transaction.</code></pre><p class="use"><b>Common mistake:</b> Catching an optimistic lock exception inside the same @Transactional method and continuing. The persistence context is in an inconsistent state and the transaction is marked rollback-only. Let the exception leave the transaction and retry the whole unit of work from outside.</p><h2>Interview questions</h2><h3>Optimistic or pessimistic locking?</h3><p>Start with optimistic locking (@Version). Use pessimistic locks for hot rows with frequent conflicts (balances, stock) or queue processing with SKIP LOCKED. Use atomic UPDATE statements for simple counters.</p><h3>Why must the retry be outside the transaction?</h3><p>A failed transaction is rolled back and its persistence context is dead. A retry needs a new transaction and freshly loaded data.</p><h3>Does @Version protect bulk updates?</h3><p>No. A JPQL update statement does not touch the version unless you write it (set p.version = p.version + 1). Use versioned bulk update syntax: update versioned Product p set ... in HQL.</p><div class="np"><a href="/springjpa/transactions/jpa-transactions/">&larr; Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

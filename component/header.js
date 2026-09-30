@@ -246,7 +246,7 @@ class CustomHeader extends HTMLElement {
                         <a href="/java/" class="active">Java</a>
                         <a href="/springboot/">Spring Boot</a>
                         <a href="/springsecurity/">Spring Security</a>
-                        <a href="/">Spring JPA</a>
+                        <a href="/springjpa/">Spring JPA</a>
                         <a href="/">Microservices</a>
                         <a href="/">Kafka</a>
                         <a href="/">AWS Cloud</a>

@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Pagination, Sorting and Projections – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Loading everything is the fastest way to crash a service.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/repositories/pagination-sorting-projections/">
+    <meta property="og:title" content="Pagination, Sorting and Projections – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/" aria-current="page">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/repositories/">Spring Data Repositories</a> / Pagination, Sorting and Projections</div>
+<h1>Pagination, Sorting and Projections</h1><p>Loading everything is the fastest way to crash a service. Pagination, typed sorting and projections reduce data at the source. This page explains offset paging costs, keyset paging (Window), all projection types and when each is correct.</p><h2>Pageable, Page and Slice</h2><pre><code class="language-java">Pageable pageable = PageRequest.of(0, 20, Sort.by(Sort.Order.desc(&quot;createdAt&quot;), Sort.Order.asc(&quot;name&quot;)));
+Page&lt;Product&gt; page = repository.findByCategory(&quot;books&quot;, pageable);
+
+page.getContent();          // the 20 items
+page.getTotalElements();    // from the COUNT query
+page.getTotalPages();
+page.hasNext();
+
+Slice&lt;Product&gt; slice = repository.findSliceByCategory(&quot;books&quot;, pageable);   // no count query: fetches 21 rows to know if a next page exists
+// Controller: public Page&lt;ProductDto&gt; list(@PageableDefault(size = 20, sort = &quot;id&quot;) Pageable p)   ?page=0&amp;size=20&amp;sort=price,desc</code></pre><table><thead><tr><th>Type</th><th>SQL</th><th>Cost</th></tr></thead><tbody><tr><td>Page</td><td>select ... limit ? offset ?  +  select count(*) ...</td><td>Count query can be slow on big tables (full scan or big index scan)</td></tr><tr><td>Slice</td><td>select ... limit size+1 offset ?</td><td>No count</td></tr><tr><td>Window (keyset)</td><td>select ... where (key) &gt; (last key) order by key limit ?</td><td>Constant time for any depth</td></tr><tr><td>List + Limit (Top N)</td><td>select ... limit N</td><td>Cheapest, no paging</td></tr></tbody></table><h2>Offset paging gets slower with depth</h2><pre class="dia"><code>select * from orders order by id limit 20 offset 1000000
+   The database must READ and SKIP 1,000,000 rows to return 20.   page 50000 is 50000 times more work than page 0.
+   Also unstable: inserts between requests make items appear twice or be skipped.
+Keyset (seek) pagination:  select * from orders where id &gt; :lastId order by id limit 20     uses the index: same speed on every page.</code></pre><h2>Keyset pagination with Window (Spring Data 3.1+)</h2><pre><code class="language-java">public interface OrderRepository extends JpaRepository&lt;OrderEntity, Long&gt; {
+    Window&lt;OrderEntity&gt; findFirst20ByStatusOrderByCreatedAtAscIdAsc(OrderStatus status, ScrollPosition position);
+}
+
+Window&lt;OrderEntity&gt; first = repository.findFirst20ByStatusOrderByCreatedAtAscIdAsc(OrderStatus.PAID, ScrollPosition.keyset());
+while (true) {
+    process(first.getContent());
+    if (!first.hasNext()) break;
+    first = repository.findFirst20ByStatusOrderByCreatedAtAscIdAsc(OrderStatus.PAID, first.positionAt(first.size() - 1));   // resume after the last row
+}
+// The sort MUST contain a unique tie-breaker (id). The API returns an opaque cursor to the client instead of page numbers.</code></pre><h2>Pageable safety</h2><pre><code class="language-java">@Transactional(readOnly = true)
+public Page&lt;ProductDto&gt; list(Pageable requested) {
+    int size = Math.min(requested.getPageSize(), 100);                                    // never trust the client size
+    Sort safeSort = requested.getSort().stream()
+            .filter(o -&gt; Set.of(&quot;name&quot;, &quot;price&quot;, &quot;createdAt&quot;).contains(o.getProperty()))  // allow-list of sortable fields
+            .collect(Collectors.collectingAndThen(Collectors.toList(), Sort::by));
+    Pageable safe = PageRequest.of(requested.getPageNumber(), size, safeSort.isEmpty() ? Sort.by(&quot;id&quot;) : safeSort);
+    return repository.findAll(safe).map(ProductDto::from);
+}</code></pre><h2>Fetch joins and paging: a trap</h2><pre><code class="language-java">// join fetch on a COLLECTION with paging: Hibernate cannot limit rows in SQL (a parent repeats per child)
+@Query(&quot;select o from OrderEntity o join fetch o.lines&quot;)
+Page&lt;OrderEntity&gt; bad(Pageable p);
+// WARN HHH90003004: firstResult/maxResults specified with collection fetch; applying in memory   ==&gt; loads EVERYTHING, then pages in Java
+
+// Correct: page the parents, then load the collections for those ids
+Page&lt;Long&gt; ids = repository.findIds(pageable);                                   // select o.id from OrderEntity o
+List&lt;OrderEntity&gt; orders = repository.findWithLinesByIdIn(ids.getContent());     // join fetch where o.id in :ids
+// or rely on hibernate.default_batch_fetch_size and page the plain entities</code></pre><h2>Projections: return only what is needed</h2><table><thead><tr><th>Kind</th><th>Example</th><th>Loads</th></tr></thead><tbody><tr><td>Interface, closed</td><td>interface NameView { String getName(); BigDecimal getPrice(); }</td><td>Only the selected columns (query is optimized)</td></tr><tr><td>Interface, open (@Value SpEL)</td><td>@Value(&quot;#{target.name + &#x27; &#x27; + target.sku}&quot;)</td><td>The WHOLE entity, then computes. No SQL savings</td></tr><tr><td>Class / record DTO</td><td>record ProductView(String name, BigDecimal price)</td><td>Only constructor columns</td></tr><tr><td>Dynamic</td><td>&lt;T&gt; List&lt;T&gt; findByCategory(String c, Class&lt;T&gt; type)</td><td>Caller chooses the shape</td></tr><tr><td>Tuple</td><td>@Query(&quot;select p.name as name, p.price as price from Product p&quot;) List&lt;Tuple&gt;</td><td>Selected columns</td></tr></tbody></table><pre><code class="language-java">public interface ProductRepository extends JpaRepository&lt;Product, Long&gt; {
+
+    interface NameAndPrice { String getName(); BigDecimal getPrice(); }             // closed projection
+    List&lt;NameAndPrice&gt; findByCategory(String category);                             // select p.name, p.price from products p where category = ?
+
+    record ProductView(String name, BigDecimal price) { }
+    List&lt;ProductView&gt; findViewByStatus(ProductStatus status);                       // DTO projection with a record
+
+    &lt;T&gt; List&lt;T&gt; findByCategory(String category, Class&lt;T&gt; type);                     // dynamic: findByCategory(&quot;b&quot;, NameAndPrice.class) or Product.class
+
+    interface CustomerOrders { String getName(); List&lt;OrderInfo&gt; getOrders(); interface OrderInfo { Long getId(); BigDecimal getTotal(); } }
+    // nested interface projections of collections load the entity graph: check the SQL
+}</code></pre><ul><li>Projections are the biggest easy performance win for list screens and APIs: fewer columns, no managed entities, no dirty checking.</li><li>A projected result is NOT managed: changes are not written back.</li><li>Interface projections of entities with relations may load the entities anyway. Use the DTO form for guaranteed selected columns.</li></ul><p class="use"><b>Common mistake:</b> Using join fetch on a collection together with Pageable. Hibernate then applies the paging in memory after loading all rows (a warning is logged), which can take down the application on big data. Page the parent ids first, or use batch fetching.</p><h2>Interview questions</h2><h3>Why is deep offset pagination slow?</h3><p>The database must scan and discard all skipped rows for every request. Keyset pagination uses an indexed condition on the last seen key and stays fast at any depth.</p><h3>Page or Slice for an infinite scroll?</h3><p>Slice (or Window). It avoids the count query and only tells whether more data exists.</p><h3>Do projections make queries faster?</h3><p>Closed interface and DTO projections select only the needed columns and skip entity management, so they usually reduce time, memory and network. Open projections still load the whole entity.</p><div class="np"><a href="/springjpa/repositories/repository-internals/">&larr; Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

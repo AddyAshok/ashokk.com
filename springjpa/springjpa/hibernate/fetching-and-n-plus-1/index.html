@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Loading data correctly is the most important performance skill in JPA.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/hibernate/fetching-and-n-plus-1/">
+    <meta property="og:title" content="Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/" aria-current="page">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/hibernate/">Hibernate Internals</a> / Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</div>
+<h1>Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</h1><p>Loading data correctly is the most important performance skill in JPA. This page explains lazy and eager fetching, how proxies work, the exact sequence of the N+1 problem, and all the fixes with their trade-offs.</p><h2>Fetch type defaults</h2><table><thead><tr><th>Association</th><th>Default</th><th>Recommended</th></tr></thead><tbody><tr><td>@ManyToOne, @OneToOne</td><td>EAGER</td><td>LAZY (always set it)</td></tr><tr><td>@OneToMany, @ManyToMany, @ElementCollection</td><td>LAZY</td><td>LAZY</td></tr><tr><td>Basic attribute (@Basic)</td><td>EAGER (no laziness without bytecode enhancement)</td><td>Keep big columns in a separate entity or projection</td></tr></tbody></table><p>FetchType is a HINT for how to load by default. You override it per query with fetch joins and entity graphs. Never fix a lazy problem by making the mapping EAGER: it loads the data in every use case, forever.</p><h2>How lazy loading works: proxies and collection wrappers</h2><pre class="dia"><code>order = orderRepository.findById(1L)        select o.* from orders o where id = 1
+order.getCustomer()          returns a PROXY  (ByteBuddy subclass of Customer, only the id is known, NO SQL yet)
+order.getCustomer().getId()  no SQL: the id is already in the proxy
+order.getCustomer().getName()  ─► the proxy sees it is uninitialized ─► asks its Session ─► select c.* from customer c where id = ?  ─► fills the target
+   Session closed at that moment?  ─► LazyInitializationException: could not initialize proxy - no Session
+
+order.getLines()  returns a PersistentBag (wrapper). Iterating it triggers:  select l.* from order_line l where l.order_id = ?</code></pre><h2>The N+1 problem, step by step</h2><pre><code class="language-java">@Transactional(readOnly = true)
+public List&lt;OrderDto&gt; list() {
+    List&lt;OrderEntity&gt; orders = orderRepository.findAll();                 // 1 query:   select * from orders          (100 rows)
+    return orders.stream()
+            .map(o -&gt; new OrderDto(o.getId(), o.getCustomer().getName(),  // +100 queries: select * from customer where id = ?   (one per order)
+                                   o.getLines().size()))                  // +100 queries: select * from order_line where order_id = ?
+            .toList();                                                    // total 1 + 100 + 100 = 201 statements for one API call
+}</code></pre><p>With 100 rows you might not notice. With 10,000 rows it is 20,001 queries. Also each query is a network round trip, so latency grows linearly with the data size.</p><h2>How to detect it</h2><ul><li>Turn on SQL logging in development and count the statements of every use case.</li><li>Use Hibernate statistics in tests: assert getPrepareStatementCount() is small and constant.</li><li>Tools: datasource-proxy or p6spy (query counter), Hypersistence Optimizer, Datasource Micrometer tracing.</li><li>Watch the metric hibernate.query.executions and the number of connections used per request.</li></ul><pre><code class="language-java">// A test that fails when someone introduces N+1
+@Test
+void listOrdersUsesConstantQueries() {
+    Statistics stats = emf.unwrap(SessionFactory.class).getStatistics();
+    stats.setStatisticsEnabled(true);
+    stats.clear();
+
+    orderService.list();
+
+    assertThat(stats.getPrepareStatementCount()).isLessThanOrEqualTo(2);
+}</code></pre><h2>Fixes</h2><table><thead><tr><th>Fix</th><th>How</th><th>Result</th><th>Caution</th></tr></thead><tbody><tr><td>1. JOIN FETCH</td><td>select o from OrderEntity o join fetch o.customer</td><td>One query with a join</td><td>Do not fetch two collections at once. Collection fetch + paging = in-memory paging</td></tr><tr><td>2. @EntityGraph</td><td>@EntityGraph(attributePaths = {&quot;customer&quot;}) on the repository method</td><td>Same as join fetch, no JPQL</td><td>Same limits</td></tr><tr><td>3. Batch fetching</td><td>hibernate.default_batch_fetch_size=50 or @BatchSize</td><td>1 + N/50 queries using IN lists</td><td>Cheap to enable, works with paging</td></tr><tr><td>4. Subselect fetch</td><td>@Fetch(FetchMode.SUBSELECT) on a collection</td><td>One query for all collections of the loaded parents</td><td>Re-runs the original query as a subquery</td></tr><tr><td>5. DTO projection</td><td>select new Dto(o.id, c.name, size(o.lines)) ... group by</td><td>Exactly the columns needed, no entities</td><td>Best for read APIs</td></tr><tr><td>6. Two step loading</td><td>Load parent ids with paging, then load associations for those ids</td><td>Correct paging with collections</td><td>Two queries</td></tr></tbody></table><pre><code class="language-java">public interface OrderRepository extends JpaRepository&lt;OrderEntity, Long&gt; {
+
+    @Query(&quot;select o from OrderEntity o join fetch o.customer&quot;)                       // ToOne: join fetch is safe, rows do not multiply
+    List&lt;OrderEntity&gt; findAllWithCustomer();
+
+    @EntityGraph(attributePaths = { &quot;customer&quot;, &quot;lines&quot; })
+    List&lt;OrderEntity&gt; findByStatus(OrderStatus status);
+
+    @Query(&quot;select new com.example.OrderRow(o.id, c.name, count(l)) from OrderEntity o join o.customer c left join o.lines l group by o.id, c.name&quot;)
+    List&lt;OrderRow&gt; summary();                                                          // no entities, one flat query
+
+    @Query(&quot;select o.id from OrderEntity o where o.status = :s&quot;)
+    Page&lt;Long&gt; findIds(@Param(&quot;s&quot;) OrderStatus s, Pageable p);                        // step 1 of two step loading
+    @Query(&quot;select distinct o from OrderEntity o join fetch o.lines where o.id in :ids&quot;)
+    List&lt;OrderEntity&gt; findWithLines(@Param(&quot;ids&quot;) List&lt;Long&gt; ids);                    // step 2
+}</code></pre><h2>Entity graph types</h2><pre><code class="language-java">@EntityGraph(attributePaths = &quot;customer&quot;, type = EntityGraph.EntityGraphType.FETCH)   // listed attributes EAGER, all others LAZY
+@EntityGraph(attributePaths = &quot;customer&quot;, type = EntityGraph.EntityGraphType.LOAD)    // listed EAGER, others keep their mapping default
+
+// Named graph on the entity
+@Entity
+@NamedEntityGraph(name = &quot;Order.full&quot;, attributeNodes = { @NamedAttributeNode(&quot;customer&quot;), @NamedAttributeNode(value = &quot;lines&quot;, subgraph = &quot;line&quot;) },
+                  subgraphs = @NamedSubgraph(name = &quot;line&quot;, attributeNodes = @NamedAttributeNode(&quot;product&quot;)))
+public class OrderEntity { }
+// @EntityGraph(&quot;Order.full&quot;)   on a repository method</code></pre><h2>LazyInitializationException: correct fixes</h2><table><thead><tr><th>Wrong fix</th><th>Right fix</th></tr></thead><tbody><tr><td>Make the association EAGER</td><td>Load what the use case needs (fetch join, entity graph, projection) inside the service transaction</td></tr><tr><td>spring.jpa.open-in-view=true</td><td>Keep it false. Map to DTOs in the service</td></tr><tr><td>Hibernate.initialize() everywhere</td><td>Only as a last resort in a service. Prefer explicit fetching</td></tr><tr><td>enable_lazy_load_no_trans=true (Hibernate property)</td><td>Never: opens a new session and connection per lazy access (an anti-pattern that hides N+1)</td></tr></tbody></table><h2>Cartesian product warning</h2><pre class="dia"><code>select o from Order o join fetch o.lines join fetch o.payments      (two collections)
+ order with 10 lines and 5 payments returns 10 x 5 = 50 rows for ONE order (with a Set; with Lists: MultipleBagFetchException)
+Fix: fetch one collection per query, or use batch fetching. The persistence context merges the results into the same entity instances.</code></pre><p class="use"><b>Common mistake:</b> Making @ManyToOne or collections EAGER to silence LazyInitializationException. Every query then loads extra tables and creates N+1 problems everywhere. Keep everything LAZY and fetch explicitly per use case.</p><h2>Interview questions</h2><h3>What is the N+1 problem?</h3><p>One query loads N parent rows, and then one additional query per parent loads an association when it is accessed, giving N+1 statements. It is fixed with fetch joins, entity graphs, batch fetching or projections.</p><h3>Why does a fetch join with Pageable cause a warning?</h3><p>A join on a collection repeats each parent for every child, so LIMIT would cut in the middle of a parent. Hibernate loads all rows and pages in memory (HHH90003004).</p><h3>Join fetch or batch fetching?</h3><p>Join fetch for one or two ToOne or one collection when you always need it. Batch fetching as a general safety net, and it works together with paging.</p><div class="np"><a href="/springjpa/hibernate/persistence-context-and-flush/">&larr; Hibernate Internals: Persistence Context, Dirty Checking and Flush</a><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

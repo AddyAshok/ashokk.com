@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Screens with optional filters need queries that are built at runtime.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/repositories/specifications-and-query-by-example/">
+    <meta property="og:title" content="Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/" aria-current="page">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/repositories/">Spring Data Repositories</a> / Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</div>
+<h1>Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</h1><p>Screens with optional filters need queries that are built at runtime. Spring Data offers Specifications (Criteria API based), Query by Example and, with an extra library, Querydsl. This page explains each with complete code and when to choose which.</p><h2>Options</h2><table><thead><tr><th>Approach</th><th>Type safe</th><th>Power</th><th>Best for</th></tr></thead><tbody><tr><td>Derived methods / @Query</td><td>Partly</td><td>Fixed queries</td><td>Known combinations</td></tr><tr><td>Specification</td><td>Yes with the metamodel (Product_)</td><td>Any Criteria query</td><td>Optional filters, composition and reuse</td></tr><tr><td>Query by Example</td><td>No (property names)</td><td>Simple equality/like on probe fields</td><td>Quick search forms</td></tr><tr><td>Querydsl</td><td>Yes (generated Q classes)</td><td>Very expressive, readable</td><td>Complex dynamic queries, teams that like a DSL</td></tr><tr><td>Criteria API directly</td><td>Yes</td><td>Everything</td><td>Custom repository code</td></tr><tr><td>jOOQ / native SQL</td><td>Yes with jOOQ</td><td>Full SQL</td><td>Reports and analytics</td></tr></tbody></table><h2>Specifications</h2><pre><code class="language-java">public interface ProductRepository extends JpaRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; { }
+
+public final class ProductSpecs {
+    private ProductSpecs() { }
+
+    public static Specification&lt;Product&gt; nameContains(String text) {
+        return (root, query, cb) -&gt; text == null || text.isBlank() ? null
+                : cb.like(cb.lower(root.get(Product_.name)), &quot;%&quot; + text.toLowerCase() + &quot;%&quot;);   // Product_ is generated (hibernate-jpamodelgen)
+    }
+    public static Specification&lt;Product&gt; inCategory(Collection&lt;String&gt; categories) {
+        return (root, query, cb) -&gt; categories == null || categories.isEmpty() ? null : root.get(Product_.category).in(categories);
+    }
+    public static Specification&lt;Product&gt; priceBetween(BigDecimal min, BigDecimal max) {
+        return (root, query, cb) -&gt; {
+            List&lt;Predicate&gt; p = new ArrayList&lt;&gt;();
+            if (min != null) p.add(cb.greaterThanOrEqualTo(root.get(Product_.price), min));
+            if (max != null) p.add(cb.lessThanOrEqualTo(root.get(Product_.price), max));
+            return p.isEmpty() ? null : cb.and(p.toArray(Predicate[]::new));
+        };
+    }
+    public static Specification&lt;Product&gt; hasTag(String tag) {                                 // join on a collection
+        return (root, query, cb) -&gt; {
+            if (tag == null) return null;
+            query.distinct(true);
+            return cb.equal(root.join(Product_.tags).get(Tag_.name), tag);
+        };
+    }
+    public static Specification&lt;Product&gt; withSupplier() {                                     // fetch join for the result query only
+        return (root, query, cb) -&gt; {
+            if (Long.class != query.getResultType()) root.fetch(Product_.supplier, JoinType.LEFT);   // the count query has no fetch
+            return null;
+        };
+    }
+}
+
+@Service
+public class ProductSearchService {
+    private final ProductRepository repository;
+    public ProductSearchService(ProductRepository repository) { this.repository = repository; }
+
+    @Transactional(readOnly = true)
+    public Page&lt;Product&gt; search(SearchRequest r, Pageable pageable) {
+        Specification&lt;Product&gt; spec = Specification.allOf(
+                ProductSpecs.nameContains(r.name()), ProductSpecs.inCategory(r.categories()),
+                ProductSpecs.priceBetween(r.minPrice(), r.maxPrice()), ProductSpecs.hasTag(r.tag()));
+        return repository.findAll(spec, pageable);
+    }
+}</code></pre><p>A specification that returns null is ignored, so only filters the user filled become SQL conditions. Combine with and(), or(), not(), allOf(), anyOf(). Specification.where() is the older entry point.</p><h2>Generate the static metamodel</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.hibernate.orm&lt;/groupId&gt;
+    &lt;artifactId&gt;hibernate-jpamodelgen&lt;/artifactId&gt;
+    &lt;scope&gt;provided&lt;/scope&gt;          &lt;!-- annotation processor: generates Product_ with SingularAttribute constants --&gt;
+&lt;/dependency&gt;</code></pre><h2>Query by Example</h2><pre><code class="language-java">Product probe = new Product();
+probe.setCategory(&quot;books&quot;);
+probe.setName(&quot;java&quot;);
+
+ExampleMatcher matcher = ExampleMatcher.matching()
+        .withIgnoreCase()
+        .withStringMatcher(ExampleMatcher.StringMatcher.CONTAINING)      // name like %java%
+        .withIgnorePaths(&quot;price&quot;, &quot;createdAt&quot;)
+        .withMatcher(&quot;category&quot;, ExampleMatcher.GenericPropertyMatchers.exact());
+
+List&lt;Product&gt; result = repository.findAll(Example.of(probe, matcher));
+// Limits: only AND, no &gt; or &lt;, no nested collections. Null probe fields are ignored. Good for simple search forms.</code></pre><h2>Querydsl (optional)</h2><pre><code class="language-java">public interface ProductRepository extends JpaRepository&lt;Product, Long&gt;, QuerydslPredicateExecutor&lt;Product&gt; { }
+
+QProduct p = QProduct.product;
+BooleanBuilder where = new BooleanBuilder();
+if (name != null) where.and(p.name.containsIgnoreCase(name));
+if (min != null) where.and(p.price.goe(min));
+Page&lt;Product&gt; page = repository.findAll(where, pageable);
+// Web binding: @QuerydslPredicate Predicate predicate builds conditions from request parameters ?name=pen&amp;price=10</code></pre><h2>Criteria API directly in a custom repository</h2><pre><code class="language-java">public List&lt;CategoryStat&gt; stats(BigDecimal minAvg) {
+    CriteriaBuilder cb = em.getCriteriaBuilder();
+    CriteriaQuery&lt;CategoryStat&gt; q = cb.createQuery(CategoryStat.class);
+    Root&lt;Product&gt; p = q.from(Product.class);
+    q.select(cb.construct(CategoryStat.class, p.get(Product_.category), cb.count(p), cb.avg(p.get(Product_.price))))
+     .groupBy(p.get(Product_.category))
+     .having(cb.ge(cb.avg(p.get(Product_.price)), minAvg))
+     .orderBy(cb.asc(p.get(Product_.category)));
+    return em.createQuery(q).getResultList();
+}</code></pre><ul><li>Write one Specification per filter, name them clearly and unit test them with @DataJpaTest.</li><li>Sort and page as usual: findAll(spec, pageable). The count query is derived from the same specification.</li><li>Watch the SQL of specifications with joins to collections: use distinct and prefer EXISTS subqueries for large data.</li></ul><p class="use"><b>Common mistake:</b> Joining a collection in a specification with paging and forgetting distinct. Rows multiply per child, pages contain duplicates and totals are wrong. Use query.distinct(true) or an EXISTS subquery.</p><h2>Interview questions</h2><h3>Specification or @Query with optional parameters?</h3><p>Do not write JPQL like (:name is null or p.name = :name) with many optionals: it defeats indexes and plans. A specification adds only the conditions that are present.</p><h3>Why is my Specification count query failing with a fetch join?</h3><p>The count query has no entity result, so root.fetch() is invalid there. Add the fetch only when the query result type is not Long.</p><h3>Is Query by Example enough?</h3><p>For simple equality or like filters yes. For ranges, ors, joins or subqueries use Specifications or Querydsl.</p><div class="np"><a href="/springjpa/repositories/pagination-sorting-projections/">&larr; Pagination, Sorting and Projections</a><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

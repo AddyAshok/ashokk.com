@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Repository Internals: Proxies, SimpleJpaRepository and Query Creation – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="You never write repository implementations, so where does the code come from? This page follows the complete path: repository scanning, the factory bean, the proxy with its interceptor chain, the query lookup strategy and how method names become JPA queries..">
+    <link rel="canonical" href="https://ashokka.com/springjpa/repositories/repository-internals/">
+    <meta property="og:title" content="Repository Internals: Proxies, SimpleJpaRepository and Query Creation – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/" aria-current="page">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/repositories/">Spring Data Repositories</a> / Repository Internals: Proxies, SimpleJpaRepository and Query Creation</div>
+<h1>Repository Internals: Proxies, SimpleJpaRepository and Query Creation</h1><p>You never write repository implementations, so where does the code come from? This page follows the complete path: repository scanning, the factory bean, the proxy with its interceptor chain, the query lookup strategy and how method names become JPA queries.</p><h2>From interface to bean</h2><pre class="dia"><code>@EnableJpaRepositories  (Spring Boot: JpaRepositoriesAutoConfiguration)
+  └─ JpaRepositoriesRegistrar ─► RepositoryConfigurationExtensionSupport scans base packages for interfaces extending Repository
+        for each interface:  BeanDefinition of JpaRepositoryFactoryBean&lt;ProductRepository, Product, Long&gt;
+                                 (properties: repositoryInterface, entityManager, queryLookupStrategy, repositoryBaseClass, fragments)
+At bean creation (JpaRepositoryFactoryBean.afterPropertiesSet):
+  1. JpaRepositoryFactory
+  2. RepositoryMetadata: domain type Product, id type Long, which methods are CRUD, which are query methods
+  3. RepositoryInformation: which method is served by which part (base class, fragment, query method)
+  4. target = new SimpleJpaRepository&lt;&gt;(Product.class, entityManager)         (the real implementation of CRUD methods)
+  5. ProxyFactory (JDK dynamic proxy of ProductRepository) with target and this ADVICE CHAIN:
+        ├─ ExposeInvocationInterceptor
+        ├─ DefaultMethodInvokingMethodInterceptor           (default methods on the interface)
+        ├─ RepositoryFragmentsMethodInterceptor             (custom fragment implementations)
+        ├─ TransactionInterceptor                           (@Transactional(readOnly=true) on SimpleJpaRepository)
+        ├─ PersistenceExceptionTranslationInterceptor       (PersistenceException -&gt; DataAccessException hierarchy)
+        ├─ QueryExecutorMethodInterceptor                   (query methods: find derived / @Query / named queries)
+        └─ ImplementationMethodExecutionInterceptor         (CRUD methods: invoke on SimpleJpaRepository)
+  6. the proxy is the bean you inject</code></pre><h2>A call through the chain</h2><pre class="dia"><code>productRepository.findByCategoryAndPriceGreaterThan(&quot;books&quot;, 100)
+   proxy ─► TransactionInterceptor (join the current tx or start a read-only one)
+         ─► PersistenceExceptionTranslationInterceptor
+         ─► QueryExecutorMethodInterceptor: find the PRE-BUILT RepositoryQuery for this Method
+                PartTreeJpaQuery.execute(parameters):
+                    1. create a JPA Criteria/JPQL query object from the PartTree (built once at startup, cached)
+                    2. bind the parameters (?1 = &quot;books&quot;, ?2 = 100)
+                    3. apply Pageable / Sort / limit
+                    4. query.getResultList()  ─► Hibernate: SQL ─► JDBC ─► ResultSet ─► managed entities
+                    5. convert to the declared return type (List, Optional, Page, projection)</code></pre><h2>Query lookup strategy: how the query for a method is chosen</h2><table><thead><tr><th>Strategy</th><th>Rule</th></tr></thead><tbody><tr><td>CREATE</td><td>Always derive the query from the method name</td></tr><tr><td>USE_DECLARED_QUERY</td><td>Use @Query or a named query. Fail at startup if none exists</td></tr><tr><td>CREATE_IF_NOT_FOUND (default)</td><td>1. @Query on the method  2. named query Entity.methodName  3. derive from the method name</td></tr></tbody></table><p>All queries are prepared at startup. A typo (findByNmae) fails the application start with PropertyReferenceException, and a wrong @Query fails with a JPQL syntax error. That is a big advantage over string queries in service code.</p><h2>PartTree: how a method name is parsed</h2><pre class="dia"><code>findByCategoryAndPriceGreaterThanOrderByPriceDesc
+   PartTree splits at &quot;By&quot;:  subject = &quot;find&quot;        predicate = &quot;CategoryAndPriceGreaterThanOrderByPriceDesc&quot;
+   splits the predicate on &quot;OrderBy&quot;, then on &quot;Or&quot;, then on &quot;And&quot;:
+        Part(Category, SIMPLE_PROPERTY)     Part(PriceGreaterThan, GREATER_THAN)     Sort(price DESC)
+   each Part is resolved against the entity&#x27;s properties with PropertyPath (Category -&gt; category; CustomerAddressCity tries customerAddressCity,
+   then customerAddress.city, then customer.addressCity, then customer.address.city ...)
+   ambiguous names: write the underscore  findByCustomer_AddressCity</code></pre><h2>SimpleJpaRepository: the real implementation (essential parts)</h2><pre><code class="language-java">@Repository
+@Transactional(readOnly = true)                              // every method is read only unless overridden
+public class SimpleJpaRepository&lt;T, ID&gt; implements JpaRepositoryImplementation&lt;T, ID&gt; {
+
+    private final EntityManager entityManager;               // the SHARED EntityManager proxy
+    private final JpaEntityInformation&lt;T, ?&gt; entityInformation;
+
+    @Transactional
+    public &lt;S extends T&gt; S save(S entity) {
+        if (entityInformation.isNew(entity)) { entityManager.persist(entity); return entity; }
+        else { return entityManager.merge(entity); }
+    }
+
+    public Optional&lt;T&gt; findById(ID id) {
+        return Optional.ofNullable(entityManager.find(entityInformation.getJavaType(), id));
+    }
+
+    @Transactional
+    public void delete(T entity) {
+        if (entityInformation.isNew(entity)) return;
+        T existing = (T) entityManager.find(ProxyUtils.getUserClass(entity), entityInformation.getId(entity));
+        if (existing == null) return;
+        entityManager.remove(entityManager.contains(entity) ? entity : entityManager.merge(entity));
+    }
+
+    public Page&lt;T&gt; findAll(Pageable pageable) {
+        TypedQuery&lt;T&gt; query = getQuery(null, pageable);
+        return isUnpaged(pageable) ? new PageImpl&lt;&gt;(query.getResultList())
+             : readPage(query, getDomainClass(), pageable, null);         // runs the count query too
+    }
+}</code></pre><h2>Where transactions and exceptions come from</h2><ul><li>Reads: readOnly = true means Hibernate uses FlushMode.MANUAL for the session (no dirty checking flush) and the JDBC connection is marked read only when supported.</li><li>Writes: each write method has its own @Transactional. Without an outer transaction every repository call is its own transaction and commits at once.</li><li>Exceptions: JPA and Hibernate exceptions become Spring DataAccessException subclasses (DataIntegrityViolationException, OptimisticLockingFailureException, EmptyResultDataAccessException). You do not catch PersistenceException in service code.</li></ul><h2>Inspect your repository at runtime</h2><pre><code class="language-java">@Autowired ProductRepository repository;
+
+System.out.println(repository.getClass());                      // jdk.proxy2.$Proxy123 : the proxy
+System.out.println(AopUtils.isJdkDynamicProxy(repository));     // true
+System.out.println(AopProxyUtils.ultimateTargetClass(repository)); // class org.springframework.data.jpa.repository.support.SimpleJpaRepository</code></pre><h2>Fragments composition</h2><pre class="dia"><code>interface ProductRepository extends JpaRepository&lt;Product, Long&gt;, ProductRepositoryCustom, AuditSupport
+    fragments resolved by name:  ProductRepositoryCustomImpl, AuditSupportImpl     (name = fragment interface + Impl)
+    method routing order: user fragments first, then the base class (SimpleJpaRepository), then query methods
+    a fragment method with the same signature as a CRUD method OVERRIDES it (for example a custom save)</code></pre><p class="use"><b>Common mistake:</b> Adding logic that depends on the concrete repository class (casting the injected repository to SimpleJpaRepository). The bean is a JDK proxy of your interface, so such a cast fails. Use custom fragments or a repository base class.</p><h2>Interview questions</h2><h3>Is the repository interface implementation created at compile time or at runtime?</h3><p>At runtime, at startup. Spring Data builds a JDK proxy over SimpleJpaRepository, and prepares all query methods at that moment.</p><h3>Why does my application fail at startup because of a repository method?</h3><p>Spring Data validates every query method when the repository is created. An unknown property in the method name or an invalid JPQL string stops the start on purpose.</p><h3>Are repository methods transactional?</h3><p>Yes. CRUD reads are readOnly transactions and writes are normal transactions. Derived and @Query methods inherit readOnly from the class level unless you add @Transactional.</p><div class="np"><a href="/springjpa/repositories/query-methods/">&larr; Query Methods: Derived Queries, @Query, Native, Named and Modifying</a><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Collections: Bag, Set, List with Order, Map and @ElementCollection – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Collection mappings decide how many SQL statements a single add or remove produces.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/mapping/collections-mapping/">
+    <meta property="og:title" content="Collections: Bag, Set, List with Order, Map and @ElementCollection – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/" aria-current="page">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/mapping/">Entity Mapping</a> / Collections: Bag, Set, List with Order, Map and @ElementCollection</div>
+<h1>Collections: Bag, Set, List with Order, Map and @ElementCollection</h1><p>Collection mappings decide how many SQL statements a single add or remove produces. Wrong choices delete and reinsert whole tables. This page shows what Hibernate does for each collection type.</p><h2>Collection types and their SQL behavior</h2><table><thead><tr><th>Java type</th><th>Hibernate model</th><th>Remove one element</th><th>Notes</th></tr></thead><tbody><tr><td>List without order column</td><td>Bag</td><td>In a join table: delete ALL rows and reinsert the rest. For OneToMany with mappedBy: one DELETE (orphanRemoval)</td><td>Allows duplicates. Cannot fetch two bags at once (MultipleBagFetchException)</td></tr><tr><td>Set</td><td>Set</td><td>DELETE of that row only</td><td>No duplicates, needs correct equals and hashCode. Best for ManyToMany</td></tr><tr><td>List + @OrderColumn</td><td>Indexed list</td><td>DELETE plus UPDATE of the index of all following elements</td><td>Keeps position in the database</td></tr><tr><td>List/Set + @OrderBy</td><td>Ordered by a column at load time</td><td>As above</td><td>Order is only applied when loading</td></tr><tr><td>Map&lt;K, V&gt;</td><td>Map with @MapKey / @MapKeyColumn</td><td>DELETE of that entry</td><td>Key stored in a column</td></tr><tr><td>SortedSet + @SortNatural</td><td>Sorted in memory</td><td>As Set</td><td>Sorting is done in Java</td></tr></tbody></table><h2>@OneToMany with order</h2><pre><code class="language-java">@OneToMany(mappedBy = &quot;order&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+@OrderBy(&quot;lineNo ASC&quot;)
+private List&lt;OrderLine&gt; lines = new ArrayList&lt;&gt;();
+// SELECT ... FROM order_line WHERE order_id = ? ORDER BY line_no
+
+@ElementCollection
+@CollectionTable(name = &quot;order_notes&quot;, joinColumns = @JoinColumn(name = &quot;order_id&quot;))
+@OrderColumn(name = &quot;position&quot;)
+@Column(name = &quot;note&quot;, length = 500)
+private List&lt;String&gt; notes = new ArrayList&lt;&gt;();</code></pre><h2>@ElementCollection: collections of simple values or embeddables</h2><pre><code class="language-java">@Entity
+public class Product {
+    @Id @GeneratedValue private Long id;
+
+    @ElementCollection
+    @CollectionTable(name = &quot;product_tags&quot;, joinColumns = @JoinColumn(name = &quot;product_id&quot;))
+    @Column(name = &quot;tag&quot;, length = 40)
+    private Set&lt;String&gt; tags = new HashSet&lt;&gt;();
+
+    @ElementCollection
+    @CollectionTable(name = &quot;product_attributes&quot;, joinColumns = @JoinColumn(name = &quot;product_id&quot;))
+    @MapKeyColumn(name = &quot;attr_name&quot;, length = 60)
+    @Column(name = &quot;attr_value&quot;, length = 200)
+    private Map&lt;String, String&gt; attributes = new HashMap&lt;&gt;();
+}</code></pre><ul><li>Element collections have no id and no own entity. Hibernate cannot update a single row: with a List or bag it deletes and reinserts all rows of that parent when anything changes.</li><li>Use a Set of embeddables or a real entity with an id when the collection is large or changes often.</li><li>They are always owned by the parent: no cascade settings, removed with the parent.</li></ul><h2>Lazy collections and PersistentBag</h2><pre class="dia"><code>product.getTags()  returns a Hibernate PersistentSet (a wrapper, not a HashSet)
+   ├─ not initialized: only holds the owner and the role. No SQL yet
+   ├─ first access (size(), iterator(), contains ...) ─► SELECT tag FROM product_tags WHERE product_id = ?   (needs an open session)
+   └─ after the session closed ─► LazyInitializationException
+Do not replace the collection object (product.setTags(new HashSet&lt;&gt;(...))) on a managed entity: with orphanRemoval this throws
+&quot;A collection with cascade all-delete-orphan was no longer referenced&quot;. Modify the existing collection: clear() and addAll().</code></pre><pre><code class="language-java">// WRONG for orphanRemoval collections
+order.setLines(newLines);
+
+// RIGHT
+order.getLines().clear();
+order.getLines().addAll(newLines);</code></pre><h2>Avoid loading a big collection to count or add</h2><pre><code class="language-java">// bad: order.getLines().size() loads all lines
+// good:
+long count = orderLineRepository.countByOrderId(orderId);
+
+// @LazyCollection(LazyCollectionOption.EXTRA) lets size() run &quot;select count(*)&quot; (Hibernate specific)
+// Adding one line: save a new OrderLine with getReferenceById(orderId), do not touch order.getLines()</code></pre><h2>MultipleBagFetchException</h2><pre><code class="language-java">// FAILS: two Lists fetched in one query
+@Query(&quot;select o from OrderEntity o join fetch o.lines join fetch o.payments&quot;)
+List&lt;OrderEntity&gt; loadAll();      // MultipleBagFetchException: cannot simultaneously fetch multiple bags
+
+// Fixes: 1. use Set for the collections   2. fetch one collection per query (the second query hits the persistence context)
+List&lt;OrderEntity&gt; orders = repo.findWithLines();        // join fetch lines
+orders = repo.findWithPayments(orders);                  // select o ... join fetch o.payments where o in :orders
+// 3. hibernate.default_batch_fetch_size to load the second collection in batches</code></pre><p class="use"><b>Common mistake:</b> Replacing the collection instance of a managed entity with orphanRemoval enabled. Hibernate loses track of the original collection and fails. Always modify the existing collection with clear, add and remove.</p><h2>Interview questions</h2><h3>When should I use @ElementCollection?</h3><p>For small collections of simple values or value objects that belong completely to one entity (tags, phone numbers). For larger or independent data use a real entity.</p><h3>Why did removing one element delete and reinsert all rows?</h3><p>The collection is a bag (List without order column) or an element collection without an id. Use a Set, or model the rows as an entity.</p><h3>How do I fetch two collections without MultipleBagFetchException?</h3><p>Use Set instead of List, load them in separate queries, or use batch fetching.</p><div class="np"><a href="/springjpa/mapping/embeddables-and-inheritance/">&larr; Embeddables, @MappedSuperclass and Inheritance Strategies</a><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

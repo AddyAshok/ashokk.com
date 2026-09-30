@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Spring Data Repository Abstraction: Interfaces and Methods – Spring Data JPA – Ashokka Tech</title>
+    <meta name="description" content="Spring Data gives you a hierarchy of repository interfaces.">
+    <link rel="canonical" href="https://ashokka.com/springjpa/repositories/repository-abstraction/">
+    <meta property="og:title" content="Spring Data Repository Abstraction: Interfaces and Methods – Spring Data JPA – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springjpa/css/springjpa.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springjpa/js/springjpa.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Data JPA menu"><h2><a href="/springjpa/">Spring Data JPA</a></h2><h3><a href="/springjpa/fundamentals/">Fundamentals and Setup</a></h3><ul><li><a href="/springjpa/fundamentals/jpa-overview/">JPA, Hibernate and Spring Data JPA: The Big Picture</a></li><li><a href="/springjpa/fundamentals/jpa-setup-and-configuration/">Setup and Configuration: Every Important Property Explained</a></li><li><a href="/springjpa/fundamentals/jpa-bootstrap-internals/">JPA Bootstrap Internals: EntityManagerFactory, EntityManager and Sessions</a></li></ul><h3><a href="/springjpa/mapping/">Entity Mapping</a></h3><ul><li><a href="/springjpa/mapping/entity-mapping-basics/">Entity Mapping Basics: @Entity, @Column, Types and Converters</a></li><li><a href="/springjpa/mapping/primary-key-generation/">Primary Keys and ID Generation Strategies</a></li><li><a href="/springjpa/mapping/relationships-mapping/">Relationship Mapping: One-to-One, One-to-Many, Many-to-Many</a></li><li><a href="/springjpa/mapping/embeddables-and-inheritance/">Embeddables, @MappedSuperclass and Inheritance Strategies</a></li><li><a href="/springjpa/mapping/collections-mapping/">Collections: Bag, Set, List with Order, Map and @ElementCollection</a></li><li><a href="/springjpa/mapping/advanced-hibernate-mapping/">Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a></li></ul><h3><a href="/springjpa/repositories/">Spring Data Repositories</a></h3><ul><li><a href="/springjpa/repositories/repository-abstraction/" aria-current="page">Spring Data Repository Abstraction: Interfaces and Methods</a></li><li><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying</a></li><li><a href="/springjpa/repositories/repository-internals/">Repository Internals: Proxies, SimpleJpaRepository and Query Creation</a></li><li><a href="/springjpa/repositories/pagination-sorting-projections/">Pagination, Sorting and Projections</a></li><li><a href="/springjpa/repositories/specifications-and-query-by-example/">Dynamic Queries: Specifications, Query by Example, Criteria and Querydsl</a></li><li><a href="/springjpa/repositories/custom-repositories-and-auditing/">Custom Repositories, Base Class, Domain Events and Auditing</a></li></ul><h3><a href="/springjpa/hibernate/">Hibernate Internals</a></h3><ul><li><a href="/springjpa/hibernate/persistence-context-and-flush/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springjpa/hibernate/fetching-and-n-plus-1/">Fetching Strategies, Lazy Loading, Proxies and the N+1 Problem</a></li><li><a href="/springjpa/hibernate/caching-levels/">Caching in JPA: First Level, Second Level and Query Cache</a></li><li><a href="/springjpa/hibernate/sql-generation-and-batching/">SQL Generation, JDBC Batching and Bulk Operations</a></li></ul><h3><a href="/springjpa/transactions/">Transactions and Concurrency</a></h3><ul><li><a href="/springjpa/transactions/jpa-transactions/">Transactions with JPA: @Transactional Internals, Propagation and Pitfalls</a></li><li><a href="/springjpa/transactions/locking-and-concurrency/">Locking and Concurrency: Optimistic, Pessimistic, Isolation and Retries</a></li></ul><h3><a href="/springjpa/queries/">Queries and Multiple Databases</a></h3><ul><li><a href="/springjpa/queries/jpql-and-criteria/">JPQL and Criteria API in Depth</a></li><li><a href="/springjpa/queries/native-queries-and-procedures/">Native SQL, Result Mapping and Stored Procedures</a></li><li><a href="/springjpa/queries/multi-datasource-and-multi-tenancy/">Multiple Databases, Read Replicas and Multi-Tenancy</a></li></ul><h3><a href="/springjpa/production/">Production, Testing and Interviews</a></h3><ul><li><a href="/springjpa/production/datasource-pool-and-migrations/">Connection Pool (HikariCP) and Flyway Migrations for JPA</a></li><li><a href="/springjpa/production/jpa-testing/">Testing JPA: @DataJpaTest, Testcontainers and Query Counting</a></li><li><a href="/springjpa/production/jpa-performance-checklist/">JPA Performance Checklist and Tuning Method</a></li><li><a href="/springjpa/production/jpa-exceptions-troubleshooting/">JPA Exceptions and Troubleshooting Guide</a></li><li><a href="/springjpa/production/jpa-interview-questions/">JPA, Hibernate and Spring Data JPA Interview Questions</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springjpa/">Spring Data JPA</a> / <a href="/springjpa/repositories/">Spring Data Repositories</a> / Spring Data Repository Abstraction: Interfaces and Methods</div>
+<h1>Spring Data Repository Abstraction: Interfaces and Methods</h1><p>Spring Data gives you a hierarchy of repository interfaces. You choose how much API to expose, and Spring generates the implementation. This page explains each interface, every method of JpaRepository, the semantics of save and delete, and how to expose only what you want.</p><h2>The interface hierarchy (Spring Data 3)</h2><pre class="dia"><code>Repository&lt;T, ID&gt;                              marker interface, no methods (you declare your own)
+   └─ CrudRepository&lt;T, ID&gt;                    save, saveAll, findById, existsById, findAll, findAllById, count, deleteById, delete, deleteAll ...
+        └─ ListCrudRepository&lt;T, ID&gt;           same, but findAll / findAllById / saveAll return List (not Iterable)
+   └─ PagingAndSortingRepository&lt;T, ID&gt;        findAll(Sort), findAll(Pageable)          (NOT a sub interface of CrudRepository since Spring Data 3)
+        └─ ListPagingAndSortingRepository&lt;T, ID&gt;
+JpaRepository&lt;T, ID&gt; extends ListCrudRepository, ListPagingAndSortingRepository, QueryByExampleExecutor
+   adds: flush, saveAndFlush, saveAllAndFlush, deleteAllInBatch, deleteAllByIdInBatch, getReferenceById, findAll(Example) ...</code></pre><table><thead><tr><th>Method</th><th>What it does</th><th>SQL / behavior</th></tr></thead><tbody><tr><td>save(entity)</td><td>Insert or update</td><td>isNew ? persist : merge. Returns the managed instance: ALWAYS use the returned value</td></tr><tr><td>saveAll(entities)</td><td>save in a loop</td><td>Batched if configured</td></tr><tr><td>saveAndFlush(entity)</td><td>save and flush now</td><td>Use for immediate constraint checks</td></tr><tr><td>findById(id)</td><td>Optional&lt;T&gt;</td><td>em.find: served from the persistence context if already loaded, else SELECT by id</td></tr><tr><td>getReferenceById(id)</td><td>Lazy proxy, no SQL</td><td>Fails later with EntityNotFoundException if the row is missing. Good for setting foreign keys</td></tr><tr><td>existsById(id)</td><td>boolean</td><td>select count / select 1</td></tr><tr><td>findAll(), findAllById(ids)</td><td>Lists</td><td>select ... (unbounded: never for big tables)</td></tr><tr><td>findAll(Pageable)</td><td>Page&lt;T&gt;</td><td>select with limit + count query</td></tr><tr><td>count()</td><td>long</td><td>select count(*)</td></tr><tr><td>delete(entity), deleteById(id)</td><td>Removes managed entity</td><td>Loads it first (cascades, lifecycle callbacks), then DELETE</td></tr><tr><td>deleteAll(), deleteAll(entities)</td><td>Loops delete</td><td>One SELECT then N DELETEs</td></tr><tr><td>deleteAllInBatch(), deleteAllByIdInBatch(ids)</td><td>Bulk delete</td><td>One DELETE statement. No cascades, no callbacks, persistence context not updated</td></tr><tr><td>flush()</td><td>Send pending SQL</td><td>Does not commit</td></tr></tbody></table><h2>save(): what really happens</h2><pre><code class="language-java">// SimpleJpaRepository (simplified from the real source)
+@Transactional
+public &lt;S extends T&gt; S save(S entity) {
+    if (entityInformation.isNew(entity)) {
+        entityManager.persist(entity);      // the SAME object becomes managed
+        return entity;
+    } else {
+        return entityManager.merge(entity); // returns a DIFFERENT managed copy. The passed object stays detached
+    }
+}
+// isNew: entity has @Version (wrapper) ? version == null : id == null (primitive id: id == 0)    or Persistable#isNew()</code></pre><pre><code class="language-java">// The classic bug
+Product detached = new Product(&quot;X&quot;, BigDecimal.ONE, &quot;c&quot;);
+detached.setId(5L);                              // an existing row
+Product saved = repository.save(detached);       // merge: copies state into a managed instance
+detached.setName(&quot;changed&quot;);                     // NOT tracked: detached is not the managed object
+saved.setName(&quot;tracked&quot;);                        // tracked. Written at commit
+
+// Inside a transaction you often need no save() for changes at all:
+@Transactional
+public void rename(Long id, String name) {
+    Product p = repository.findById(id).orElseThrow();   // managed
+    p.setName(name);                                     // dirty checking writes the UPDATE at commit
+}</code></pre><h2>delete: entity vs batch</h2><pre><code class="language-java">repository.deleteById(5L);            // select product where id=5;  then  delete from product where id=5   (cascade and callbacks work)
+repository.deleteAllInBatch();         // delete from product     (one statement, ignores cascades, JPA callbacks and the persistence context)
+repository.deleteAllByIdInBatch(ids);  // delete from product where id in (...)</code></pre><h2>Choose the right base interface</h2><table><thead><tr><th>Need</th><th>Extend</th></tr></thead><tbody><tr><td>Only some methods (for example read only)</td><td>Repository or a custom base with @NoRepositoryBean, declare only find methods</td></tr><tr><td>Basic CRUD with lists</td><td>ListCrudRepository</td></tr><tr><td>CRUD + paging + JPA features (flush, batch delete, Example)</td><td>JpaRepository (most common)</td></tr><tr><td>Read only repository for reporting</td><td>Repository&lt;T, ID&gt; with your own find methods</td></tr></tbody></table><pre><code class="language-java">@NoRepositoryBean
+public interface ReadOnlyRepository&lt;T, ID&gt; extends Repository&lt;T, ID&gt; {       // no save, no delete: cannot be misused
+    Optional&lt;T&gt; findById(ID id);
+    List&lt;T&gt; findAll();
+}
+
+public interface CountryRepository extends ReadOnlyRepository&lt;Country, String&gt; { }</code></pre><h2>Repository scanning and configuration</h2><pre><code class="language-java">@EnableJpaRepositories(
+    basePackages = &quot;com.example.shop.persistence&quot;,
+    repositoryBaseClass = ShopRepositoryImpl.class,          // your own base class (see custom repositories)
+    queryLookupStrategy = QueryLookupStrategy.Key.CREATE_IF_NOT_FOUND,
+    bootstrapMode = BootstrapMode.DEFERRED)                   // create repositories in the background at startup
+class RepositoryConfig { }</code></pre><ul><li>Repository beans are singletons and thread safe. Transaction and EntityManager come from the current thread.</li><li>Repository methods are transactional by themselves: reads use readOnly, writes use a normal transaction. A service @Transactional joins them into one.</li><li>@Repository is not needed on the interface. Spring Data registers it and translates exceptions.</li></ul><p class="use"><b>Common mistake:</b> Calling repository.save(detached) and continuing to work with the original object. merge() returns a new managed copy and the original stays detached, so later changes are lost. Use the return value of save().</p><h2>Interview questions</h2><h3>What is the difference between findById and getReferenceById?</h3><p>findById runs a SELECT and returns Optional. getReferenceById returns a lazy proxy without SQL, useful to set a foreign key, and throws EntityNotFoundException when first used if the row does not exist.</p><h3>Is calling save() required inside a @Transactional method?</h3><p>Not for changes to managed entities: dirty checking writes them at commit. save() is needed for new entities (persist) or detached ones (merge).</p><h3>What is the difference between deleteAll and deleteAllInBatch?</h3><p>deleteAll loads each entity and deletes it one by one, running cascades and callbacks. deleteAllInBatch runs a single DELETE statement and skips cascades, callbacks and the persistence context.</p><div class="np"><a href="/springjpa/mapping/advanced-hibernate-mapping/">&larr; Advanced Hibernate Mapping: Formula, NaturalId, Filters, Immutable, TenantId and more</a><a href="/springjpa/repositories/query-methods/">Query Methods: Derived Queries, @Query, Native, Named and Modifying &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>
