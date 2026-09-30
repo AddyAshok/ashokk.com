@@ -307,25 +307,3 @@ class CustomHeader extends HTMLElement {
 if (!customElements.get('app-header')) {
     customElements.define('app-header', CustomHeader);
 }
-
-export default {
-  async fetch(request, env) {
-    const url = new URL(request.url);
-
-    // Block direct navigation to .js files
-    if (
-      request.method === "GET" &&
-      url.pathname.endsWith(".js") &&
-      request.headers.get("Sec-Fetch-Mode") === "navigate"
-    ) {
-      return new Response("Access Denied", {
-        status: 403,
-        headers: {
-          "Content-Type": "text/plain",
-        },
-      });
-    }
-
-    return env.ASSETS.fetch(request);
-  },
-};
