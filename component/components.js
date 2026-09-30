@@ -145,4 +145,7 @@ class CustomFooter extends HTMLElement {
         `;
     }
 }
+if (!customElements.get('CustomFooter')) {
+   }
 customElements.define('app-footer', CustomFooter);
+

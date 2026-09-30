@@ -225,7 +225,7 @@ class CustomHeader extends HTMLElement {
         </style>
 
         <header class="header-nav-container">
-        <link rel="icon" href="/images/logo.svg">
+    
             <div class="single-row-nav">
                 <!-- Brand Logo & Status -->
                 <div class="logo-group">
@@ -304,4 +304,28 @@ class CustomHeader extends HTMLElement {
 
         document.head.appendChild(favicon);
     }
-customElements.define('app-header', CustomHeader);
+if (!customElements.get('app-header')) {
+    customElements.define('app-header', CustomHeader);
+}
+
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    // Block direct navigation to .js files
+    if (
+      request.method === "GET" &&
+      url.pathname.endsWith(".js") &&
+      request.headers.get("Sec-Fetch-Mode") === "navigate"
+    ) {
+      return new Response("Access Denied", {
+        status: 403,
+        headers: {
+          "Content-Type": "text/plain",
+        },
+      });
+    }
+
+    return env.ASSETS.fetch(request);
+  },
+};
