@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>The Security Filter Chain in Depth: Order, Customization and Multiple Chains – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="The filter order is fixed by Spring Security.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/fundamentals/filter-chain-in-depth/">
+    <meta property="og:title" content="The Security Filter Chain in Depth: Order, Customization and Multiple Chains – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/" aria-current="page">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a> / The Security Filter Chain in Depth: Order, Customization and Multiple Chains</div>
+<h1>The Security Filter Chain in Depth: Order, Customization and Multiple Chains</h1><p>The filter order is fixed by Spring Security. Knowing where each filter sits tells you where to add custom filters, and why a request is rejected before or after some step. This page also covers multiple chains, matchers and debugging.</p><h2>Filters and their fixed order</h2><pre class="dia"><code>(position)  filter                                  role
+   1    DisableEncodeUrlFilter                    no session id in URLs
+   2    WebAsyncManagerIntegrationFilter          context for async threads
+   3    SecurityContextHolderFilter               load/clear the SecurityContext
+   4    HeaderWriterFilter                        security headers
+   5    CorsFilter                                CORS (only when http.cors() is enabled)
+   6    CsrfFilter                                CSRF token check
+   7    LogoutFilter                              /logout
+   8    OAuth2AuthorizationRequestRedirectFilter  (oauth2Login only)
+   9    UsernamePasswordAuthenticationFilter      form login   ◄── common place for a custom &quot;before&quot;
+  10    DefaultLoginPageGeneratingFilter          /login page
+  11    BasicAuthenticationFilter                 HTTP Basic
+  12    BearerTokenAuthenticationFilter           JWT / opaque token (oauth2ResourceServer only)
+  13    RequestCacheAwareFilter                   replay saved request
+  14    SecurityContextHolderAwareRequestFilter   servlet API methods
+  15    AnonymousAuthenticationFilter             anonymous user
+  16    SessionManagementFilter                   session fixation, concurrency
+  17    ExceptionTranslationFilter                401 / 403 handling
+  18    AuthorizationFilter                       access rules   ◄── LAST</code></pre><p>Not all filters exist in every chain: the chain contains only those for the features you enabled. ExceptionTranslationFilter wraps only the filters AFTER it, which is why AuthorizationFilter (after it) can throw AccessDeniedException and get a clean 403, but exceptions thrown by a filter placed BEFORE it are not translated.</p><h2>Adding a custom filter</h2><pre><code class="language-java">http.addFilterBefore(myFilter, UsernamePasswordAuthenticationFilter.class);   // run before that filter
+http.addFilterAfter(myFilter, BasicAuthenticationFilter.class);              // run after
+http.addFilterAt(myFilter, UsernamePasswordAuthenticationFilter.class);      // same position (order between them undefined)
+
+// Typical: put a token filter before UsernamePasswordAuthenticationFilter, an audit/log filter after AuthorizationFilter</code></pre><pre><code class="language-java">// A filter that logs who is calling (runs after authentication is done)
+public class AuditFilter extends OncePerRequestFilter {
+    private static final Logger log = LoggerFactory.getLogger(AuditFilter.class);
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
+            throws ServletException, IOException {
+        chain.doFilter(req, res);
+        Authentication a = SecurityContextHolder.getContext().getAuthentication();
+        log.info(&quot;{} {} user={} status={}&quot;, req.getMethod(), req.getRequestURI(),
+                 a == null ? &quot;-&quot; : a.getName(), res.getStatus());
+    }
+}
+// http.addFilterAfter(new AuditFilter(), AuthorizationFilter.class);</code></pre><p class="use"><b>Tip:</b> Do not annotate a security filter with @Component. Spring Boot would also register it as a normal servlet filter, and it would run twice (once outside and once inside the chain). Create it with new inside the SecurityFilterChain bean, or register a FilterRegistrationBean with setEnabled(false).</p><h2>Request matchers and rule order</h2><pre><code class="language-java">http.authorizeHttpRequests(auth -&gt; auth
+    .requestMatchers(HttpMethod.GET, &quot;/api/products/**&quot;).permitAll()          // method + path
+    .requestMatchers(&quot;/api/admin/**&quot;).hasRole(&quot;ADMIN&quot;)
+    .requestMatchers(&quot;/api/orders/**&quot;).hasAnyRole(&quot;USER&quot;, &quot;ADMIN&quot;)
+    .requestMatchers(new AntPathRequestMatcher(&quot;/legacy/*.jsp&quot;)).denyAll()    // explicit matcher type
+    .requestMatchers(RegexRequestMatcher.regexMatcher(&quot;/files/[0-9]+&quot;)).authenticated()
+    .anyRequest().denyAll());                                                 // safest default: deny by default</code></pre><ul><li>Rules are checked from top to bottom. The FIRST match decides. Put the most specific rules first.</li><li>Finish with anyRequest().denyAll() or authenticated(). A forgotten endpoint should be closed, not open.</li><li>With Spring MVC, requestMatchers(String) uses MvcRequestMatcher rules (the same as your controllers). Servlet paths and trailing slash differences are a common source of bypasses. Test with real requests.</li><li>authorizeHttpRequests replaces the old authorizeRequests: it uses AuthorizationManager and is checked for every dispatch type.</li></ul><h2>Multiple SecurityFilterChains</h2><pre><code class="language-java">@Bean @Order(1)
+SecurityFilterChain apiChain(HttpSecurity http) throws Exception {
+    http.securityMatcher(&quot;/api/**&quot;)                       // this chain handles only /api/**
+        .csrf(csrf -&gt; csrf.disable())
+        .sessionManagement(s -&gt; s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .oauth2ResourceServer(o -&gt; o.jwt(Customizer.withDefaults()))
+        .authorizeHttpRequests(a -&gt; a.anyRequest().authenticated());
+    return http.build();
+}
+
+@Bean @Order(2)
+SecurityFilterChain webChain(HttpSecurity http) throws Exception {
+    http.authorizeHttpRequests(a -&gt; a.requestMatchers(&quot;/login&quot;, &quot;/css/**&quot;).permitAll().anyRequest().authenticated())
+        .formLogin(Customizer.withDefaults());
+    return http.build();                                  // no securityMatcher = matches everything (must be last)
+}</code></pre><p>FilterChainProxy uses the FIRST chain whose securityMatcher matches, and only that chain is used. A chain without securityMatcher matches every request, so it must have the lowest priority.</p><h2>Debugging checklist</h2><pre><code class="language-properties">logging.level.org.springframework.security=TRACE
+# TRACE prints: the list of filters at startup, which chain matched, each filter, the authorization decision and why access was denied</code></pre><table><thead><tr><th>Symptom</th><th>Likely reason</th></tr></thead><tbody><tr><td>401 for a public endpoint</td><td>Rule order wrong, or the URL does not match (context path, trailing slash), or the endpoint is under a different chain</td></tr><tr><td>403 on POST only</td><td>CSRF token missing</td></tr><tr><td>403 for a logged-in user</td><td>Role name mismatch: hasRole(&#x27;ADMIN&#x27;) needs the authority ROLE_ADMIN</td></tr><tr><td>Redirect to /login for an API call</td><td>formLogin is enabled. Use httpBasic or a token and an entry point returning 401</td></tr><tr><td>Custom filter runs twice</td><td>It is also a @Component (servlet filter registration)</td></tr><tr><td>CORS preflight gets 401</td><td>http.cors() is missing, so OPTIONS reaches authorization</td></tr><tr><td>Static files blocked</td><td>requestMatchers for /css/** etc. missing, or PathRequest.toStaticResources() not permitted</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Placing a broad permitAll rule before specific rules (for example /** first). The first match wins, so the later, stricter rules are never reached and your API is open.</p><h2>Interview questions</h2><h3>What decides which SecurityFilterChain handles a request?</h3><p>FilterChainProxy checks the chains in order (by @Order) and uses the first whose securityMatcher matches the request.</p><h3>Where should a JWT filter be added?</h3><p>Before UsernamePasswordAuthenticationFilter, so the SecurityContext is filled before the authorization check. With oauth2ResourceServer this is already done by BearerTokenAuthenticationFilter.</p><h3>Why is anyRequest() required to be last?</h3><p>Because it matches every request. Spring Security throws an error at startup if you add rules after anyRequest().</p><div class="np"><a href="/springsecurity/fundamentals/security-architecture/">&larr; Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

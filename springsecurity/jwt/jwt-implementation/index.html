@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JWT Authentication in Spring Security: Complete Implementation with RS256 – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="A complete, working design: users log in with a password, the server signs a short-lived JWT with an RSA private key, and every API request is verified with the public key using Spring Security&#x27;s built-in resource server support.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/jwt/jwt-implementation/">
+    <meta property="og:title" content="JWT Authentication in Spring Security: Complete Implementation with RS256 – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/" aria-current="page">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/jwt/">JWT in Depth</a> / JWT Authentication in Spring Security: Complete Implementation with RS256</div>
+<h1>JWT Authentication in Spring Security: Complete Implementation with RS256</h1><p>A complete, working design: users log in with a password, the server signs a short-lived JWT with an RSA private key, and every API request is verified with the public key using Spring Security&#x27;s built-in resource server support. No hand-written token parsing. It also shows the internal workflow of the bearer token filter.</p><h2>Architecture</h2><pre class="dia"><code>POST /auth/login {email, password}
+   └─ AuthenticationManager ─► DaoAuthenticationProvider ─► DbUserDetailsService + BCrypt      (password check)
+   └─ JwtEncoder signs the token with the PRIVATE key (RS256, kid in header)
+   ◄─ { &quot;accessToken&quot;: &quot;eyJ...&quot; }
+
+GET /api/orders   Authorization: Bearer eyJ...
+   └─ Security filter chain (stateless)
+        BearerTokenAuthenticationFilter
+          1. BearerTokenResolver: read the Authorization header, strip &quot;Bearer &quot;
+          2. BearerTokenAuthenticationToken(tokenString)
+          3. ProviderManager ─► JwtAuthenticationProvider
+                4. JwtDecoder.decode(token):  parse ─► check alg is RS256 ─► verify signature with the PUBLIC key
+                                              ─► validators: exp/nbf (JwtTimestampValidator), iss, aud, custom
+                5. JwtAuthenticationConverter: claims ─► authorities (roles / permissions)
+                6. JwtAuthenticationToken (authenticated) ─► SecurityContextHolder
+          errors: invalid token ─► BearerTokenAuthenticationEntryPoint ─► 401 + WWW-Authenticate: Bearer error=&quot;invalid_token&quot;
+                  not enough rights ─► BearerTokenAccessDeniedHandler ─► 403
+        AuthorizationFilter ─► hasAuthority(...) rules ─► controller</code></pre><h2>Dependencies</h2><pre><code class="language-xml">&lt;dependency&gt;&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&lt;artifactId&gt;spring-boot-starter-security&lt;/artifactId&gt;&lt;/dependency&gt;
+&lt;dependency&gt;&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&lt;artifactId&gt;spring-boot-starter-oauth2-resource-server&lt;/artifactId&gt;&lt;/dependency&gt;
+&lt;dependency&gt;&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;&lt;/dependency&gt;
+&lt;dependency&gt;&lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;&lt;artifactId&gt;spring-boot-starter-data-jpa&lt;/artifactId&gt;&lt;/dependency&gt;</code></pre><h2>Keys: encoder and decoder</h2><pre><code class="language-java">import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.jwk.JWKSet;
+import com.nimbusds.jose.jwk.RSAKey;
+import com.nimbusds.jose.jwk.source.ImmutableJWKSet;
+
+@Configuration
+public class JwtKeyConfig {
+
+    // DEMO: generates a new key at every start (all tokens become invalid after a restart).
+    // PRODUCTION: load the private key from a secret store or a mounted file, and keep the same key across instances.
+    @Bean
+    public RSAKey rsaKey() throws Exception {
+        KeyPairGenerator generator = KeyPairGenerator.getInstance(&quot;RSA&quot;);
+        generator.initialize(2048);
+        KeyPair pair = generator.generateKeyPair();
+        return new RSAKey.Builder((RSAPublicKey) pair.getPublic())
+                .privateKey(pair.getPrivate())
+                .keyID(UUID.randomUUID().toString())
+                .build();
+    }
+
+    @Bean
+    public JwtEncoder jwtEncoder(RSAKey rsaKey) {
+        return new NimbusJwtEncoder(new ImmutableJWKSet&lt;&gt;(new JWKSet(rsaKey)));
+    }
+
+    @Bean
+    public JwtDecoder jwtDecoder(RSAKey rsaKey) throws JOSEException {
+        return NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey())
+                .signatureAlgorithm(SignatureAlgorithm.RS256)          // PIN the algorithm: nothing else is accepted
+                .build();
+    }
+}</code></pre><h2>Token service</h2><pre><code class="language-java">@Service
+public class TokenService {
+
+    private static final String ISSUER = &quot;https://auth.shop.example&quot;;
+    private static final String AUDIENCE = &quot;shop-api&quot;;
+
+    private final JwtEncoder encoder;
+    private final RSAKey rsaKey;
+
+    public TokenService(JwtEncoder encoder, RSAKey rsaKey) { this.encoder = encoder; this.rsaKey = rsaKey; }
+
+    public String createAccessToken(Authentication auth) {
+        Instant now = Instant.now();
+        List&lt;String&gt; authorities = auth.getAuthorities().stream().map(GrantedAuthority::getAuthority).toList();
+
+        JwtClaimsSet claims = JwtClaimsSet.builder()
+                .issuer(ISSUER)
+                .audience(List.of(AUDIENCE))
+                .subject(auth.getName())
+                .issuedAt(now)
+                .expiresAt(now.plus(Duration.ofMinutes(10)))               // short lived
+                .id(UUID.randomUUID().toString())                          // jti for revocation
+                .claim(&quot;authorities&quot;, authorities)
+                .build();
+
+        JwsHeader header = JwsHeader.with(SignatureAlgorithm.RS256).keyId(rsaKey.getKeyID()).build();
+        return encoder.encode(JwtEncoderParameters.from(header, claims)).getTokenValue();
+    }
+}</code></pre><h2>Security configuration</h2><pre><code class="language-java">@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class SecurityConfig {
+
+    @Bean
+    SecurityFilterChain api(HttpSecurity http) throws Exception {
+        http
+            .csrf(csrf -&gt; csrf.disable())                                              // stateless, Authorization header
+            .cors(Customizer.withDefaults())
+            .sessionManagement(s -&gt; s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(a -&gt; a
+                .requestMatchers(&quot;/auth/login&quot;, &quot;/auth/refresh&quot;, &quot;/actuator/health&quot;).permitAll()
+                .requestMatchers(&quot;/api/admin/**&quot;).hasRole(&quot;ADMIN&quot;)
+                .anyRequest().authenticated())
+            .oauth2ResourceServer(o -&gt; o.jwt(j -&gt; j.jwtAuthenticationConverter(jwtAuthenticationConverter())));
+        return http.build();
+    }
+
+    // read authorities from our own claim, without adding the default SCOPE_ prefix
+    private JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter authorities = new JwtGrantedAuthoritiesConverter();
+        authorities.setAuthoritiesClaimName(&quot;authorities&quot;);
+        authorities.setAuthorityPrefix(&quot;&quot;);
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(authorities);
+        return converter;
+    }
+
+    @Bean
+    AuthenticationManager authenticationManager(AuthenticationConfiguration config) throws Exception {
+        return config.getAuthenticationManager();            // uses your UserDetailsService and PasswordEncoder beans
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() { return PasswordEncoderFactories.createDelegatingPasswordEncoder(); }
+}</code></pre><h2>Login endpoint and a protected endpoint</h2><pre><code class="language-java">public record LoginRequest(@NotBlank String email, @NotBlank String password) { }
+public record TokenResponse(String accessToken, String tokenType, long expiresIn) { }
+
+@RestController
+@RequestMapping(&quot;/auth&quot;)
+public class AuthController {
+
+    private final AuthenticationManager authenticationManager;
+    private final TokenService tokenService;
+
+    public AuthController(AuthenticationManager authenticationManager, TokenService tokenService) {
+        this.authenticationManager = authenticationManager;
+        this.tokenService = tokenService;
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    public TokenResponse login(@Valid @RequestBody LoginRequest request) {
+        Authentication auth = authenticationManager.authenticate(                      // throws BadCredentialsException -&gt; 401
+                UsernamePasswordAuthenticationToken.unauthenticated(request.email(), request.password()));
+        return new TokenResponse(tokenService.createAccessToken(auth), &quot;Bearer&quot;, 600);
+    }
+}
+
+@RestController
+@RequestMapping(&quot;/api&quot;)
+class OrderController {
+
+    @GetMapping(&quot;/orders&quot;)
+    List&lt;String&gt; orders(@AuthenticationPrincipal Jwt jwt) {                            // the verified token
+        return List.of(&quot;order for &quot; + jwt.getSubject());
+    }
+
+    @GetMapping(&quot;/admin/stats&quot;)
+    @PreAuthorize(&quot;hasAuthority(&#x27;ROLE_ADMIN&#x27;)&quot;)
+    Map&lt;String, Object&gt; stats(JwtAuthenticationToken auth) {
+        return Map.of(&quot;user&quot;, auth.getName(), &quot;claims&quot;, auth.getToken().getClaims().keySet());
+    }
+}</code></pre><pre><code class="language-shell">TOKEN=$(curl -s -X POST localhost:8080/auth/login -H &quot;Content-Type: application/json&quot; \
+        -d &#x27;{&quot;email&quot;:&quot;ram@example.com&quot;,&quot;password&quot;:&quot;a-long-password&quot;}&#x27; | jq -r .accessToken)
+curl -i localhost:8080/api/orders                                   # 401  WWW-Authenticate: Bearer
+curl -i localhost:8080/api/orders -H &quot;Authorization: Bearer $TOKEN&quot; # 200
+curl -i localhost:8080/api/orders -H &quot;Authorization: Bearer ${TOKEN}x&quot;   # 401 error=&quot;invalid_token&quot; (signature failed)
+echo $TOKEN | cut -d. -f2 | base64 -d 2&gt;/dev/null                    # read the payload (it is not secret)</code></pre><h2>Custom error responses (JSON)</h2><pre><code class="language-java">http.oauth2ResourceServer(o -&gt; o
+    .jwt(Customizer.withDefaults())
+    .authenticationEntryPoint((req, res, ex) -&gt; {                     // 401
+        res.setStatus(401);
+        res.setContentType(&quot;application/json&quot;);
+        res.getWriter().write(&quot;{\&quot;error\&quot;:\&quot;unauthorized\&quot;}&quot;);
+    })
+    .accessDeniedHandler((req, res, ex) -&gt; {                          // 403
+        res.setStatus(403);
+        res.setContentType(&quot;application/json&quot;);
+        res.getWriter().write(&quot;{\&quot;error\&quot;:\&quot;forbidden\&quot;}&quot;);
+    }));</code></pre><h2>Alternative: your own OncePerRequestFilter</h2><p>Older tutorials write a filter that parses the header, verifies the token with a library such as jjwt, and sets the SecurityContext. It works, but you must remember every check (algorithm, exp, iss, aud, clock skew, error handling). The built-in resource server support does all of it, is tested and maintained by the Spring team, and integrates with JWKS, opaque tokens and multi-tenancy. Prefer it unless you have a special requirement.</p><pre><code class="language-java">// The structure of a hand-written filter (for understanding only)
+public class JwtAuthFilter extends OncePerRequestFilter {
+    private final JwtDecoder decoder;
+    private final JwtAuthenticationConverter converter;
+
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain) throws ServletException, IOException {
+        String header = req.getHeader(HttpHeaders.AUTHORIZATION);
+        if (header != null &amp;&amp; header.startsWith(&quot;Bearer &quot;)) {
+            try {
+                Jwt jwt = decoder.decode(header.substring(7));                  // verifies signature AND validators
+                SecurityContextHolder.getContext().setAuthentication(converter.convert(jwt));
+            } catch (JwtException e) {
+                SecurityContextHolder.clearContext();
+                res.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+                return;
+            }
+        }
+        chain.doFilter(req, res);
+    }
+}</code></pre><p class="use"><b>Common mistake:</b> Generating the RSA key at every startup in production, or with several instances. Tokens issued by one instance are rejected by the other and by the same instance after a restart. Load one stable key from a secret store, and plan rotation with key ids (kid).</p><h2>Interview questions</h2><h3>Why RS256 and not HS256?</h3><p>With RS256 only the auth server holds the private key. Other services verify with the public key and cannot create tokens. With HS256 every verifier knows the signing secret and could forge tokens.</p><h3>What does oauth2ResourceServer().jwt() add to the chain?</h3><p>BearerTokenAuthenticationFilter with a JwtAuthenticationProvider, a JwtDecoder for verification and validation, and entry point and access denied handlers for 401 and 403 with Bearer headers.</p><h3>Why put the authorities claim in the token?</h3><p>So the API can authorize without a database call. The price is stale permissions until the token expires, so keep it short and consider a token version check.</p><div class="np"><a href="/springsecurity/jwt/jwt-pros-and-cons/">&larr; JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

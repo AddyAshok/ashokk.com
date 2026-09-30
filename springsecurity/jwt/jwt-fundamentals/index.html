@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JWT Fundamentals: Structure, Signature and Verification – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="A JSON Web Token (JWT, pronounced &#x27;jot&#x27;) is a compact, URL-safe string that carries claims (statements about a user) and is protected by a digital signature.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/jwt/jwt-fundamentals/">
+    <meta property="og:title" content="JWT Fundamentals: Structure, Signature and Verification – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/" aria-current="page">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/jwt/">JWT in Depth</a> / JWT Fundamentals: Structure, Signature and Verification</div>
+<h1>JWT Fundamentals: Structure, Signature and Verification</h1><p>A JSON Web Token (JWT, pronounced &#x27;jot&#x27;) is a compact, URL-safe string that carries claims (statements about a user) and is protected by a digital signature. The server that receives it can trust the content without looking anything up, because it can verify the signature. Understanding exactly what is inside, what is signed and what is not, is the base for every JWT decision.</p><h2>Structure: three parts separated by dots</h2><pre class="dia"><code>eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9 . eyJzdWIiOiJyYW0iLCJyb2xlcyI6WyJVU0VSIl0sImV4cCI6MTc5MDAwMDkwMH0 . nJeZz2xz5I_mqgjAvDCgt593vRvgph2Pzk1TYMm_y7A
+└──────────── HEADER ────────────┘   └───────────────────────── PAYLOAD (claims) ──────────────────────────┘   └──────── SIGNATURE ───────┘
+ base64url({&quot;alg&quot;:&quot;HS256&quot;,&quot;typ&quot;:&quot;JWT&quot;})   base64url({&quot;sub&quot;:&quot;ram&quot;,&quot;roles&quot;:[&quot;USER&quot;],&quot;exp&quot;:1790000900})            base64url( HMAC-SHA256( header + &quot;.&quot; + payload, secret ) )
+
+signature = SIGN( base64url(header) + &quot;.&quot; + base64url(payload) , key )
+Anyone can READ header and payload (Base64 is not encryption). Only the key holder can create a valid SIGNATURE.</code></pre><ul><li>Base64url is an encoding to make bytes printable and URL safe (uses - and _ instead of + and /, no = padding). It hides nothing.</li><li>The signature covers the header and the payload. Changing even one character makes verification fail.</li><li>A JWT is a bearer token: whoever holds it can use it. There is no link to the client that received it (unless you add one, see the hardening page).</li></ul><h2>Registered claims (standard names)</h2><table><thead><tr><th>Claim</th><th>Name</th><th>Meaning</th><th>Validate?</th></tr></thead><tbody><tr><td>iss</td><td>Issuer</td><td>Who created the token (https://auth.example.com)</td><td>Always</td></tr><tr><td>sub</td><td>Subject</td><td>Who the token is about (user id)</td><td>Use as user identity</td></tr><tr><td>aud</td><td>Audience</td><td>Which API the token is meant for (shop-api)</td><td>Always in every resource server</td></tr><tr><td>exp</td><td>Expiration time</td><td>Unix time after which the token is invalid</td><td>Always</td></tr><tr><td>nbf</td><td>Not before</td><td>Not valid before this time</td><td>Yes if present</td></tr><tr><td>iat</td><td>Issued at</td><td>When the token was created</td><td>Optional (age checks)</td></tr><tr><td>jti</td><td>JWT ID</td><td>Unique id of this token (for revocation and replay detection)</td><td>If you revoke tokens</td></tr></tbody></table><p>Custom claims (roles, tenantId, email) are allowed. Keep them few and small, because the token is sent with every request.</p><h2>JWS, JWE and JWT: the words</h2><table><thead><tr><th>Term</th><th>Meaning</th></tr></thead><tbody><tr><td>JWT</td><td>The token format (claims as JSON)</td></tr><tr><td>JWS (JSON Web Signature)</td><td>A JWT that is SIGNED. Content readable, integrity protected. This is what almost everybody means by JWT</td></tr><tr><td>JWE (JSON Web Encryption)</td><td>A JWT that is ENCRYPTED. Content hidden from everyone without the key (5 parts). Use when claims are sensitive</td></tr><tr><td>JWK / JWKS</td><td>JSON format for keys / a set of public keys published at an URL (for example /.well-known/jwks.json)</td></tr></tbody></table><h2>Signing algorithms</h2><table><thead><tr><th>Algorithm</th><th>Type</th><th>How</th><th>Use</th></tr></thead><tbody><tr><td>HS256 / HS384 / HS512</td><td>Symmetric (HMAC)</td><td>One shared secret signs AND verifies</td><td>One service both issues and verifies. Any verifier can also forge tokens</td></tr><tr><td>RS256 / RS384 / RS512</td><td>Asymmetric (RSA)</td><td>Private key signs, public key verifies</td><td>Standard for distributed systems. Verifiers cannot forge tokens</td></tr><tr><td>ES256 / ES384</td><td>Asymmetric (ECDSA)</td><td>Private key signs, public key verifies. Smaller keys and signatures than RSA</td><td>Modern choice, fast verification</td></tr><tr><td>EdDSA (Ed25519)</td><td>Asymmetric</td><td>Modern curve, fast and simple</td><td>Modern choice where supported</td></tr><tr><td>none</td><td>No signature</td><td>Token is not protected</td><td>Never accept it</td></tr></tbody></table><h2>Verification: the exact steps a resource server does</h2><pre class="dia"><code>1. Split the token into 3 parts. Reject if the format is wrong.
+2. Read the header: alg and kid.  (the ALGORITHM must be one YOU allow, never blindly trust the header)
+3. Find the key for kid (from the JWKS) or use the configured key.
+4. Recompute the signature over base64(header).base64(payload) and compare with constant-time equality.   ─► mismatch: reject (401)
+5. Only NOW read the claims:
+      exp in the future?  nbf in the past?  iss equals the expected issuer?  aud contains this API?
+6. Map claims to Authentication (sub -&gt; name, scope/roles -&gt; authorities).
+Rule: never trust or use any claim before the signature has been verified.</code></pre><h2>Runnable example: create, read and tamper with a JWT (plain Java, no library)</h2><p>This program builds an HS256 token by hand, decodes it, then changes the role to ADMIN without the key. The forged token fails verification. It was executed, and the output below is real.</p><pre><code class="language-java">import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.util.Base64;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
+public class Main {
+    static final byte[] SECRET = &quot;this-is-a-demo-secret-of-32-bytes!&quot;.getBytes(StandardCharsets.UTF_8);
+
+    static String b64(byte[] b) { return Base64.getUrlEncoder().withoutPadding().encodeToString(b); }
+    static String text(String b64) { return new String(Base64.getUrlDecoder().decode(b64), StandardCharsets.UTF_8); }
+
+    static String sign(String signingInput) throws Exception {
+        Mac mac = Mac.getInstance(&quot;HmacSHA256&quot;);
+        mac.init(new SecretKeySpec(SECRET, &quot;HmacSHA256&quot;));
+        return b64(mac.doFinal(signingInput.getBytes(StandardCharsets.UTF_8)));
+    }
+
+    static boolean verify(String jwt) throws Exception {
+        String[] p = jwt.split(&quot;\\.&quot;);
+        String expected = sign(p[0] + &quot;.&quot; + p[1]);
+        return MessageDigest.isEqual(expected.getBytes(StandardCharsets.UTF_8), p[2].getBytes(StandardCharsets.UTF_8));   // constant time
+    }
+
+    public static void main(String[] args) throws Exception {
+        String header = &quot;{\&quot;alg\&quot;:\&quot;HS256\&quot;,\&quot;typ\&quot;:\&quot;JWT\&quot;}&quot;;
+        String payload = &quot;{\&quot;sub\&quot;:\&quot;ram\&quot;,\&quot;roles\&quot;:[\&quot;USER\&quot;],\&quot;iat\&quot;:1790000000,\&quot;exp\&quot;:1790000900}&quot;;
+        String signingInput = b64(header.getBytes(StandardCharsets.UTF_8)) + &quot;.&quot; + b64(payload.getBytes(StandardCharsets.UTF_8));
+        String jwt = signingInput + &quot;.&quot; + sign(signingInput);
+
+        System.out.println(&quot;JWT      : &quot; + jwt);
+        String[] parts = jwt.split(&quot;\\.&quot;);
+        System.out.println(&quot;header   : &quot; + text(parts[0]));
+        System.out.println(&quot;payload  : &quot; + text(parts[1]));
+
+        String forgedPayload = b64(&quot;{\&quot;sub\&quot;:\&quot;ram\&quot;,\&quot;roles\&quot;:[\&quot;ADMIN\&quot;],\&quot;iat\&quot;:1790000000,\&quot;exp\&quot;:1790000900}&quot;.getBytes(StandardCharsets.UTF_8));
+        String forged = parts[0] + &quot;.&quot; + forgedPayload + &quot;.&quot; + parts[2];
+        System.out.println(&quot;original token valid : &quot; + verify(jwt));
+        System.out.println(&quot;forged (ADMIN) valid : &quot; + verify(forged));
+    }
+}</code></pre><pre><code class="language-text">JWT      : eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJyYW0iLCJyb2xlcyI6WyJVU0VSIl0sImlhdCI6MTc5MDAwMDAwMCwiZXhwIjoxNzkwMDAwOTAwfQ.nJeZz2xz5I_mqgjAvDCgt593vRvgph2Pzk1TYMm_y7A
+header   : {&quot;alg&quot;:&quot;HS256&quot;,&quot;typ&quot;:&quot;JWT&quot;}
+payload  : {&quot;sub&quot;:&quot;ram&quot;,&quot;roles&quot;:[&quot;USER&quot;],&quot;iat&quot;:1790000000,&quot;exp&quot;:1790000900}
+original token valid : true
+forged (ADMIN) valid : false</code></pre><p>You would never write this in production (use Nimbus JOSE, which Spring Security uses), but building it once removes the mystery. The payload can be read by anyone, and the signature protects against changes only.</p><h2>Stateless authentication: the idea</h2><pre class="dia"><code>SESSION                                              JWT
+Server stores: sessionId ─► {user, roles, ...}       Server stores: nothing
+Browser stores: sessionId                            Client stores: the token itself (all data inside, signed)
+Each request: server looks up the session            Each request: server verifies the signature and reads the claims
+Revoke: delete the session (instant)                 Revoke: hard (the token is valid until exp)</code></pre><p class="use"><b>Common mistake:</b> Believing that the JWT payload is secret because it looks like random text. It is only Base64 encoded. Never put passwords, personal data or secrets in it, or encrypt it with JWE.</p><h2>Interview questions</h2><h3>What is inside a JWT?</h3><p>A header (algorithm and key id), a payload with claims (sub, exp, roles ...) and a signature over both. The first two parts are readable by anyone.</p><h3>What does the signature protect?</h3><p>Integrity and origin: nobody without the key can change the claims or create a valid token. It does not hide the content and does not stop a stolen token from being used.</p><h3>Why should the server not trust the alg header?</h3><p>The attacker controls the header. If the server obeys alg=none or switches from RS256 to HS256, verification can be bypassed. The server must decide which algorithm it accepts.</p><div class="np"><a href="/springsecurity/web-protections/common-attacks-and-defenses/">&larr; Common Attacks and Defenses in Spring Applications</a><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

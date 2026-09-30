@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="These are the core building blocks that appear in every stack trace and every customization.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/fundamentals/security-architecture/">
+    <meta property="og:title" content="Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/" aria-current="page">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a> / Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</div>
+<h1>Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</h1><p>These are the core building blocks that appear in every stack trace and every customization. Each component has one job, and once you know them, security code becomes predictable.</p><h2>Component map</h2><pre class="dia"><code>┌───────────────────────────── one request ───────────────────────────────┐
+│ DelegatingFilterProxy ─► FilterChainProxy ─► SecurityFilterChain #1 (/api/**)    │
+│                                          └─► SecurityFilterChain #2 (/**)       │
+│                                                                                 │
+│ inside a chain:                                                                 │
+│  AuthenticationFilter ──creates──► Authentication (unauthenticated)             │
+│        │                                                                        │
+│        ▼                                                                        │
+│  AuthenticationManager (interface)                                              │
+│        └─ ProviderManager (implementation) ─ loops over ─►                      │
+│               AuthenticationProvider  (DaoAuthenticationProvider, JwtAuth...)   │
+│                    ├─ UserDetailsService ─► UserDetails                         │
+│                    └─ PasswordEncoder                                           │
+│        ▼                                                                        │
+│  Authentication (authenticated, with authorities)                               │
+│        ▼                                                                        │
+│  SecurityContextHolder ─► SecurityContext ─► Authentication   (ThreadLocal)     │
+│        ▼                                                                        │
+│  AuthorizationFilter ─► AuthorizationManager  (decides allow or deny)           │
+└─────────────────────────────────────────────────────────────────────────────────┘</code></pre><table><thead><tr><th>Component</th><th>Job</th></tr></thead><tbody><tr><td>DelegatingFilterProxy</td><td>A servlet Filter that forwards to a Spring bean, so Spring beans can act as servlet filters</td></tr><tr><td>FilterChainProxy</td><td>The bean that owns all SecurityFilterChains, picks the first whose RequestMatcher matches, adds firewall checks (StrictHttpFirewall rejects // ; %2e encoded tricks)</td></tr><tr><td>SecurityFilterChain</td><td>A RequestMatcher plus an ordered list of Filters</td></tr><tr><td>Authentication</td><td>The token object: principal (who), credentials (proof), authorities (permissions), authenticated flag, details</td></tr><tr><td>AuthenticationManager</td><td>authenticate(Authentication): returns a fully authenticated object or throws AuthenticationException</td></tr><tr><td>ProviderManager</td><td>Default AuthenticationManager. Tries each AuthenticationProvider that supports() the token type, and can have a parent</td></tr><tr><td>AuthenticationProvider</td><td>Knows how to verify one kind of credentials (password, JWT, OTP, LDAP)</td></tr><tr><td>UserDetailsService</td><td>Loads user data by username: loadUserByUsername</td></tr><tr><td>PasswordEncoder</td><td>encode() for storing, matches() for checking, upgradeEncoding() for migration</td></tr><tr><td>SecurityContextHolder</td><td>Stores the SecurityContext for the current thread (default strategy MODE_THREADLOCAL)</td></tr><tr><td>GrantedAuthority</td><td>One permission or role as a string (ROLE_ADMIN, orders:read)</td></tr><tr><td>AuthorizationManager</td><td>check(Supplier&lt;Authentication&gt;, object): AuthorizationDecision. Used for URLs and methods</td></tr></tbody></table><h2>The Authentication object</h2><pre><code class="language-java">// BEFORE authentication (created by a filter)
+Authentication token = UsernamePasswordAuthenticationToken.unauthenticated(&quot;ram&quot;, &quot;ram123&quot;);
+token.isAuthenticated();                         // false
+
+// AFTER authentication (created by the provider)
+Authentication result = authenticationManager.authenticate(token);
+result.getPrincipal();                           // UserDetails (or a String or a Jwt)
+result.getCredentials();                         // null: credentials are erased after success
+result.getAuthorities();                         // [ROLE_USER]
+result.isAuthenticated();                        // true</code></pre><h2>ProviderManager algorithm</h2><pre class="dia"><code>authenticate(token)
+  for each provider in providers:
+      if !provider.supports(token.getClass())   continue           ← e.g. Dao supports UsernamePassword..., Jwt supports BearerTokenAuthenticationToken
+      try   result = provider.authenticate(token)
+            if result != null ─► copy details, ERASE credentials, publish AuthenticationSuccessEvent ─► return result
+      catch AccountStatusException / InternalAuthenticationServiceException ─► rethrow at once
+      catch AuthenticationException ─► remember it, try the next provider
+  if nothing succeeded: ask the parent AuthenticationManager (if any), else throw the remembered exception (ProviderNotFoundException if none supported)</code></pre><h2>What the DaoAuthenticationProvider does</h2><pre class="dia"><code>authenticate(UsernamePasswordAuthenticationToken)
+  1. user = UserDetailsService.loadUserByUsername(name)    (not found ─► UsernameNotFoundException, hidden as BadCredentials)
+  2. preAuthenticationChecks:  isAccountNonLocked / isEnabled / isAccountNonExpired    ─► LockedException, DisabledException, AccountExpiredException
+  3. additionalAuthenticationChecks: passwordEncoder.matches(rawPassword, user.getPassword())  ─► BadCredentialsException
+  4. postAuthenticationChecks: isCredentialsNonExpired                                        ─► CredentialsExpiredException
+  5. if passwordEncoder.upgradeEncoding(hash) ─► re-encode and save (UserDetailsPasswordService)
+  6. return a NEW authenticated token with the user&#x27;s authorities
+  (a dummy password check is done even for unknown users, to reduce timing attacks)</code></pre><h2>SecurityContextHolder: where the current user lives</h2><pre><code class="language-java">Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+String name = auth.getName();
+
+// set it manually (for example in a custom filter or a test)
+SecurityContext context = SecurityContextHolder.createEmptyContext();
+context.setAuthentication(new UsernamePasswordAuthenticationToken(&quot;job-runner&quot;, null, List.of(new SimpleGrantedAuthority(&quot;ROLE_SYSTEM&quot;))));
+SecurityContextHolder.setContext(context);
+
+// strategies: MODE_THREADLOCAL (default), MODE_INHERITABLETHREADLOCAL, MODE_GLOBAL
+// New threads (@Async, executors) do NOT see the context unless you delegate it:
+Executor delegating = new DelegatingSecurityContextExecutor(Executors.newFixedThreadPool(4));</code></pre><p>A ThreadLocal context is cleared at the end of every request by SecurityContextHolderFilter. This is why a request never sees the user of another request that used the same thread from the pool.</p><h2>Saving the context between requests</h2><table><thead><tr><th>Style</th><th>How</th><th>Use for</th></tr></thead><tbody><tr><td>Session</td><td>HttpSessionSecurityContextRepository stores the SecurityContext in the HttpSession. Browser sends JSESSIONID</td><td>Server-rendered web apps</td></tr><tr><td>Stateless</td><td>NullSecurityContextRepository (with SessionCreationPolicy.STATELESS). Every request must carry credentials again (Basic, API key, JWT)</td><td>REST APIs</td></tr></tbody></table><h2>The firewall</h2><p>Before any filter runs, FilterChainProxy applies StrictHttpFirewall. It rejects suspicious requests with RequestRejectedException: encoded slashes, double slashes, semicolons in paths, backslashes, null bytes, and disallowed HTTP methods. This blocks many path traversal and URL matching bypass attempts. Change it only with a very good reason.</p><p class="use"><b>Common mistake:</b> Building your own AuthenticationManager or Authentication handling in a controller (reading the password yourself and comparing). Use the framework pipeline. Hand-written login code misses timing protection, events, lockout hooks and password upgrade.</p><h2>Interview questions</h2><h3>Difference between AuthenticationManager and AuthenticationProvider?</h3><p>AuthenticationManager is the entry API. ProviderManager implements it and delegates to a list of AuthenticationProviders, each supporting one type of credentials.</p><h3>Why are credentials null after authentication?</h3><p>ProviderManager erases credentials after success (eraseCredentialsAfterAuthentication) so that passwords do not stay in memory or in the session.</p><h3>Why does the security context disappear in @Async methods?</h3><p>It is stored in a ThreadLocal that belongs to the request thread. Use DelegatingSecurityContextExecutor or a task decorator to copy it.</p><div class="np"><a href="/springsecurity/fundamentals/default-security-configuration/">&larr; Default Spring Security Configuration: What Happens When You Add the Starter</a><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

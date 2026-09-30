@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="Authorization decides what an authenticated user may do.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/authorization/authorization-internals/">
+    <meta property="og:title" content="Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/" aria-current="page">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/authorization/">Authorization</a> / Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</div>
+<h1>Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</h1><p>Authorization decides what an authenticated user may do. This page shows how the URL based check works inside, how roles and authorities differ, role hierarchies, and how to write your own AuthorizationManager for rules such as ownership or time of day.</p><h2>Workflow of a URL access check</h2><pre class="dia"><code>AuthorizationFilter.doFilter(request)
+  1. Supplier&lt;Authentication&gt; auth = () -&gt; SecurityContextHolder.getContext().getAuthentication()   (lazy)
+  2. RequestMatcherDelegatingAuthorizationManager: find the FIRST rule whose matcher matches the request
+       /public/**   -&gt; permitAll        (AuthorizationManagers: always granted)
+       /admin/**    -&gt; hasRole(&quot;ADMIN&quot;) -&gt; AuthorityAuthorizationManager
+       anyRequest   -&gt; authenticated()  -&gt; AuthenticatedAuthorizationManager
+  3. manager.check(auth, request)  ──►  AuthorizationDecision(granted true/false)
+  4. granted     ─► chain.doFilter (continue to the controller)
+     not granted ─► AccessDeniedException ─► ExceptionTranslationFilter:
+                        anonymous user  ─► start authentication (401 or redirect to login)
+                        logged in user  ─► AccessDeniedHandler ─► 403</code></pre><h2>Roles and authorities</h2><table><thead><tr><th>Concept</th><th>Stored as</th><th>Check</th><th>Example</th></tr></thead><tbody><tr><td>Authority</td><td>Any string</td><td>hasAuthority(&#x27;orders:delete&#x27;)</td><td>Fine-grained permission</td></tr><tr><td>Role</td><td>Authority with the prefix ROLE_</td><td>hasRole(&#x27;ADMIN&#x27;) = hasAuthority(&#x27;ROLE_ADMIN&#x27;)</td><td>Coarse group</td></tr></tbody></table><pre><code class="language-java">http.authorizeHttpRequests(auth -&gt; auth
+    .requestMatchers(HttpMethod.GET,    &quot;/api/orders/**&quot;).hasAuthority(&quot;orders:read&quot;)
+    .requestMatchers(HttpMethod.POST,   &quot;/api/orders/**&quot;).hasAuthority(&quot;orders:write&quot;)
+    .requestMatchers(HttpMethod.DELETE, &quot;/api/orders/**&quot;).hasAnyRole(&quot;ADMIN&quot;, &quot;MANAGER&quot;)
+    .requestMatchers(&quot;/api/reports/**&quot;).access(AuthorizationManagers.allOf(
+            AuthorityAuthorizationManager.hasRole(&quot;MANAGER&quot;),
+            AuthorityAuthorizationManager.hasAuthority(&quot;reports:view&quot;)))
+    .requestMatchers(&quot;/internal/**&quot;).access(new WebExpressionAuthorizationManager(&quot;hasIpAddress(&#x27;10.0.0.0/8&#x27;)&quot;))
+    .anyRequest().denyAll());</code></pre><h2>Role hierarchy</h2><pre><code class="language-java">@Bean
+RoleHierarchy roleHierarchy() {
+    return RoleHierarchyImpl.fromHierarchy(&quot;ROLE_ADMIN &gt; ROLE_MANAGER\nROLE_MANAGER &gt; ROLE_USER&quot;);   // ADMIN also has MANAGER and USER rights
+}
+// Spring Security 6.3 and older: RoleHierarchyImpl h = new RoleHierarchyImpl(); h.setHierarchy(&quot;ROLE_ADMIN &gt; ROLE_MANAGER &gt; ROLE_USER&quot;);</code></pre><h2>Custom AuthorizationManager: owner or admin</h2><pre><code class="language-java">@Component
+public class OrderOwnerAuthorizationManager implements AuthorizationManager&lt;RequestAuthorizationContext&gt; {
+
+    private final OrderRepository orders;
+    public OrderOwnerAuthorizationManager(OrderRepository orders) { this.orders = orders; }
+
+    @Override
+    public AuthorizationDecision check(Supplier&lt;Authentication&gt; authentication, RequestAuthorizationContext context) {
+        Authentication auth = authentication.get();
+        if (auth == null || !auth.isAuthenticated()) return new AuthorizationDecision(false);
+        boolean admin = auth.getAuthorities().stream().anyMatch(a -&gt; a.getAuthority().equals(&quot;ROLE_ADMIN&quot;));
+        if (admin) return new AuthorizationDecision(true);
+        Long orderId = Long.valueOf(context.getVariables().get(&quot;id&quot;));       // from the URL template
+        boolean owner = orders.findById(orderId).map(o -&gt; o.getOwner().equals(auth.getName())).orElse(false);
+        return new AuthorizationDecision(owner);
+    }
+}
+
+// use:  .requestMatchers(&quot;/api/orders/{id}&quot;).access(orderOwnerAuthorizationManager)</code></pre><h2>Rules for safe authorization</h2><ul><li>Default deny: finish with anyRequest().denyAll() (or authenticated() for simple apps).</li><li>Do access control on the SERVER for every request. Hiding a button in the UI is not security.</li><li>Check ownership, not only roles. This is the classic Broken Object Level Authorization (BOLA / IDOR) bug: user 5 can read /orders/6 because only &#x27;is logged in&#x27; was checked.</li><li>Use least privilege: give each role only what it needs.</li><li>Keep URL rules simple, and put fine-grained business rules into method security next to the data access.</li></ul><p class="use"><b>Common mistake:</b> Checking only that the user is logged in and then loading an object by the id from the URL. Any logged-in user can read any record by changing the number (IDOR). Always verify ownership or permission for the concrete object.</p><h2>Interview questions</h2><h3>hasRole(&#x27;ADMIN&#x27;) or hasAuthority(&#x27;ROLE_ADMIN&#x27;)?</h3><p>They are the same. hasRole adds the ROLE_ prefix. Choose one convention and use it everywhere.</p><h3>Why do I get 403 with the role name ADMIN in the database?</h3><p>The authority must be ROLE_ADMIN when you use hasRole(&#x27;ADMIN&#x27;). Map database roles to authorities with the prefix.</p><h3>What is BOLA or IDOR?</h3><p>Broken object level authorization: the server checks who you are but not whether you may access this specific object. It is the number one API security problem.</p><div class="np"><a href="/springsecurity/authentication/session-management/">&larr; Session Management: Fixation, Concurrency, Timeouts and Spring Session</a><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

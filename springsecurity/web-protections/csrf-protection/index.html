@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CSRF Protection in Depth – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="CSRF makes a victim&#x27;s browser send an authenticated request to your site without the victim knowing.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/web-protections/csrf-protection/">
+    <meta property="og:title" content="CSRF Protection in Depth – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/" aria-current="page">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/web-protections/">Web Protections</a> / CSRF Protection in Depth</div>
+<h1>CSRF Protection in Depth</h1><p>CSRF makes a victim&#x27;s browser send an authenticated request to your site without the victim knowing. Spring Security protects against it by default with a token. You must know when this protection is needed, how it works internally, and how to configure it for single page apps.</p><h2>The attack</h2><pre class="dia"><code>1. You are logged in to bank.com (browser has the session cookie)
+2. You open evil.com in another tab. It contains:
+      &lt;form action=&quot;https://bank.com/transfer&quot; method=&quot;POST&quot;&gt; &lt;input name=&quot;to&quot; value=&quot;attacker&quot;&gt; &lt;input name=&quot;amount&quot; value=&quot;5000&quot;&gt; &lt;/form&gt;
+      &lt;script&gt;document.forms[0].submit()&lt;/script&gt;
+3. Your browser sends POST /transfer to bank.com AND automatically adds your session cookie
+4. bank.com sees a valid session and transfers the money.
+The attacker cannot READ the response, but the state change happened.</code></pre><h2>The defense: a token the attacker cannot know</h2><pre class="dia"><code>GET /transfer-form           ─► server creates a random CSRF token, stores it in the session, puts it in the HTML form (hidden field _csrf)
+POST /transfer  _csrf=8f3c...   ─► CsrfFilter compares the token from the request with the token stored on the server
+      equal ─► continue          different or missing ─► 403 Forbidden (InvalidCsrfTokenException / MissingCsrfTokenException)
+evil.com cannot read the token (same-origin policy) so it cannot include it.</code></pre><p>CSRF protection is checked for methods that change state: POST, PUT, PATCH, DELETE. GET, HEAD, OPTIONS and TRACE are ignored, which is why GET requests must never change data.</p><h2>When do you need CSRF protection?</h2><table><thead><tr><th>Situation</th><th>CSRF needed?</th><th>Reason</th></tr></thead><tbody><tr><td>Browser app, session cookie authentication</td><td>YES</td><td>Browsers send cookies automatically</td></tr><tr><td>SPA with session cookie</td><td>YES</td><td>Same reason. Configure the cookie based token</td></tr><tr><td>API using an Authorization: Bearer header with JWT stored in memory or localStorage</td><td>No</td><td>The browser does not add the header automatically, so evil.com cannot send it</td></tr><tr><td>API using JWT stored in a cookie</td><td>YES</td><td>The cookie is sent automatically again</td></tr><tr><td>HTTP Basic with browser credential caching</td><td>YES</td><td>Browser sends the cached credentials automatically</td></tr></tbody></table><h2>Thymeleaf and forms</h2><pre><code class="language-html">&lt;!-- Thymeleaf adds the hidden _csrf field automatically for th:action forms --&gt;
+&lt;form th:action=&quot;@{/transfer}&quot; method=&quot;post&quot;&gt;
+    &lt;input name=&quot;to&quot;&gt;&lt;input name=&quot;amount&quot;&gt;&lt;button&gt;Send&lt;/button&gt;
+&lt;/form&gt;
+&lt;!-- Plain HTML: add it yourself --&gt;
+&lt;input type=&quot;hidden&quot; th:name=&quot;${_csrf.parameterName}&quot; th:value=&quot;${_csrf.token}&quot;/&gt;</code></pre><h2>SPA with cookie based token (Angular and React style)</h2><pre><code class="language-java">http.csrf(csrf -&gt; csrf
+        .csrfTokenRepository(CookieCsrfTokenRepository.withHttpOnlyFalse())       // cookie XSRF-TOKEN readable by JavaScript
+        .csrfTokenRequestHandler(new SpaCsrfTokenRequestHandler()));
+
+// Spring Security 6 masks the token (BREACH protection). SPAs need a handler that accepts the raw cookie value in the header:
+final class SpaCsrfTokenRequestHandler implements CsrfTokenRequestHandler {
+    private final CsrfTokenRequestHandler plain = new CsrfTokenRequestAttributeHandler();
+    private final CsrfTokenRequestHandler xor = new XorCsrfTokenRequestAttributeHandler();
+
+    @Override
+    public void handle(HttpServletRequest request, HttpServletResponse response, Supplier&lt;CsrfToken&gt; csrfToken) {
+        this.xor.handle(request, response, csrfToken);         // makes the token available (masked) for rendering
+        csrfToken.get();                                        // forces the deferred token to be loaded so the cookie is written
+    }
+
+    @Override
+    public String resolveCsrfTokenValue(HttpServletRequest request, CsrfToken csrfToken) {
+        String headerValue = request.getHeader(csrfToken.getHeaderName());
+        return (StringUtils.hasText(headerValue) ? this.plain : this.xor).resolveCsrfTokenValue(request, csrfToken);
+    }
+}
+// Angular reads cookie XSRF-TOKEN and sends header X-XSRF-TOKEN automatically. In fetch/axios, copy the cookie value into the header yourself.</code></pre><h2>Disable it only for stateless token APIs</h2><pre><code class="language-java">http.csrf(csrf -&gt; csrf.disable())
+    .sessionManagement(s -&gt; s.sessionCreationPolicy(SessionCreationPolicy.STATELESS));
+// or exclude only some paths:  csrf.ignoringRequestMatchers(&quot;/api/webhooks/**&quot;)  (webhooks are verified by a signature)</code></pre><h2>Extra layer: SameSite cookies</h2><p>SameSite=Lax (default in modern browsers) stops the browser from sending the cookie on cross-site POST requests. SameSite=Strict blocks it for all cross-site navigation. This is a strong second line of defense, but do not remove the CSRF token because of it (old browsers, subdomain attacks).</p><p class="use"><b>Common mistake:</b> Turning CSRF off in a session based application because a POST returned 403. The 403 means the token is missing. Send the token (form field or header) instead of removing the protection.</p><h2>Interview questions</h2><h3>Why is GET exempt from CSRF checks?</h3><p>GET must be safe (no state change). CSRF protection is only about state changes, so GET, HEAD and OPTIONS are not checked. If GET changes data, you have a design bug.</p><h3>Do JWT APIs need CSRF?</h3><p>Not when the token is sent in the Authorization header by your JavaScript. They do when the JWT is stored in a cookie, because the browser sends cookies automatically.</p><h3>Why does a POST from Postman return 403?</h3><p>CSRF protection is on and the request has no token. For a stateless API disable CSRF and use token authentication, or send the token in the header.</p><div class="np"><a href="/springsecurity/authorization/database-users-roles-permissions/">&larr; Database Design for Users, Roles and Permissions (RBAC)</a><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Custom AuthenticationProvider, Handlers, Events and Account Lockout – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="When passwords are not the only proof (OTP codes, API secrets, LDAP, external services), you write an AuthenticationProvider.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/authentication/custom-authentication-provider/">
+    <meta property="og:title" content="Custom AuthenticationProvider, Handlers, Events and Account Lockout – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/" aria-current="page">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/authentication/">Authentication</a> / Custom AuthenticationProvider, Handlers, Events and Account Lockout</div>
+<h1>Custom AuthenticationProvider, Handlers, Events and Account Lockout</h1><p>When passwords are not the only proof (OTP codes, API secrets, LDAP, external services), you write an AuthenticationProvider. This page also shows success and failure handlers, authentication events, and a complete brute-force lockout design.</p><h2>Custom provider: password plus one-time code (2FA)</h2><pre><code class="language-java">// The token that carries username, password and OTP
+public class OtpAuthenticationToken extends AbstractAuthenticationToken {
+    private final String username, password, otp;
+    private final Object principal;
+
+    public OtpAuthenticationToken(String username, String password, String otp) {   // unauthenticated
+        super(null);
+        this.username = username; this.password = password; this.otp = otp; this.principal = username;
+        setAuthenticated(false);
+    }
+    public OtpAuthenticationToken(UserDetails user, Collection&lt;? extends GrantedAuthority&gt; authorities) {   // authenticated
+        super(authorities);
+        this.username = user.getUsername(); this.password = null; this.otp = null; this.principal = user;
+        setAuthenticated(true);
+    }
+    public String getUsername() { return username; }
+    public String getPassword() { return password; }
+    public String getOtp() { return otp; }
+    @Override public Object getCredentials() { return password; }
+    @Override public Object getPrincipal() { return principal; }
+}
+
+@Component
+public class OtpAuthenticationProvider implements AuthenticationProvider {
+
+    private final UserDetailsService users;
+    private final PasswordEncoder encoder;
+    private final OtpService otpService;
+
+    public OtpAuthenticationProvider(UserDetailsService users, PasswordEncoder encoder, OtpService otpService) {
+        this.users = users; this.encoder = encoder; this.otpService = otpService;
+    }
+
+    @Override
+    public Authentication authenticate(Authentication authentication) throws AuthenticationException {
+        OtpAuthenticationToken token = (OtpAuthenticationToken) authentication;
+        UserDetails user;
+        try { user = users.loadUserByUsername(token.getUsername()); }
+        catch (UsernameNotFoundException e) { throw new BadCredentialsException(&quot;Invalid credentials&quot;); }   // hide which part failed
+
+        if (!encoder.matches(token.getPassword(), user.getPassword())) throw new BadCredentialsException(&quot;Invalid credentials&quot;);
+        if (!user.isEnabled()) throw new DisabledException(&quot;Account disabled&quot;);
+        if (!otpService.verify(user.getUsername(), token.getOtp())) throw new BadCredentialsException(&quot;Invalid credentials&quot;);
+
+        return new OtpAuthenticationToken(user, user.getAuthorities());
+    }
+
+    @Override
+    public boolean supports(Class&lt;?&gt; type) { return OtpAuthenticationToken.class.isAssignableFrom(type); }   // which tokens I handle
+}</code></pre><pre><code class="language-java">// Register: ProviderManager collects all AuthenticationProvider beans automatically when you build the manager yourself
+@Bean
+AuthenticationManager authenticationManager(OtpAuthenticationProvider otpProvider, DaoAuthenticationProvider dao) {
+    return new ProviderManager(otpProvider, dao);
+}
+
+@RestController
+class LoginController {
+    private final AuthenticationManager manager;
+    LoginController(AuthenticationManager manager) { this.manager = manager; }
+
+    @PostMapping(&quot;/login-otp&quot;)
+    Map&lt;String, String&gt; login(@RequestBody OtpLogin req) {
+        Authentication result = manager.authenticate(new OtpAuthenticationToken(req.username(), req.password(), req.otp()));
+        SecurityContextHolder.getContext().setAuthentication(result);
+        return Map.of(&quot;user&quot;, result.getName());
+    }
+    record OtpLogin(String username, String password, String otp) { }
+}</code></pre><h2>Success and failure handlers (form login)</h2><pre><code class="language-java">http.formLogin(f -&gt; f
+    .successHandler((request, response, authentication) -&gt; {
+        // for example return JSON for an SPA
+        response.setStatus(200);
+        response.setContentType(&quot;application/json&quot;);
+        response.getWriter().write(&quot;{\&quot;user\&quot;:\&quot;&quot; + authentication.getName() + &quot;\&quot;}&quot;);
+    })
+    .failureHandler((request, response, exception) -&gt; {
+        response.setStatus(401);
+        response.setContentType(&quot;application/json&quot;);
+        response.getWriter().write(&quot;{\&quot;error\&quot;:\&quot;Invalid credentials\&quot;}&quot;);
+    }));</code></pre><h2>Authentication events: audit and lockout</h2><pre><code class="language-java">@Component
+public class AuthEventListener {
+    private static final Logger log = LoggerFactory.getLogger(&quot;SECURITY_AUDIT&quot;);
+    private final LoginAttemptService attempts;
+    public AuthEventListener(LoginAttemptService attempts) { this.attempts = attempts; }
+
+    @EventListener
+    public void onSuccess(AuthenticationSuccessEvent event) {
+        String user = event.getAuthentication().getName();
+        attempts.reset(user);
+        log.info(&quot;LOGIN_SUCCESS user={}&quot;, user);
+    }
+
+    @EventListener
+    public void onFailure(AbstractAuthenticationFailureEvent event) {
+        String user = String.valueOf(event.getAuthentication().getPrincipal());
+        attempts.recordFailure(user);
+        log.warn(&quot;LOGIN_FAILURE user={} reason={}&quot;, user, event.getException().getClass().getSimpleName());
+    }
+}</code></pre><h2>Complete brute-force protection: lockout with expiry</h2><pre class="dia"><code>login attempt ─► failed ─► counter for user (and for IP) +1  (stored in Redis or DB with TTL)
+                 ─► counter &gt;= 5 ─► account is locked for 15 minutes  (isAccountNonLocked() = false ─► LockedException)
+   successful login ─► counter is reset
+Also: rate limit per IP, add growing delay, notify the owner by email, and never reveal whether the account exists.</code></pre><pre><code class="language-java">@Service
+public class LoginAttemptService {
+
+    private static final int MAX_ATTEMPTS = 5;
+    private static final Duration LOCK_TIME = Duration.ofMinutes(15);
+    private final StringRedisTemplate redis;
+
+    public LoginAttemptService(StringRedisTemplate redis) { this.redis = redis; }
+
+    public void recordFailure(String username) {
+        String key = &quot;login:fail:&quot; + username.toLowerCase();
+        Long count = redis.opsForValue().increment(key);
+        if (count != null &amp;&amp; count == 1) redis.expire(key, LOCK_TIME);                 // window starts at the first failure
+    }
+    public void reset(String username) { redis.delete(&quot;login:fail:&quot; + username.toLowerCase()); }
+
+    public boolean isLocked(String username) {
+        String v = redis.opsForValue().get(&quot;login:fail:&quot; + username.toLowerCase());
+        return v != null &amp;&amp; Integer.parseInt(v) &gt;= MAX_ATTEMPTS;
+    }
+}
+
+// In DbUserDetailsService.loadUserByUsername:
+//    .accountLocked(attempts.isLocked(email))     ─► DaoAuthenticationProvider throws LockedException BEFORE checking the password</code></pre><p>Locking accounts can be abused to lock out real users (denial of service). Combine it with per-IP rate limits, CAPTCHA after several failures, and short lock times.</p><p class="use"><b>Common mistake:</b> Returning different messages for unknown user and wrong password (&#x27;user not found&#x27; vs &#x27;wrong password&#x27;). It tells attackers which emails are registered. Use one generic message and constant-time style checks.</p><h2>Interview questions</h2><h3>Where do I register a custom AuthenticationProvider?</h3><p>Declare it as a bean. If it is the only AuthenticationProvider bean, Spring Security uses it. To combine several, build a ProviderManager yourself or use http.authenticationProvider(provider).</p><h3>What is the difference between AuthenticationException and AccessDeniedException?</h3><p>AuthenticationException means identity could not be proven (401). AccessDeniedException means identity is known but the action is not permitted (403).</p><h3>How do I add 2FA?</h3><p>Either a custom provider that also checks a TOTP code (as shown), or a two-step flow where the first step returns a limited &#x27;pre-auth&#x27; state and the second step verifies the code before a full login is granted.</p><div class="np"><a href="/springsecurity/authentication/users-and-password-encoding/">&larr; Users, UserDetailsService and Password Encoding</a><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

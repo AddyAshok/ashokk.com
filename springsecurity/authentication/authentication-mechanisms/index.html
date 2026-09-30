@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Authentication Mechanisms Compared – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="Spring Security supports many ways to prove identity.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/authentication/authentication-mechanisms/">
+    <meta property="og:title" content="Authentication Mechanisms Compared – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/" aria-current="page">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/authentication/">Authentication</a> / Authentication Mechanisms Compared</div>
+<h1>Authentication Mechanisms Compared</h1><p>Spring Security supports many ways to prove identity. Choose the mechanism that fits your client type and threat model. This page compares them and shows the minimal configuration of each.</p><h2>Comparison</h2><table><thead><tr><th>Mechanism</th><th>How it works</th><th>State</th><th>Good for</th><th>Weak points</th></tr></thead><tbody><tr><td>Form login + session</td><td>POST credentials once, server sets a JSESSIONID cookie</td><td>Server session</td><td>Server-rendered sites</td><td>CSRF, session storage, scaling needs sticky sessions or shared sessions</td></tr><tr><td>HTTP Basic</td><td>Base64(user:password) in every request</td><td>Stateless</td><td>Internal tools, testing, service to service behind TLS</td><td>Password sent every time, no logout, not encrypted (only encoded)</td></tr><tr><td>API key</td><td>Static secret in a header</td><td>Stateless</td><td>Machine clients, partner integrations</td><td>No expiry by default, hard to rotate, no user identity</td></tr><tr><td>Session cookie (opaque id)</td><td>Random id maps to server data</td><td>Server session</td><td>Browsers</td><td>Memory, replication</td></tr><tr><td>JWT bearer token</td><td>Signed token with claims in Authorization: Bearer</td><td>Stateless</td><td>SPAs, mobile apps, microservices</td><td>No easy revocation, theft, large size</td></tr><tr><td>Opaque token + introspection</td><td>Random token checked at the authorization server</td><td>Central state</td><td>When instant revocation matters</td><td>Extra network call per request</td></tr><tr><td>OAuth2 / OIDC login</td><td>Delegate login to Google, Keycloak, Azure AD</td><td>Session or token</td><td>Single sign-on, social login</td><td>Depends on the provider</td></tr><tr><td>Remember-me</td><td>Long-lived cookie to re-authenticate</td><td>Cookie</td><td>Convenience</td><td>Theft = long access. Use the persistent token variant</td></tr><tr><td>Client certificate (mTLS)</td><td>TLS client certificate identifies the caller</td><td>Stateless</td><td>Service to service, high security</td><td>Certificate management</td></tr><tr><td>SAML, LDAP, Kerberos</td><td>Enterprise identity</td><td>Varies</td><td>Corporate environments</td><td>Complexity</td></tr></tbody></table><h2>Form login with custom page and handlers</h2><pre><code class="language-java">http.formLogin(form -&gt; form
+        .loginPage(&quot;/login&quot;)                              // your own page (permit it!)
+        .loginProcessingUrl(&quot;/perform_login&quot;)             // where the form posts
+        .usernameParameter(&quot;email&quot;)
+        .defaultSuccessUrl(&quot;/dashboard&quot;, false)           // false = go back to the saved request if there is one
+        .failureUrl(&quot;/login?error&quot;)
+        .permitAll())
+    .logout(logout -&gt; logout
+        .logoutUrl(&quot;/logout&quot;)
+        .logoutSuccessUrl(&quot;/login?logout&quot;)
+        .deleteCookies(&quot;JSESSIONID&quot;)
+        .invalidateHttpSession(true));</code></pre><h2>HTTP Basic for APIs</h2><pre><code class="language-java">http.httpBasic(basic -&gt; basic.realmName(&quot;Shop API&quot;))
+    .sessionManagement(s -&gt; s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+    .csrf(csrf -&gt; csrf.disable());
+// header: Authorization: Basic base64(username:password)
+// Use it only over HTTPS, and preferably not for end users.</code></pre><h2>API key filter</h2><pre><code class="language-java">public class ApiKeyFilter extends OncePerRequestFilter {
+    private final ApiKeyService keys;
+    public ApiKeyFilter(ApiKeyService keys) { this.keys = keys; }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
+            throws ServletException, IOException {
+        String key = req.getHeader(&quot;X-API-Key&quot;);
+        if (key != null) {
+            keys.findClient(key).ifPresent(client -&gt; SecurityContextHolder.getContext().setAuthentication(
+                    UsernamePasswordAuthenticationToken.authenticated(client.name(), null,
+                            List.of(new SimpleGrantedAuthority(&quot;ROLE_PARTNER&quot;)))));
+        }
+        chain.doFilter(req, res);
+    }
+}
+// Store only a HASH of each key, give keys an expiry and a scope, and allow rotation.</code></pre><h2>Remember-me: persistent token approach</h2><pre><code class="language-java">http.rememberMe(r -&gt; r
+        .tokenRepository(new JdbcTokenRepositoryImpl() {{ setDataSource(dataSource); }})   // table persistent_logins
+        .tokenValiditySeconds(14 * 24 * 3600)
+        .key(rememberMeKey));                                                               // secret from the environment</code></pre><p>The simple hash-based variant puts username, expiry and a hash of the password in the cookie, which is weak. The persistent token variant stores random series and token values in a table and changes the token at every use, so theft can be detected.</p><h2>How to choose</h2><ul><li>Browser app rendered by the server: form login + session (with CSRF).</li><li>Single page app with your own backend: session cookie (HttpOnly, SameSite) is often simpler and safer than JWT in localStorage.</li><li>Mobile app or many microservices: OAuth2 with short-lived JWT access tokens and refresh tokens.</li><li>Machine to machine: OAuth2 client credentials or mTLS. API keys only for simple cases.</li><li>Enterprise users: OIDC or SAML with the company identity provider.</li></ul><p class="use"><b>Common mistake:</b> Choosing JWT for every project only because it is popular. A server-rendered application or a simple SPA with the same backend is usually safer and simpler with a normal HttpOnly session cookie.</p><h2>Interview questions</h2><h3>Is HTTP Basic secure?</h3><p>Only over HTTPS. The password is sent with every request and there is no logout, so it suits internal tools and service-to-service calls, not end users.</p><h3>Session or JWT for a REST API?</h3><p>Sessions are simple and revocable but need shared session storage when you scale. JWT is stateless and good across services, but hard to revoke. Decide by scaling needs, client type and revocation requirements.</p><h3>Why is remember-me risky?</h3><p>The cookie is a long-lived credential. If it is stolen, the attacker stays logged in. Use the persistent token version, HTTPS and require re-authentication for sensitive actions.</p><div class="np"><a href="/springsecurity/fundamentals/filter-chain-in-depth/">&larr; The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

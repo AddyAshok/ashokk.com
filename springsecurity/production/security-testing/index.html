@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Testing Spring Security – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="Security rules that are not tested break silently.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/production/security-testing/">
+    <meta property="og:title" content="Testing Spring Security – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/" aria-current="page">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/production/">Testing, Checklist and Interviews</a> / Testing Spring Security</div>
+<h1>Testing Spring Security</h1><p>Security rules that are not tested break silently. Spring Security Test lets you simulate users, roles, JWTs and CSRF tokens, so 401 and 403 behavior is verified in every build.</p><h2>Setup</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.security&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-security-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre><h2>Test 401 and 403 with MockMvc</h2><pre><code class="language-java">@SpringBootTest
+@AutoConfigureMockMvc
+class OrderSecurityTest {
+
+    @Autowired MockMvc mvc;
+
+    @Test
+    void anonymousGets401() throws Exception {
+        mvc.perform(get(&quot;/api/orders&quot;)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    @WithMockUser(username = &quot;ram&quot;, roles = &quot;USER&quot;)
+    void userCanReadButNotDelete() throws Exception {
+        mvc.perform(get(&quot;/api/orders&quot;)).andExpect(status().isOk());
+        mvc.perform(delete(&quot;/api/orders/1&quot;).with(csrf())).andExpect(status().isForbidden());
+    }
+
+    @Test
+    @WithMockUser(roles = &quot;ADMIN&quot;)
+    void adminCanDelete() throws Exception {
+        mvc.perform(delete(&quot;/api/orders/1&quot;).with(csrf())).andExpect(status().isNoContent());
+    }
+
+    @Test
+    void postWithoutCsrfIsForbidden() throws Exception {
+        mvc.perform(post(&quot;/api/orders&quot;).with(user(&quot;ram&quot;).roles(&quot;USER&quot;)).contentType(&quot;application/json&quot;).content(&quot;{}&quot;))
+           .andExpect(status().isForbidden());
+    }
+}</code></pre><h2>Test JWT protected APIs</h2><pre><code class="language-java">@Test
+void jwtWithScopeCanRead() throws Exception {
+    mvc.perform(get(&quot;/api/orders&quot;)
+            .with(jwt().jwt(j -&gt; j.subject(&quot;ram&quot;).claim(&quot;roles&quot;, List.of(&quot;USER&quot;)))
+                       .authorities(new SimpleGrantedAuthority(&quot;SCOPE_read&quot;))))
+       .andExpect(status().isOk());
+}
+
+@Test
+void wrongScopeGets403() throws Exception {
+    mvc.perform(get(&quot;/api/orders&quot;).with(jwt().authorities(new SimpleGrantedAuthority(&quot;SCOPE_other&quot;))))
+       .andExpect(status().isForbidden());
+}</code></pre><h2>Custom users and method security</h2><pre><code class="language-java">@Test
+@WithUserDetails(value = &quot;admin@example.com&quot;, userDetailsServiceBeanName = &quot;dbUserDetailsService&quot;)   // loads a real user from your service
+void withRealUser() { }
+
+@SpringBootTest
+class DocumentServiceSecurityTest {
+    @Autowired DocumentService service;
+
+    @Test
+    @WithMockUser(roles = &quot;USER&quot;)
+    void userCannotDeleteAll() {
+        assertThrows(AccessDeniedException.class, () -&gt; service.deleteAll());
+    }
+
+    @Test
+    @WithMockUser(roles = &quot;ADMIN&quot;)
+    void adminCanDeleteAll() { service.deleteAll(); }
+}</code></pre><h2>What to test</h2><ul><li>Every endpoint: anonymous (401), wrong role (403), right role (200).</li><li>Ownership: user A cannot read or change user B&#x27;s object (IDOR test).</li><li>Validation of tokens: expired, wrong issuer, wrong audience, bad signature are rejected. Build such tokens in a test with a test key.</li><li>Headers: assert Content-Security-Policy, X-Frame-Options and Cache-Control on responses.</li><li>Login lockout, password rules and refresh token rotation with integration tests.</li></ul><pre><code class="language-java">// A test that fails the build if a new endpoint is left open
+@Test
+void allEndpointsRequireAuthenticationExceptWhitelist() throws Exception {
+    for (String path : List.of(&quot;/api/orders&quot;, &quot;/api/users&quot;, &quot;/api/products/1&quot;)) {
+        mvc.perform(get(path)).andExpect(status().isUnauthorized());
+    }
+}</code></pre><p class="use"><b>Common mistake:</b> Testing only the happy path with @WithMockUser(roles = ADMIN). Security bugs live in the negative cases: no login, wrong role, another user&#x27;s data, expired tokens. Write those tests first.</p><h2>Interview questions</h2><h3>What does @WithMockUser do?</h3><p>It puts a fake authenticated user with the given roles into the SecurityContext for the test. It skips login and password checks.</p><h3>Why must I add with(csrf()) in POST tests?</h3><p>CSRF protection is active in tests too. Without a token, POST, PUT and DELETE return 403.</p><h3>How do I test JWT validation rules?</h3><p>Create tokens with a test key in the test (expired, wrong audience) and send them to a running app or a JwtDecoder built with the same validators, and assert they are rejected.</p><div class="np"><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">&larr; OAuth2 Login and Keycloak with Spring Boot</a><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

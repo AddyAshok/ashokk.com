@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Common Attacks and Defenses in Spring Applications – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="A practical guide to the attacks you must defend against (OWASP Top 10 style) with the Spring specific defense for each.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/web-protections/common-attacks-and-defenses/">
+    <meta property="og:title" content="Common Attacks and Defenses in Spring Applications – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/" aria-current="page">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/web-protections/">Web Protections</a> / Common Attacks and Defenses in Spring Applications</div>
+<h1>Common Attacks and Defenses in Spring Applications</h1><p>A practical guide to the attacks you must defend against (OWASP Top 10 style) with the Spring specific defense for each. Use it as a design review checklist.</p><h2>Attack and defense map</h2><table><thead><tr><th>Attack</th><th>How it works</th><th>Defense in a Spring app</th></tr></thead><tbody><tr><td>SQL injection</td><td>User input becomes part of the SQL text</td><td>Use Spring Data, JPA parameters, JdbcTemplate placeholders. Never concatenate strings into SQL/JPQL</td></tr><tr><td>XSS</td><td>Script injected into a page runs in the victim&#x27;s browser</td><td>Output encoding (Thymeleaf escapes by default), CSP header, HttpOnly cookies, validate input, sanitize rich text</td></tr><tr><td>CSRF</td><td>Cross-site request with the victim&#x27;s cookie</td><td>CSRF tokens, SameSite cookies</td></tr><tr><td>Broken access control / IDOR</td><td>Change an id in the URL to see others&#x27; data</td><td>Authorize per object (owner check), method security</td></tr><tr><td>Mass assignment (over-posting)</td><td>Client sends extra JSON fields such as role=ADMIN that bind to an entity</td><td>Bind to request DTOs with only allowed fields, never to entities</td></tr><tr><td>Brute force / credential stuffing</td><td>Automated password guessing</td><td>Slow hashing, lockout, rate limiting, CAPTCHA, MFA</td></tr><tr><td>Session fixation / hijacking</td><td>Steal or set the session id</td><td>Change id at login, HttpOnly Secure cookies, HTTPS</td></tr><tr><td>SSRF</td><td>The server is tricked to call internal URLs</td><td>Allow-list target hosts, block private IP ranges, no redirects, timeouts</td></tr><tr><td>Path traversal</td><td>../ in file names</td><td>Normalize paths, generate own file names, check startsWith(root)</td></tr><tr><td>Insecure deserialization</td><td>Malicious serialized objects</td><td>Do not use Java serialization on untrusted data. JSON with typed DTOs. No default typing in Jackson</td></tr><tr><td>Sensitive data exposure</td><td>Secrets in logs, error pages, Git</td><td>Do not log secrets, hide stack traces, environment variables or a vault, encrypt at rest</td></tr><tr><td>Vulnerable dependencies</td><td>Known CVEs in libraries</td><td>Regular updates, dependency scanning (OWASP Dependency-Check, Dependabot), Boot BOM updates</td></tr><tr><td>Security misconfiguration</td><td>Open actuator, swagger, H2 console, default passwords</td><td>Expose only needed endpoints, profiles per environment, deny by default</td></tr></tbody></table><h2>SQL injection: the wrong and the right way</h2><pre><code class="language-java">// WRONG: string concatenation
+String jpql = &quot;select u from AppUser u where u.email = &#x27;&quot; + email + &quot;&#x27;&quot;;       // email = &#x27; or &#x27;1&#x27;=&#x27;1  returns all users
+em.createQuery(jpql, AppUser.class).getResultList();
+
+// RIGHT: parameters
+em.createQuery(&quot;select u from AppUser u where u.email = :email&quot;, AppUser.class).setParameter(&quot;email&quot;, email).getResultList();
+jdbc.query(&quot;select * from users where email = ?&quot;, mapper, email);
+repository.findByEmail(email);                                               // derived query is always parameterized
+
+// Dynamic ORDER BY needs an allow-list, because column names cannot be parameters
+Set&lt;String&gt; allowed = Set.of(&quot;name&quot;, &quot;price&quot;);
+if (!allowed.contains(sort)) throw new IllegalArgumentException(&quot;Invalid sort field&quot;);</code></pre><h2>Mass assignment</h2><pre><code class="language-java">// WRONG: binding the request straight to the entity. A client can send {&quot;email&quot;:&quot;x&quot;,&quot;role&quot;:&quot;ADMIN&quot;,&quot;enabled&quot;:true}
+@PostMapping(&quot;/register&quot;) public AppUser register(@RequestBody AppUser user) { return repo.save(user); }
+
+// RIGHT: a DTO with only the fields the client may set
+public record RegisterRequest(@Email String email, @Size(min = 12) String password) { }
+@PostMapping(&quot;/register&quot;) public void register(@Valid @RequestBody RegisterRequest req) { service.register(req.email(), req.password()); }</code></pre><h2>XSS</h2><ul><li>Thymeleaf th:text escapes HTML. th:utext does NOT. Never use th:utext with user data.</li><li>Never build HTML strings from user data in Java. If users may submit HTML, sanitize it with a library such as OWASP Java HTML Sanitizer.</li><li>Send JSON APIs with Content-Type application/json and X-Content-Type-Options: nosniff.</li><li>Add a Content-Security-Policy that forbids inline scripts. This limits damage if an injection happens.</li></ul><h2>Rate limiting the login and sensitive endpoints</h2><pre><code class="language-java">@Component
+public class RateLimitFilter extends OncePerRequestFilter {
+
+    private final StringRedisTemplate redis;
+    public RateLimitFilter(StringRedisTemplate redis) { this.redis = redis; }
+
+    @Override
+    protected boolean shouldNotFilter(HttpServletRequest req) { return !req.getRequestURI().startsWith(&quot;/auth/&quot;); }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest req, HttpServletResponse res, FilterChain chain)
+            throws ServletException, IOException {
+        String key = &quot;rl:&quot; + req.getRemoteAddr() + &quot;:&quot; + (System.currentTimeMillis() / 60_000);      // per IP, per minute
+        Long count = redis.opsForValue().increment(key);
+        if (count != null &amp;&amp; count == 1) redis.expire(key, Duration.ofMinutes(2));
+        if (count != null &amp;&amp; count &gt; 20) {
+            res.setStatus(429);
+            res.setHeader(&quot;Retry-After&quot;, &quot;60&quot;);
+            res.getWriter().write(&quot;{\&quot;error\&quot;:\&quot;Too many requests\&quot;}&quot;);
+            return;
+        }
+        chain.doFilter(req, res);
+    }
+}
+// Behind a proxy use server.forward-headers-strategy=framework so getRemoteAddr is the client IP. Better: rate limit at the gateway.</code></pre><h2>SSRF guard for URL fetching features</h2><pre><code class="language-java">public static void assertSafe(String url) throws UnknownHostException {
+    URI uri = URI.create(url);
+    if (!&quot;https&quot;.equalsIgnoreCase(uri.getScheme())) throw new IllegalArgumentException(&quot;Only https&quot;);
+    for (InetAddress a : InetAddress.getAllByName(uri.getHost())) {
+        if (a.isAnyLocalAddress() || a.isLoopbackAddress() || a.isLinkLocalAddress() || a.isSiteLocalAddress())
+            throw new IllegalArgumentException(&quot;Internal address not allowed&quot;);          // blocks 127.x, 10.x, 192.168.x, 169.254.x (cloud metadata)
+    }
+}</code></pre><h2>Configuration hygiene</h2><ul><li>Restrict Actuator: expose only health and info publicly, secure the rest, use another port.</li><li>Disable Swagger UI, H2 console and debug features in production.</li><li>server.error.include-stacktrace=never, server.error.include-message=never.</li><li>Use separate secrets per environment. Rotate leaked secrets at once.</li><li>Log security events (login failures, access denied, password changes) without logging secrets.</li></ul><p class="use"><b>Common mistake:</b> Believing that using Spring Security means the application is secure. The framework cannot know your business rules: IDOR, mass assignment, injection and misconfiguration are your responsibility. Review each endpoint with the table above.</p><h2>Interview questions</h2><h3>Is JPA safe from SQL injection?</h3><p>Parameterized queries and derived queries are. Building JPQL or native SQL with string concatenation is not.</p><h3>What is the most common API vulnerability?</h3><p>Broken object level authorization: checking login but not whether the user may access that specific record.</p><h3>How do I prevent mass assignment?</h3><p>Never bind requests to entities. Use request DTOs that list only the fields a client may send.</p><div class="np"><a href="/springsecurity/web-protections/cors-and-security-headers/">&larr; CORS and Security Headers</a><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

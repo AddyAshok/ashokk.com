@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Default Spring Security Configuration: What Happens When You Add the Starter – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="Add spring-boot-starter-security and do nothing else: every URL asks for a login.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/fundamentals/default-security-configuration/">
+    <meta property="og:title" content="Default Spring Security Configuration: What Happens When You Add the Starter – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/" aria-current="page">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a> / Default Spring Security Configuration: What Happens When You Add the Starter</div>
+<h1>Default Spring Security Configuration: What Happens When You Add the Starter</h1><p>Add spring-boot-starter-security and do nothing else: every URL asks for a login. This page explains exactly which classes create this behavior, what the default filter chain contains, what the generated password is, which headers and protections are on, and what the default does NOT protect. Knowing the default well is the base for every customization.</p><h2>What you see</h2><pre><code class="language-text">Using generated security password: 8e557245-73e2-4286-969a-ff57fe326336
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.</code></pre><ul><li>Every URL, including /, static files and /actuator, redirects a browser to a generated login page at /login.</li><li>User name is user. The password is a random UUID printed at every startup.</li><li>API clients (curl) get 401 with the header WWW-Authenticate: Basic realm=&quot;Realm&quot;.</li></ul><pre><code class="language-shell">curl -i http://localhost:8080/api/hello
+# HTTP/1.1 401     WWW-Authenticate: Basic realm=&quot;Realm&quot;
+curl -u user:8e557245-73e2-4286-969a-ff57fe326336 http://localhost:8080/api/hello    # 200
+curl -i -H &quot;Accept: text/html&quot; http://localhost:8080/api/hello
+# HTTP/1.1 302  Location: http://localhost:8080/login    (browser style: redirect to the login page)</code></pre><h2>Which classes create the default behavior?</h2><pre class="dia"><code>spring-boot-autoconfigure (AutoConfiguration.imports)
+ ├─ SecurityAutoConfiguration
+ │     └─ imports SpringBootWebSecurityConfiguration        (only for servlet web apps)
+ │           └─ @Bean SecurityFilterChain defaultSecurityFilterChain(HttpSecurity http)
+ │                 @ConditionalOnDefaultWebSecurity        ← only when YOU did NOT define a SecurityFilterChain bean
+ │                     http.authorizeHttpRequests(r -&gt; r.anyRequest().authenticated());
+ │                     http.formLogin(withDefaults());
+ │                     http.httpBasic(withDefaults());
+ │
+ ├─ UserDetailsServiceAutoConfiguration
+ │     └─ @Bean InMemoryUserDetailsManager                 (one user from spring.security.user.*)
+ │           @ConditionalOnMissingBean(AuthenticationManager, AuthenticationProvider, UserDetailsService, JwtDecoder ...)
+ │           password = &quot;{noop}&quot; + generated UUID, roles = none
+ │
+ ├─ SecurityFilterAutoConfiguration
+ │     └─ registers DelegatingFilterProxy &quot;springSecurityFilterChain&quot; in the servlet container
+ │           order = spring.security.filter.order (default -100: before almost every other filter)
+ │
+ └─ WebSecurityEnablerConfiguration  ─► @EnableWebSecurity (turns on the Spring Security machinery)</code></pre><p>The rule behind every &#x27;default&#x27;: @ConditionalOnMissingBean. As soon as you define your own SecurityFilterChain bean, the default chain disappears completely (it does not merge). As soon as you define your own UserDetailsService, the generated user disappears.</p><h2>The default configuration written out as code</h2><pre><code class="language-java">@Configuration
+@EnableWebSecurity
+public class EquivalentOfTheDefault {
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -&gt; auth.anyRequest().authenticated())   // everything needs login
+            .formLogin(Customizer.withDefaults())                               // generated HTML login page
+            .httpBasic(Customizer.withDefaults());                              // Authorization: Basic ...
+        return http.build();
+    }
+}
+// plus (also defaults): csrf(), headers(), sessionManagement(), logout(), anonymous(), requestCache(),
+//                       securityContext(), servletApi(), exceptionHandling()</code></pre><h2>Default filter chain, in order</h2><table><thead><tr><th>#</th><th>Filter</th><th>What it does by default</th></tr></thead><tbody><tr><td>1</td><td>DisableEncodeUrlFilter</td><td>Stops the session id from being added to URLs (;jsessionid=)</td></tr><tr><td>2</td><td>WebAsyncManagerIntegrationFilter</td><td>Passes the SecurityContext to async request threads</td></tr><tr><td>3</td><td>SecurityContextHolderFilter</td><td>Loads the SecurityContext (from the HTTP session) into SecurityContextHolder, clears it at the end</td></tr><tr><td>4</td><td>HeaderWriterFilter</td><td>Adds the security response headers (see below)</td></tr><tr><td>5</td><td>CsrfFilter</td><td>Requires a valid CSRF token for POST, PUT, PATCH and DELETE</td></tr><tr><td>6</td><td>LogoutFilter</td><td>Handles POST /logout: invalidate session, clear context</td></tr><tr><td>7</td><td>UsernamePasswordAuthenticationFilter</td><td>Handles POST /login (fields username and password)</td></tr><tr><td>8</td><td>DefaultLoginPageGeneratingFilter</td><td>Generates the HTML login page for GET /login</td></tr><tr><td>9</td><td>DefaultLogoutPageGeneratingFilter</td><td>Generates the logout confirmation page for GET /logout</td></tr><tr><td>10</td><td>BasicAuthenticationFilter</td><td>Reads the Authorization: Basic header</td></tr><tr><td>11</td><td>RequestCacheAwareFilter</td><td>After login, replays the request that was saved before the redirect to /login</td></tr><tr><td>12</td><td>SecurityContextHolderAwareRequestFilter</td><td>Makes request.getUserPrincipal(), isUserInRole() work</td></tr><tr><td>13</td><td>AnonymousAuthenticationFilter</td><td>If nobody is authenticated, puts an anonymous user (anonymousUser, ROLE_ANONYMOUS) into the context</td></tr><tr><td>14</td><td>SessionManagementFilter</td><td>Session fixation and concurrency handling after authentication</td></tr><tr><td>15</td><td>ExceptionTranslationFilter</td><td>Turns AuthenticationException into login redirect or 401, AccessDeniedException into 403</td></tr><tr><td>16</td><td>AuthorizationFilter</td><td>The final check: anyRequest().authenticated()</td></tr></tbody></table><p>See the real chain of your own application with logging.level.org.springframework.security=TRACE (it prints &#x27;Will secure any request with [...]&#x27; at startup), or with @EnableWebSecurity(debug = true) during development only.</p><h2>What happens on the first request (browser)</h2><pre class="dia"><code>1. GET /orders  (no session)
+     ... SecurityContextHolderFilter: no context ... AnonymousAuthenticationFilter: anonymousUser
+     AuthorizationFilter: anyRequest().authenticated()  ─► anonymous is not authenticated ─► AccessDeniedException
+     ExceptionTranslationFilter:
+         ├─ saves the request /orders in the HttpSession (RequestCache)
+         └─ starts authentication: entry point = redirect to /login          [302]
+2. GET /login  ─► DefaultLoginPageGeneratingFilter renders the HTML form (with a hidden _csrf field)
+3. POST /login  username=user&amp;password=...&amp;_csrf=...
+     CsrfFilter validates the token
+     UsernamePasswordAuthenticationFilter ─► AuthenticationManager ─► DaoAuthenticationProvider
+         ─► InMemoryUserDetailsManager.loadUserByUsername(&quot;user&quot;) ─► DelegatingPasswordEncoder.matches
+     success:  session id is CHANGED (fixation protection), SecurityContext saved in the session,
+               redirect to the SAVED request /orders   [302]
+4. GET /orders (JSESSIONID cookie) ─► context loaded from the session ─► authenticated ─► controller runs</code></pre><h2>Default entry point for APIs vs browsers</h2><p>Because formLogin and httpBasic are both on, Spring Security uses a DelegatingAuthenticationEntryPoint that picks by request: requests with X-Requested-With: XMLHttpRequest get 401 with a Basic challenge, requests that accept text/html are redirected to /login, and all other clients (curl, Postman, mobile apps) get 401 with WWW-Authenticate: Basic.</p><h2>Default response headers</h2><table><thead><tr><th>Header</th><th>Value</th><th>Protects against</th></tr></thead><tbody><tr><td>Cache-Control</td><td>no-cache, no-store, max-age=0, must-revalidate (plus Pragma and Expires)</td><td>Sensitive pages cached in the browser</td></tr><tr><td>X-Content-Type-Options</td><td>nosniff</td><td>MIME sniffing attacks</td></tr><tr><td>X-Frame-Options</td><td>DENY</td><td>Clickjacking</td></tr><tr><td>Strict-Transport-Security</td><td>max-age=31536000 ; includeSubDomains (only on HTTPS responses)</td><td>Downgrade to HTTP</td></tr><tr><td>X-XSS-Protection</td><td>0 (disabled on purpose: the old browser filter caused problems)</td><td>Use CSP instead</td></tr></tbody></table><p>Not added by default: Content-Security-Policy, Referrer-Policy, Permissions-Policy. Add them yourself (see the headers page).</p><h2>Other defaults you should know</h2><table><thead><tr><th>Area</th><th>Default behavior</th></tr></thead><tbody><tr><td>CSRF</td><td>Enabled. Token stored in the HttpSession (HttpSessionCsrfTokenRepository). Token is BREACH protected by XOR masking. GET, HEAD, OPTIONS, TRACE are exempt</td></tr><tr><td>Sessions</td><td>Created when needed (IF_REQUIRED). New session id after login (changeSessionId). Cookie name JSESSIONID</td></tr><tr><td>Password encoder</td><td>DelegatingPasswordEncoder: stored values look like {bcrypt}$2a$10$... Generated dev password is stored as {noop}uuid (plain text)</td></tr><tr><td>Anonymous access</td><td>Enabled. Principal is the string anonymousUser with authority ROLE_ANONYMOUS</td></tr><tr><td>Logout</td><td>POST /logout (needs a CSRF token). Invalidates the session, clears the SecurityContext, deletes JSESSIONID, redirects to /login?logout</td></tr><tr><td>Login failure</td><td>Redirect to /login?error</td></tr><tr><td>Remember me</td><td>Off</td></tr><tr><td>CORS</td><td>Not configured. Browser cross-origin calls are blocked by the browser policy</td></tr><tr><td>Actuator</td><td>Boot secures /actuator/** with the same default chain (only health is exposed over HTTP by default)</td></tr><tr><td>Static resources</td><td>Also require login by default (the chain says anyRequest)</td></tr><tr><td>Method security</td><td>Off. @PreAuthorize does nothing until you add @EnableMethodSecurity</td></tr></tbody></table><h2>Change the default user (development only)</h2><pre><code class="language-properties">spring.security.user.name=admin
+spring.security.user.password=changeit
+spring.security.user.roles=ADMIN,USER</code></pre><h2>What the default does NOT give you</h2><ul><li>No real users: one in-memory user, recreated at every start.</li><li>No role based rules: all authenticated users can do everything.</li><li>No protection against brute force: unlimited login attempts.</li><li>No CSP header, no rate limiting, no account lockout, no audit log.</li><li>No token support (JWT): browsers use sessions, APIs use Basic auth (password on every request).</li><li>Everything needs login, including the health endpoint used by load balancers and static files.</li></ul><h2>First customization: the smallest useful SecurityFilterChain</h2><pre><code class="language-java">@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    @Bean
+    SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http
+            .authorizeHttpRequests(auth -&gt; auth
+                .requestMatchers(&quot;/&quot;, &quot;/css/**&quot;, &quot;/js/**&quot;, &quot;/actuator/health&quot;).permitAll()
+                .requestMatchers(&quot;/admin/**&quot;).hasRole(&quot;ADMIN&quot;)
+                .anyRequest().authenticated())
+            .formLogin(Customizer.withDefaults())
+            .logout(Customizer.withDefaults());
+        return http.build();
+    }
+
+    @Bean
+    UserDetailsService users(PasswordEncoder encoder) {
+        return new InMemoryUserDetailsManager(
+            User.withUsername(&quot;ram&quot;).password(encoder.encode(&quot;ram123&quot;)).roles(&quot;USER&quot;).build(),
+            User.withUsername(&quot;admin&quot;).password(encoder.encode(&quot;admin123&quot;)).roles(&quot;ADMIN&quot;, &quot;USER&quot;).build());
+    }
+
+    @Bean
+    PasswordEncoder passwordEncoder() { return PasswordEncoderFactories.createDelegatingPasswordEncoder(); }
+}</code></pre><p class="use"><b>Common mistake:</b> Leaving the generated password and default chain in production, or copying an example that disables everything (csrf disable and permitAll on any request) because it &#x27;made the error go away&#x27;. Understand why a request is rejected (TRACE logging) and open only what is needed.</p><h2>Interview questions</h2><h3>Why does everything ask for a password after adding the starter?</h3><p>Boot creates a default SecurityFilterChain with anyRequest().authenticated(), formLogin and httpBasic, because no other SecurityFilterChain bean exists.</p><h3>How do I turn off the default configuration?</h3><p>Define your own SecurityFilterChain bean. The default one has @ConditionalOnDefaultWebSecurity and backs off. Do not exclude SecurityAutoConfiguration unless you know why.</p><h3>Where does the generated password come from?</h3><p>UserDetailsServiceAutoConfiguration creates an InMemoryUserDetailsManager with a random UUID password (prefixed with {noop}) when you define no UserDetailsService, AuthenticationManager or AuthenticationProvider.</p><div class="np"><a href="/springsecurity/fundamentals/security-overview/">&larr; Application Security and Spring Security Overview</a><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JWT Attacks and Defenses – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="Real attacks against JWT implementations happen because of validation mistakes, not because the cryptography is broken.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/jwt/jwt-attacks-and-defenses/">
+    <meta property="og:title" content="JWT Attacks and Defenses – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/" aria-current="page">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/jwt/">JWT in Depth</a> / JWT Attacks and Defenses</div>
+<h1>JWT Attacks and Defenses</h1><p>Real attacks against JWT implementations happen because of validation mistakes, not because the cryptography is broken. Knowing each attack tells you which check must never be skipped.</p><h2>Attack overview</h2><table><thead><tr><th>Attack</th><th>How it works</th><th>Defense</th></tr></thead><tbody><tr><td>alg=none</td><td>Attacker sets alg to none and removes the signature. A weak library accepts it</td><td>Pin accepted algorithms. Modern Spring/Nimbus rejects none</td></tr><tr><td>Algorithm confusion (RS256 to HS256)</td><td>Server expects RS256. Attacker signs with HS256 using the PUBLIC key as the HMAC secret. A library that trusts the alg header verifies it with the public key as a secret and accepts the token</td><td>Fix the algorithm per key. withPublicKey(...).signatureAlgorithm(RS256)</td></tr><tr><td>Weak HMAC secret</td><td>Attacker takes a token and brute forces the secret offline (hashcat) like &#x27;secret&#x27; or &#x27;password123&#x27;</td><td>Random secret of 256 bits or more, or use asymmetric keys</td></tr><tr><td>Payload tampering</td><td>Change roles in the payload and hope the signature is not checked</td><td>Always verify. Never use decode-only APIs for authorization</td></tr><tr><td>kid injection</td><td>The kid header is used in a file path or SQL query: &#x27;../../dev/null&#x27; or a SQL payload selects a known key</td><td>Treat kid as untrusted. Look it up in an allow-list of keys (map), never in a raw query or path</td></tr><tr><td>jku / x5u / jwk header injection</td><td>Header tells the server where to fetch the key. Attacker points it to his own server with his own key</td><td>Ignore these headers. Configure the JWKS URI on the server side only</td></tr><tr><td>Missing audience check (token confusion)</td><td>A token issued for service A is accepted by service B</td><td>Validate aud in every service, separate audiences and scopes</td></tr><tr><td>Missing issuer check</td><td>Tokens from another (attacker controlled) issuer accepted</td><td>Validate iss. Use issuer-uri</td></tr><tr><td>No expiry check or huge lifetime</td><td>A stolen token works forever</td><td>Always exp, short lifetimes</td></tr><tr><td>Token theft (XSS, logs, URL)</td><td>Attacker copies a valid token</td><td>Safe storage, CSP, HTTPS, no tokens in URLs or logs, short expiry, binding</td></tr><tr><td>Replay</td><td>Captured token is sent again</td><td>HTTPS, short exp, jti tracking for one-time tokens (email links), DPoP</td></tr><tr><td>Refresh token theft</td><td>Long-lived credential stolen</td><td>Rotation and reuse detection, HttpOnly cookie, bind to device</td></tr><tr><td>Timing attacks</td><td>Signature comparison leaks information through time</td><td>Use library verification with constant-time comparison</td></tr><tr><td>Sensitive data in payload</td><td>Anyone reads it</td><td>Minimal claims, JWE</td></tr></tbody></table><h2>Algorithm confusion in detail</h2><pre class="dia"><code>Server config (vulnerable library):  verify(token, key = PUBLIC_KEY)   and reads the algorithm from the token header
+Attacker (knows the public key: it is public!):
+   header  = { &quot;alg&quot;: &quot;HS256&quot; }               ◄── changed from RS256
+   payload = { &quot;sub&quot;: &quot;admin&quot;, &quot;roles&quot;: [&quot;ADMIN&quot;] }
+   signature = HMAC-SHA256( header.payload , secret = the PUBLIC KEY bytes )
+Server:  alg says HS256 ─► uses the configured key as an HMAC secret ─► signature matches ─► attacker is admin.
+Fix: the server decides the algorithm from ITS OWN configuration: RSA public key can only be used with RS256/ES256, never as an HMAC secret.</code></pre><pre><code class="language-java">// SAFE in Spring Security: the key type decides the verifier and the algorithm is pinned
+NimbusJwtDecoder.withPublicKey(rsaPublicKey).signatureAlgorithm(SignatureAlgorithm.RS256).build();
+// ALSO SAFE: jwk-set-uri with jws-algorithms=RS256, keys selected by kid from YOUR JWKS only</code></pre><h2>Decode is not verify</h2><pre><code class="language-java">// DANGEROUS: only decodes. Anyone can craft a payload
+String payload = new String(Base64.getUrlDecoder().decode(token.split(&quot;\\.&quot;)[1]));
+if (payload.contains(&quot;\&quot;role\&quot;:\&quot;ADMIN\&quot;&quot;)) { grantAdmin(); }            // NEVER
+
+// CORRECT: verify first (throws JwtException when signature, exp, iss or aud are wrong)
+Jwt jwt = jwtDecoder.decode(token);
+if (jwt.getClaimAsStringList(&quot;authorities&quot;).contains(&quot;ROLE_ADMIN&quot;)) { grantAdmin(); }</code></pre><h2>Weak secret cracking: why HS256 needs a strong secret</h2><p>The signature is public. An attacker who has one token can test guesses offline at billions per second: compute HMAC(guess, header.payload) and compare with the signature. A secret such as &#x27;secret&#x27; or a company name is found in seconds. A random 256-bit value is impossible to guess. Generate it with a secure generator, for example: openssl rand -base64 32.</p><pre><code class="language-shell">openssl rand -base64 32                       # a good HS256 secret
+openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:2048 -out private.pem
+openssl rsa -in private.pem -pubout -out public.pem
+openssl genpkey -algorithm ed25519 -out ed-private.pem</code></pre><h2>Write negative tests for your validation</h2><pre><code class="language-java">@SpringBootTest
+class JwtValidationTest {
+
+    @Autowired JwtDecoder decoder;
+    @Autowired JwtEncoder encoder;
+    @Autowired RSAKey rsaKey;
+
+    private String token(Duration lifetime, String audience, String issuer) {
+        Instant now = Instant.now();
+        JwtClaimsSet claims = JwtClaimsSet.builder().issuer(issuer).audience(List.of(audience)).subject(&quot;1&quot;)
+                .issuedAt(now).expiresAt(now.plus(lifetime)).id(UUID.randomUUID().toString()).build();
+        return encoder.encode(JwtEncoderParameters.from(JwsHeader.with(SignatureAlgorithm.RS256).keyId(rsaKey.getKeyID()).build(), claims)).getTokenValue();
+    }
+
+    @Test void validTokenPasses() { assertDoesNotThrow(() -&gt; decoder.decode(token(Duration.ofMinutes(5), &quot;shop-api&quot;, &quot;https://auth.shop.example&quot;))); }
+    @Test void expiredIsRejected() { assertThrows(JwtValidationException.class, () -&gt; decoder.decode(token(Duration.ofMinutes(-5), &quot;shop-api&quot;, &quot;https://auth.shop.example&quot;))); }
+    @Test void wrongAudienceIsRejected() { assertThrows(JwtValidationException.class, () -&gt; decoder.decode(token(Duration.ofMinutes(5), &quot;other-api&quot;, &quot;https://auth.shop.example&quot;))); }
+    @Test void wrongIssuerIsRejected() { assertThrows(JwtValidationException.class, () -&gt; decoder.decode(token(Duration.ofMinutes(5), &quot;shop-api&quot;, &quot;https://evil.example&quot;))); }
+
+    @Test
+    void tamperedPayloadIsRejected() {
+        String[] p = token(Duration.ofMinutes(5), &quot;shop-api&quot;, &quot;https://auth.shop.example&quot;).split(&quot;\\.&quot;);
+        String forged = p[0] + &quot;.&quot; + Base64.getUrlEncoder().withoutPadding().encodeToString(&quot;{\&quot;sub\&quot;:\&quot;admin\&quot;}&quot;.getBytes()) + &quot;.&quot; + p[2];
+        assertThrows(JwtException.class, () -&gt; decoder.decode(forged));
+    }
+
+    @Test
+    void noneAlgorithmIsRejected() {
+        String header = Base64.getUrlEncoder().withoutPadding().encodeToString(&quot;{\&quot;alg\&quot;:\&quot;none\&quot;}&quot;.getBytes());
+        String payload = Base64.getUrlEncoder().withoutPadding().encodeToString(&quot;{\&quot;sub\&quot;:\&quot;admin\&quot;}&quot;.getBytes());
+        assertThrows(JwtException.class, () -&gt; decoder.decode(header + &quot;.&quot; + payload + &quot;.&quot;));
+    }
+}</code></pre><h2>Checklist against JWT attacks</h2><ul><li>Pinned algorithm, asymmetric keys, strong secrets.</li><li>Validate signature, exp, nbf, iss and aud on every request in every service.</li><li>Never trust headers that point to keys (jku, x5u, jwk) and treat kid as untrusted input.</li><li>Short lifetimes, refresh rotation, revocation options.</li><li>Safe storage and CSP against XSS. Tokens never in URLs or logs.</li><li>Use maintained libraries (Nimbus via Spring Security), keep them updated, and write negative tests.</li></ul><p class="use"><b>Common mistake:</b> Writing your own JWT parser or verifying only the signature. Every skipped check (exp, iss, aud, algorithm) is a known attack. Use the framework decoder with validators and test the negative cases.</p><h2>Interview questions</h2><h3>What is the JWT algorithm confusion attack?</h3><p>The attacker changes alg from RS256 to HS256 and signs with the public key as the HMAC secret. If the server picks the algorithm from the token header, it accepts the forged token. Pinning the algorithm prevents it.</p><h3>Why is the kid header dangerous?</h3><p>It is attacker controlled. If the server uses it in a file path or SQL query, it leads to path traversal or injection, or to selecting a key the attacker knows. Look it up only in a fixed set of your own keys.</p><h3>Can someone read my JWT payload?</h3><p>Yes, anyone holding the token can. Signing prevents changes, not reading. Keep sensitive data out or use JWE.</p><div class="np"><a href="/springsecurity/jwt/jwt-hardening/">&larr; Making JWT More Secure: Complete Hardening Guide</a><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design) &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

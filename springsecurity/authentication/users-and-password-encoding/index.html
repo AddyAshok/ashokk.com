@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Users, UserDetailsService and Password Encoding – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="Where users are stored and how passwords are hashed decide how safe your system is when the database leaks.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/authentication/users-and-password-encoding/">
+    <meta property="og:title" content="Users, UserDetailsService and Password Encoding – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/" aria-current="page">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/authentication/">Authentication</a> / Users, UserDetailsService and Password Encoding</div>
+<h1>Users, UserDetailsService and Password Encoding</h1><p>Where users are stored and how passwords are hashed decide how safe your system is when the database leaks. This page covers UserDetails, database users, every PasswordEncoder, the delegating format and safe migration between algorithms.</p><h2>UserDetails and UserDetailsService</h2><pre><code class="language-java">public interface UserDetails extends Serializable {
+    Collection&lt;? extends GrantedAuthority&gt; getAuthorities();
+    String getPassword();
+    String getUsername();
+    boolean isAccountNonExpired();
+    boolean isAccountNonLocked();
+    boolean isCredentialsNonExpired();
+    boolean isEnabled();
+}
+public interface UserDetailsService {
+    UserDetails loadUserByUsername(String username) throws UsernameNotFoundException;
+}</code></pre><table><thead><tr><th>Built-in implementation</th><th>Storage</th><th>Use</th></tr></thead><tbody><tr><td>InMemoryUserDetailsManager</td><td>Memory</td><td>Tests, demos</td></tr><tr><td>JdbcUserDetailsManager</td><td>SQL tables users and authorities (default schema)</td><td>Simple systems with the standard schema</td></tr><tr><td>Your own UserDetailsService</td><td>Your JPA entities</td><td>Most real applications</td></tr><tr><td>LdapUserDetailsManager</td><td>LDAP / Active Directory</td><td>Corporate</td></tr></tbody></table><h2>Users stored with JPA</h2><pre><code class="language-java">@Entity
+@Table(name = &quot;app_users&quot;, uniqueConstraints = @UniqueConstraint(columnNames = &quot;email&quot;))
+public class AppUser {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false) private String email;
+    @Column(nullable = false) private String passwordHash;
+    private boolean enabled = true;
+    private boolean locked = false;
+    @ElementCollection(fetch = FetchType.EAGER)
+    @Enumerated(EnumType.STRING)
+    private Set&lt;Role&gt; roles = new HashSet&lt;&gt;();
+    // getters, setters
+}
+public enum Role { USER, MANAGER, ADMIN }
+
+public interface AppUserRepository extends JpaRepository&lt;AppUser, Long&gt; {
+    Optional&lt;AppUser&gt; findByEmailIgnoreCase(String email);
+}
+
+@Service
+public class DbUserDetailsService implements UserDetailsService {
+
+    private final AppUserRepository users;
+    public DbUserDetailsService(AppUserRepository users) { this.users = users; }
+
+    @Override
+    @Transactional(readOnly = true)
+    public UserDetails loadUserByUsername(String email) {
+        AppUser u = users.findByEmailIgnoreCase(email)
+                .orElseThrow(() -&gt; new UsernameNotFoundException(&quot;User not found&quot;));   // same message for all failures
+        return User.builder()
+                .username(u.getEmail())
+                .password(u.getPasswordHash())
+                .disabled(!u.isEnabled())
+                .accountLocked(u.isLocked())
+                .authorities(u.getRoles().stream().map(r -&gt; new SimpleGrantedAuthority(&quot;ROLE_&quot; + r.name())).toList())
+                .build();
+    }
+}</code></pre><h2>Password hashing: why and how</h2><ul><li>Never store plain text and never use fast hashes (MD5, SHA-1, SHA-256 alone) for passwords. Attackers test billions of guesses per second on a GPU.</li><li>A password hash must be slow on purpose (adaptive work factor) and salted (random value per password), so the same password gives different hashes and rainbow tables are useless.</li><li>Spring Security&#x27;s encoders generate the salt and store it inside the hash string.</li></ul><table><thead><tr><th>Encoder</th><th>Algorithm</th><th>Notes</th></tr></thead><tbody><tr><td>BCryptPasswordEncoder</td><td>bcrypt, strength 4 to 31 (default 10)</td><td>Good default. 72 byte password limit. Not memory hard</td></tr><tr><td>Argon2PasswordEncoder</td><td>Argon2id</td><td>Winner of the password hashing competition, memory hard. Needs BouncyCastle</td></tr><tr><td>SCryptPasswordEncoder</td><td>scrypt</td><td>Memory hard. Needs BouncyCastle</td></tr><tr><td>Pbkdf2PasswordEncoder</td><td>PBKDF2</td><td>FIPS friendly. Needs many iterations (hundreds of thousands)</td></tr><tr><td>NoOpPasswordEncoder</td><td>None</td><td>Plain text. Tests only, never production</td></tr></tbody></table><pre><code class="language-java">PasswordEncoder bcrypt = new BCryptPasswordEncoder(12);          // each +1 doubles the time
+String hash = bcrypt.encode(&quot;MySecret#1&quot;);
+// $2a$12$Xw5c3...   = version, cost, 22 chars salt, 31 chars hash
+boolean ok = bcrypt.matches(&quot;MySecret#1&quot;, hash);                  // true
+
+PasswordEncoder argon = Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8();</code></pre><p>Choose the cost so that one hash takes about 100 to 300 ms on your production hardware. Too low is weak, too high makes login a denial of service target.</p><h2>DelegatingPasswordEncoder: the {id} format</h2><pre><code class="language-text">{bcrypt}$2a$10$dXJ3SW6G7P50lGmMkkmwe.20cQQubK3.HZWzG3YB1tlRy.fqvM/BG
+{argon2}$argon2id$v=19$m=16384,t=2,p=1$...
+{noop}plain-text-password-for-tests
+{pbkdf2}5d923b44a6d129f3ddf3e3c8d29412723dcbde72445e8ef6bf3b508fbf46c8c2....</code></pre><p>The prefix says which algorithm created the hash. The delegating encoder reads the prefix and picks the matching encoder, and new passwords use the default (bcrypt). This lets you change algorithms later without a big-bang migration.</p><pre><code class="language-java">@Bean
+PasswordEncoder passwordEncoder() {
+    // the default is bcrypt. Make argon2 the default for NEW passwords while old hashes keep working
+    Map&lt;String, PasswordEncoder&gt; encoders = new HashMap&lt;&gt;();
+    encoders.put(&quot;argon2&quot;, Argon2PasswordEncoder.defaultsForSpringSecurity_v5_8());
+    encoders.put(&quot;bcrypt&quot;, new BCryptPasswordEncoder());
+    DelegatingPasswordEncoder delegating = new DelegatingPasswordEncoder(&quot;argon2&quot;, encoders);
+    return delegating;
+}</code></pre><h2>Upgrade hashes automatically at login</h2><pre><code class="language-java">@Service
+public class DbUserDetailsService implements UserDetailsService, UserDetailsPasswordService {
+    // loadUserByUsername as before ...
+
+    @Override
+    @Transactional
+    public UserDetails updatePassword(UserDetails user, String newEncodedPassword) {
+        AppUser u = users.findByEmailIgnoreCase(user.getUsername()).orElseThrow();
+        u.setPasswordHash(newEncodedPassword);        // called when encoder.upgradeEncoding(oldHash) is true
+        return User.withUserDetails(user).password(newEncodedPassword).build();
+    }
+}
+// DaoAuthenticationProvider calls updatePassword after a successful login when the stored hash uses an outdated algorithm or cost.</code></pre><h2>Registration and password rules</h2><pre><code class="language-java">@Service
+public class RegistrationService {
+    private final AppUserRepository users;
+    private final PasswordEncoder encoder;
+    public RegistrationService(AppUserRepository users, PasswordEncoder encoder) { this.users = users; this.encoder = encoder; }
+
+    @Transactional
+    public void register(String email, String rawPassword) {
+        if (rawPassword.length() &lt; 12) throw new IllegalArgumentException(&quot;Password must have at least 12 characters&quot;);
+        if (users.findByEmailIgnoreCase(email).isPresent()) throw new ConflictException(&quot;Email already registered&quot;);
+        AppUser u = new AppUser();
+        u.setEmail(email.toLowerCase());
+        u.setPasswordHash(encoder.encode(rawPassword));      // never keep or log the raw password
+        u.getRoles().add(Role.USER);
+        users.save(u);
+    }
+}</code></pre><ul><li>Length beats complexity: require at least 12 characters, allow long passphrases, and check against lists of breached passwords.</li><li>Do not truncate or restrict characters. Note bcrypt uses only the first 72 bytes.</li><li>Use the same error message for unknown user and wrong password, and add rate limiting, so attackers cannot find valid accounts.</li><li>Never send passwords by email. Password reset should use a random, single-use, short-lived token that is stored hashed.</li></ul><p class="use"><b>Common mistake:</b> Using SHA-256 or MD5 for passwords because they are &#x27;secure hashes&#x27;. They are designed to be fast. Use bcrypt, Argon2, scrypt or PBKDF2 through PasswordEncoder.</p><h2>Interview questions</h2><h3>Why does the same password give different bcrypt hashes?</h3><p>bcrypt generates a random salt for each hash and stores it inside the hash string. matches() reads the salt from the stored hash to check the password.</p><h3>What does {noop} mean?</h3><p>It is the delegating encoder prefix for plain text (NoOpPasswordEncoder). It exists only for demos and tests.</p><h3>How do I migrate from MD5 to bcrypt without asking users to reset passwords?</h3><p>Wrap old hashes as bcrypt(md5) or mark them with a legacy {id}, verify with the old algorithm at login, and immediately re-encode with the new algorithm using UserDetailsPasswordService.</p><div class="np"><a href="/springsecurity/authentication/authentication-mechanisms/">&larr; Authentication Mechanisms Compared</a><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

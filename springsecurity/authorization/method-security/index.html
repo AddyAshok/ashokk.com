@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="URL rules are coarse.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/authorization/method-security/">
+    <meta property="og:title" content="Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/" aria-current="page">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/authorization/">Authorization</a> / Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</div>
+<h1>Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</h1><p>URL rules are coarse. Method security puts the rule next to the business method, has access to method arguments and return values, and also protects calls that do not come through HTTP (jobs, messages).</p><h2>Enable and use</h2><pre><code class="language-java">@Configuration
+@EnableMethodSecurity           // Spring Security 6: prePostEnabled = true by default. Also: securedEnabled, jsr250Enabled
+public class MethodSecurityConfig { }
+
+@Service
+public class DocumentService {
+
+    @PreAuthorize(&quot;hasRole(&#x27;ADMIN&#x27;)&quot;)
+    public void deleteAll() { }
+
+    @PreAuthorize(&quot;hasAuthority(&#x27;documents:read&#x27;) and #ownerId == authentication.name&quot;)     // uses the argument
+    public List&lt;Document&gt; findByOwner(String ownerId) { return List.of(); }
+
+    @PostAuthorize(&quot;returnObject.owner == authentication.name or hasRole(&#x27;ADMIN&#x27;)&quot;)        // checks the RESULT
+    public Document get(Long id) { return repository.findById(id).orElseThrow(); }
+
+    @PreFilter(&quot;filterObject.owner == authentication.name&quot;)                                // filters an input collection
+    public void saveAll(List&lt;Document&gt; documents) { }
+
+    @PostFilter(&quot;filterObject.owner == authentication.name&quot;)                               // filters the returned collection (loads everything first!)
+    public List&lt;Document&gt; findAll() { return repository.findAll(); }
+}</code></pre><table><thead><tr><th>Annotation</th><th>When checked</th><th>Can use</th></tr></thead><tbody><tr><td>@PreAuthorize</td><td>Before the method runs</td><td>Arguments (#name), authentication, roles, beans</td></tr><tr><td>@PostAuthorize</td><td>After the method, before returning</td><td>returnObject</td></tr><tr><td>@PreFilter / @PostFilter</td><td>Remove elements from a collection argument or result</td><td>filterObject</td></tr><tr><td>@Secured({&quot;ROLE_ADMIN&quot;})</td><td>Before</td><td>Only role names, no SpEL</td></tr><tr><td>@RolesAllowed (JSR-250)</td><td>Before</td><td>Role names, standard annotation</td></tr></tbody></table><h2>Internal workflow</h2><pre class="dia"><code>caller ─► Spring AOP proxy of DocumentService
+              └─ AuthorizationManagerBeforeMethodInterceptor   (from @EnableMethodSecurity)
+                     1. read @PreAuthorize expression
+                     2. build a MethodSecurityExpressionRoot: authentication, hasRole(), hasAuthority(), arguments, beans
+                     3. evaluate the SpEL expression
+                     4. false ─► AccessDeniedException (403)      true ─► call the real method
+              └─ (after) AuthorizationManagerAfterMethodInterceptor for @PostAuthorize with returnObject</code></pre><p>Because it uses AOP proxies, the same limits apply as for @Transactional: a call from another method in the SAME class is not checked (self invocation), private methods are not checked, and the bean must be created by Spring. Put security annotations on the public methods of beans that are called from outside.</p><h2>Custom permission logic as a bean</h2><pre><code class="language-java">@Component(&quot;perm&quot;)
+public class PermissionService {
+    private final DocumentRepository documents;
+    public PermissionService(DocumentRepository documents) { this.documents = documents; }
+
+    public boolean canEdit(Long documentId, Authentication auth) {
+        return documents.findById(documentId)
+                .map(d -&gt; d.getOwner().equals(auth.getName()) || auth.getAuthorities().stream().anyMatch(a -&gt; a.getAuthority().equals(&quot;ROLE_ADMIN&quot;)))
+                .orElse(false);
+    }
+}
+
+@Service
+public class DocumentEditService {
+    @PreAuthorize(&quot;@perm.canEdit(#id, authentication)&quot;)        // call a Spring bean from the expression
+    public void update(Long id, String text) { }
+}</code></pre><h2>Meta-annotations: readable rules</h2><pre><code class="language-java">@Target({ElementType.METHOD, ElementType.TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@PreAuthorize(&quot;hasRole(&#x27;ADMIN&#x27;)&quot;)
+public @interface IsAdmin { }
+
+@IsAdmin
+public void deleteUser(Long id) { }</code></pre><h2>Best practice: filter in the query, not after</h2><pre><code class="language-java">// BAD: loads all documents, then removes the ones the user may not see (slow, may leak through logs)
+@PostFilter(&quot;filterObject.owner == authentication.name&quot;)
+List&lt;Document&gt; findAll();
+
+// GOOD: the database only returns allowed rows
+@Query(&quot;select d from Document d where d.owner = ?#{authentication.name}&quot;)     // needs SecurityEvaluationContextExtension
+List&lt;Document&gt; findMine();
+// or pass the username explicitly: findByOwner(String owner) and call it with the current user</code></pre><p class="use"><b>Common mistake:</b> Adding @PreAuthorize to a private method or calling the secured method from within the same class. The proxy is bypassed and the check silently does not run. Test 403 behavior with an integration test.</p><h2>Interview questions</h2><h3>URL security or method security?</h3><p>Use both. URL rules give a coarse first barrier. Method security enforces fine-grained rules close to the business logic and also protects non-HTTP entry points.</p><h3>Why is my @PreAuthorize ignored?</h3><p>Usually @EnableMethodSecurity is missing, the call is a self invocation, the method is private or final, or the bean is not created by Spring.</p><h3>What is the difference between @Secured and @PreAuthorize?</h3><p>@Secured accepts only role names. @PreAuthorize accepts full SpEL expressions with arguments, beans and complex logic.</p><div class="np"><a href="/springsecurity/authorization/authorization-internals/">&larr; Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC) &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

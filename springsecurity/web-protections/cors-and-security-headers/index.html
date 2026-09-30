@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>CORS and Security Headers – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="CORS is a browser rule that decides which websites may call your API from JavaScript.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/web-protections/cors-and-security-headers/">
+    <meta property="og:title" content="CORS and Security Headers – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/" aria-current="page">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/web-protections/">Web Protections</a> / CORS and Security Headers</div>
+<h1>CORS and Security Headers</h1><p>CORS is a browser rule that decides which websites may call your API from JavaScript. Security headers tell the browser how to treat your pages. Both are often misconfigured, and both cause the most confusing browser errors.</p><h2>Same-origin policy and CORS</h2><p>An origin is scheme + host + port (https://app.example.com:443). By default a page can only call APIs of its own origin. CORS (Cross-Origin Resource Sharing) lets your API say: I allow these other origins. CORS is enforced by the browser, not by the server: curl and Postman ignore it. It is not authentication.</p><pre class="dia"><code>Browser page at https://app.example.com calls https://api.example.com/orders  (different origin)
+
+SIMPLE request (GET, no custom headers):    browser sends it with   Origin: https://app.example.com
+                                             server answers with     Access-Control-Allow-Origin: https://app.example.com
+                                             browser lets JavaScript read the response
+
+PREFLIGHT (PUT/DELETE, JSON, Authorization header ...):
+   1. browser sends OPTIONS /orders   Origin: ... ; Access-Control-Request-Method: PUT ; Access-Control-Request-Headers: authorization
+   2. server answers 200  Access-Control-Allow-Origin, -Allow-Methods, -Allow-Headers, -Max-Age
+   3. only then the browser sends the real PUT request
+If the preflight is answered with 401 (security blocked it), the browser reports a CORS error.</code></pre><h2>Configure CORS correctly with Spring Security</h2><pre><code class="language-java">@Bean
+SecurityFilterChain chain(HttpSecurity http) throws Exception {
+    http.cors(Customizer.withDefaults())                            // uses the CorsConfigurationSource bean, runs BEFORE authorization
+        .authorizeHttpRequests(a -&gt; a.anyRequest().authenticated());
+    return http.build();
+}
+
+@Bean
+CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration cfg = new CorsConfiguration();
+    cfg.setAllowedOrigins(List.of(&quot;https://app.example.com&quot;));      // exact origins. Not &quot;*&quot; when credentials are allowed
+    cfg.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;PATCH&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));
+    cfg.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Content-Type&quot;, &quot;X-Requested-With&quot;));
+    cfg.setExposedHeaders(List.of(&quot;Location&quot;, &quot;X-Request-Id&quot;));     // headers JavaScript may read
+    cfg.setAllowCredentials(true);                                  // cookies and Authorization allowed
+    cfg.setMaxAge(Duration.ofHours(1));                             // cache the preflight
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration(&quot;/api/**&quot;, cfg);
+    return source;
+}</code></pre><table><thead><tr><th>Mistake</th><th>Result</th></tr></thead><tbody><tr><td>allowedOrigins(&#x27;*&#x27;) with allowCredentials(true)</td><td>Rejected by Spring and by browsers. Use exact origins or allowedOriginPatterns</td></tr><tr><td>Reflecting any Origin header back</td><td>Any website can call your API with the user&#x27;s cookies</td></tr><tr><td>CORS configured only in @CrossOrigin or WebMvcConfigurer but Security not told to use it</td><td>Preflight is rejected with 401 before Spring MVC sees it</td></tr><tr><td>Thinking CORS protects the API</td><td>It does not. Attackers use curl. Always use authentication and authorization</td></tr></tbody></table><h2>Security headers</h2><pre><code class="language-java">http.headers(h -&gt; h
+    .contentSecurityPolicy(csp -&gt; csp.policyDirectives(
+        &quot;default-src &#x27;self&#x27;; script-src &#x27;self&#x27;; style-src &#x27;self&#x27; &#x27;unsafe-inline&#x27;; img-src &#x27;self&#x27; data:; &quot;
+      + &quot;frame-ancestors &#x27;none&#x27;; base-uri &#x27;self&#x27;; form-action &#x27;self&#x27;&quot;))
+    .httpStrictTransportSecurity(hsts -&gt; hsts.includeSubDomains(true).maxAgeInSeconds(31536000).preload(true))
+    .frameOptions(frame -&gt; frame.deny())
+    .contentTypeOptions(Customizer.withDefaults())                                   // X-Content-Type-Options: nosniff
+    .referrerPolicy(r -&gt; r.policy(ReferrerPolicyHeaderWriter.ReferrerPolicy.STRICT_ORIGIN_WHEN_CROSS_ORIGIN))
+    .permissionsPolicyHeader(p -&gt; p.policy(&quot;camera=(), microphone=(), geolocation=()&quot;)));</code></pre><table><thead><tr><th>Header</th><th>Purpose</th></tr></thead><tbody><tr><td>Content-Security-Policy</td><td>Whitelist where scripts, styles, images and frames may load from. The best defense against XSS impact</td></tr><tr><td>Strict-Transport-Security</td><td>Browser must use HTTPS for this domain for a year</td></tr><tr><td>X-Frame-Options / frame-ancestors</td><td>Stops clickjacking (your page inside another site&#x27;s frame)</td></tr><tr><td>X-Content-Type-Options: nosniff</td><td>Browser must trust the declared content type</td></tr><tr><td>Referrer-Policy</td><td>Limits URL information sent to other sites</td></tr><tr><td>Permissions-Policy</td><td>Turn off browser features (camera, microphone, location)</td></tr><tr><td>Cache-Control: no-store</td><td>For responses with private data (Spring Security sets this by default)</td></tr></tbody></table><ul><li>Pure REST APIs return JSON, so CSP matters less there. It matters a lot for HTML pages and SPAs.</li><li>Start with Content-Security-Policy-Report-Only to find what would break, then enforce.</li><li>Test your headers with securityheaders.com or the browser developer tools.</li></ul><p class="use"><b>Common mistake:</b> Fixing a CORS error by allowing all origins with credentials. This lets any website use the logged-in user&#x27;s browser against your API. List the exact origins you trust.</p><h2>Interview questions</h2><h3>Why does the browser show a CORS error while Postman works?</h3><p>CORS is a browser enforced rule. Postman does not enforce it. The browser blocks JavaScript from reading responses without the right Access-Control headers.</p><h3>What is a preflight request?</h3><p>An automatic OPTIONS request the browser sends before certain cross-origin calls to ask the server whether the real request is allowed.</p><h3>Does CORS protect my API from attackers?</h3><p>No. It only limits what browsers allow web pages to do. Anybody can call your API with other tools, so always authenticate and authorize.</p><div class="np"><a href="/springsecurity/web-protections/csrf-protection/">&larr; CSRF Protection in Depth</a><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

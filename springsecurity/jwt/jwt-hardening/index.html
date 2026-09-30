@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Making JWT More Secure: Complete Hardening Guide – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="A default JWT setup already works, but it is not yet safe enough for important data.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/jwt/jwt-hardening/">
+    <meta property="og:title" content="Making JWT More Secure: Complete Hardening Guide – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/" aria-current="page">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/jwt/">JWT in Depth</a> / Making JWT More Secure: Complete Hardening Guide</div>
+<h1>Making JWT More Secure: Complete Hardening Guide</h1><p>A default JWT setup already works, but it is not yet safe enough for important data. Each topic below removes one real risk: weak keys, wrong algorithms, missing validation, theft, no revocation and stale permissions. Apply as many as your risk level requires.</p><h2>Hardening overview</h2><table><thead><tr><th>#</th><th>Risk</th><th>Measure</th></tr></thead><tbody><tr><td>1</td><td>Forged tokens</td><td>Asymmetric signing (RS256, ES256, EdDSA) and a pinned algorithm</td></tr><tr><td>2</td><td>Key leak or old key</td><td>Key ids (kid), JWKS, regular rotation, private key in a vault</td></tr><tr><td>3</td><td>Token for another service or issuer</td><td>Validate iss and aud, and give every API its own audience</td></tr><tr><td>4</td><td>Long window of misuse after theft</td><td>Short access token lifetime (5 to 15 minutes)</td></tr><tr><td>5</td><td>Refresh token theft</td><td>Opaque refresh tokens, hashed in DB, rotation, reuse detection</td></tr><tr><td>6</td><td>No logout, no emergency stop</td><td>Deny list by jti, per-user token version, revoke refresh tokens</td></tr><tr><td>7</td><td>Stale roles</td><td>Short lifetime, token version, re-check sensitive actions in the database</td></tr><tr><td>8</td><td>XSS steals the token</td><td>Do not keep tokens in localStorage. Memory or HttpOnly cookie, BFF pattern, CSP</td></tr><tr><td>9</td><td>Stolen token used from another device</td><td>Token binding with a fingerprint cookie, or DPoP / mTLS</td></tr><tr><td>10</td><td>Data exposure</td><td>Minimal claims, no personal data, JWE if needed</td></tr><tr><td>11</td><td>Leaks in logs and URLs</td><td>Header only, never in URLs, mask Authorization in logs</td></tr><tr><td>12</td><td>Brute force and abuse</td><td>Rate limit login and refresh, alert on anomalies</td></tr></tbody></table><h2>1. Asymmetric signing and a pinned algorithm</h2><pre><code class="language-java">NimbusJwtDecoder decoder = NimbusJwtDecoder
+        .withPublicKey(publicKey)
+        .signatureAlgorithm(SignatureAlgorithm.RS256)      // only this algorithm. &quot;none&quot; and HS256 are rejected
+        .build();
+// With HS256 the secret must be a random value of at least 256 bits (32 bytes), never a dictionary word, and known only to ONE service.</code></pre><h2>2. Key rotation with kid and JWKS</h2><pre class="dia"><code>Auth server publishes:  GET /.well-known/jwks.json   { &quot;keys&quot;: [ {kid: &quot;k2026-09&quot;, ...public}, {kid: &quot;k2026-06&quot;, ...public} ] }
+Token header:           { &quot;alg&quot;: &quot;RS256&quot;, &quot;kid&quot;: &quot;k2026-09&quot; }
+Rotation:  1. create the new key k2026-12 and add its PUBLIC part to the JWKS
+           2. start signing with k2026-12
+           3. keep the old public key in the JWKS until all old tokens have expired (max token lifetime)
+           4. remove the old key
+Resource servers use jwk-set-uri: they cache the keys and reload when they see an unknown kid, so rotation needs no redeploy.</code></pre><pre><code class="language-properties">spring.security.oauth2.resourceserver.jwt.jwk-set-uri=https://auth.shop.example/.well-known/jwks.json
+spring.security.oauth2.resourceserver.jwt.jws-algorithms=RS256</code></pre><pre><code class="language-java">// Expose the public keys from your own auth server
+@RestController
+class JwksController {
+    private final RSAKey rsaKey;
+    JwksController(RSAKey rsaKey) { this.rsaKey = rsaKey; }
+
+    @GetMapping(&quot;/.well-known/jwks.json&quot;)
+    Map&lt;String, Object&gt; jwks() { return new JWKSet(rsaKey.toPublicJWK()).toJSONObject(); }   // toPublicJWK: never the private part
+}</code></pre><h2>3. Full validation: time, issuer, audience, revocation</h2><pre><code class="language-java">@Bean
+public JwtDecoder jwtDecoder(RSAKey rsaKey, TokenRevocationService revocation) throws JOSEException {
+    NimbusJwtDecoder decoder = NimbusJwtDecoder.withPublicKey(rsaKey.toRSAPublicKey())
+            .signatureAlgorithm(SignatureAlgorithm.RS256).build();
+
+    OAuth2TokenValidator&lt;Jwt&gt; timestamp = new JwtTimestampValidator(Duration.ofSeconds(30));    // exp / nbf with 30 s clock skew
+    OAuth2TokenValidator&lt;Jwt&gt; issuer = new JwtIssuerValidator(&quot;https://auth.shop.example&quot;);
+    OAuth2TokenValidator&lt;Jwt&gt; audience = new JwtClaimValidator&lt;List&lt;String&gt;&gt;(
+            JwtClaimNames.AUD, aud -&gt; aud != null &amp;&amp; aud.contains(&quot;shop-api&quot;));                    // this token is FOR this API
+    OAuth2TokenValidator&lt;Jwt&gt; notRevoked = jwt -&gt; revocation.isRevoked(jwt.getId())
+            ? OAuth2TokenValidatorResult.failure(new OAuth2Error(&quot;invalid_token&quot;, &quot;Token has been revoked&quot;, null))
+            : OAuth2TokenValidatorResult.success();
+
+    decoder.setJwtValidator(new DelegatingOAuth2TokenValidator&lt;&gt;(timestamp, issuer, audience, notRevoked));
+    return decoder;
+}</code></pre><h2>4 and 5. Short access tokens, rotating refresh tokens</h2><p>Keep access tokens at 5 to 15 minutes. Use the refresh token flow (rotation, hashed storage, reuse detection) from the refresh token page, so a stolen access token is useful only for minutes and a stolen refresh token is detected.</p><h2>6. Revocation: deny list and token version</h2><pre><code class="language-java">@Service
+public class TokenRevocationService {
+
+    private final StringRedisTemplate redis;
+    public TokenRevocationService(StringRedisTemplate redis) { this.redis = redis; }
+
+    /** Block one token until it would expire anyway. The deny list stays small because entries expire by themselves. */
+    public void revoke(Jwt jwt) {
+        Duration remaining = Duration.between(Instant.now(), jwt.getExpiresAt());
+        if (!remaining.isNegative()) redis.opsForValue().set(&quot;jwt:deny:&quot; + jwt.getId(), &quot;1&quot;, remaining);
+    }
+
+    public boolean isRevoked(String jti) {
+        return jti != null &amp;&amp; Boolean.TRUE.equals(redis.hasKey(&quot;jwt:deny:&quot; + jti));
+    }
+}
+
+// Logout endpoint: revoke the presented access token and the refresh token
+@PostMapping(&quot;/auth/logout&quot;)
+public ResponseEntity&lt;Void&gt; logout(@AuthenticationPrincipal Jwt jwt, @CookieValue(name = &quot;refresh_token&quot;, required = false) String refresh) {
+    revocation.revoke(jwt);
+    if (refresh != null) refreshTokens.revoke(refresh);
+    return ResponseEntity.noContent().build();
+}</code></pre><p>Token version: keep an integer per user (the tokenVersion column). Put it in the token as a claim (ver). At validation compare it with the current value (cache it for a few seconds). Increasing the version instantly invalidates ALL tokens of that user: use it for password change, role change, &#x27;log out from all devices&#x27; and account compromise.</p><pre><code class="language-java">OAuth2TokenValidator&lt;Jwt&gt; versionValidator = jwt -&gt; {
+    Long userId = Long.valueOf(jwt.getSubject());
+    int current = tokenVersionCache.get(userId);                    // Caffeine cache with a 10 second TTL over the database
+    Number claimed = jwt.getClaim(&quot;ver&quot;);
+    return claimed != null &amp;&amp; claimed.intValue() == current
+            ? OAuth2TokenValidatorResult.success()
+            : OAuth2TokenValidatorResult.failure(new OAuth2Error(&quot;invalid_token&quot;, &quot;Token version outdated&quot;, null));
+};</code></pre><table><thead><tr><th>Revocation approach</th><th>Instant?</th><th>Cost</th></tr></thead><tbody><tr><td>Short expiry only</td><td>After exp (minutes)</td><td>None. Good baseline</td></tr><tr><td>Deny list by jti</td><td>Yes</td><td>Redis lookup per request. Entries expire with the token</td></tr><tr><td>Token version per user</td><td>Yes, for ALL tokens of a user</td><td>Cached DB lookup per request</td></tr><tr><td>Opaque token with introspection</td><td>Yes</td><td>Network call per request (cache it)</td></tr></tbody></table><h2>7. Stale roles</h2><ul><li>Accept that roles in a token can be up to (token lifetime) minutes old. For most apps 10 minutes is fine.</li><li>For dangerous actions (delete account, money transfer, admin operations) check the permission in the database, or require a fresh login (step-up authentication).</li><li>Or put only the user id in the token and load authorities from a cache on each request (a trade-off: a lookup per request).</li></ul><h2>8. Where to keep the token in the browser</h2><table><thead><tr><th>Storage</th><th>XSS can steal it?</th><th>CSRF risk?</th><th>Verdict</th></tr></thead><tbody><tr><td>localStorage / sessionStorage</td><td>Yes, easily</td><td>No</td><td>Avoid for long-lived or powerful tokens</td></tr><tr><td>JavaScript memory (variable)</td><td>Harder, but XSS can still use it while the page runs</td><td>No</td><td>Good for short access tokens, lost on reload</td></tr><tr><td>HttpOnly Secure SameSite cookie</td><td>Cannot be read by scripts (but can be used by them)</td><td>Yes: needs SameSite and a CSRF defense</td><td>Good, best for refresh tokens</td></tr><tr><td>BFF pattern (backend for frontend)</td><td>Tokens never reach the browser. Browser has only a session cookie</td><td>CSRF defense needed</td><td>Strongest for SPAs</td></tr></tbody></table><p>Recommended for a SPA: access token in memory, refresh token in an HttpOnly Secure SameSite=Strict cookie limited to the /auth path, a strict Content-Security-Policy, and no third-party scripts you do not control. With a BFF, tokens stay on the server.</p><h2>9. Token binding with a fingerprint (stops simple theft)</h2><pre class="dia"><code>Login:  server creates a random FINGERPRINT (32 bytes)
+        ─► sends it in an HttpOnly Secure cookie  __Secure-Fgp=&lt;fingerprint&gt;
+        ─► puts SHA-256(fingerprint) into the JWT claim &quot;fgp&quot;
+Each request: the cookie arrives automatically, the token in the header. The validator hashes the cookie and compares with fgp.
+Attacker steals the token via XSS or logs: has no fingerprint cookie (HttpOnly, invisible to scripts) ─► token is rejected.</code></pre><pre><code class="language-java">OAuth2TokenValidator&lt;Jwt&gt; fingerprint = jwt -&gt; {
+    HttpServletRequest request = ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
+    Cookie cookie = WebUtils.getCookie(request, &quot;__Secure-Fgp&quot;);
+    String claim = jwt.getClaimAsString(&quot;fgp&quot;);
+    if (cookie == null || claim == null || !sha256Hex(cookie.getValue()).equals(claim)) {
+        return OAuth2TokenValidatorResult.failure(new OAuth2Error(&quot;invalid_token&quot;, &quot;Fingerprint mismatch&quot;, null));
+    }
+    return OAuth2TokenValidatorResult.success();
+};</code></pre><p>For stronger sender constraining use DPoP (proof of possession with a per-client key, supported in newer Spring Security versions) or mutual TLS. They make a stolen token useless without the client&#x27;s private key.</p><h2>10. Minimal claims</h2><pre><code class="language-json">// GOOD
+{ &quot;iss&quot;:&quot;https://auth.shop.example&quot;, &quot;aud&quot;:[&quot;shop-api&quot;], &quot;sub&quot;:&quot;4711&quot;, &quot;iat&quot;:1790000000, &quot;exp&quot;:1790000600,
+  &quot;jti&quot;:&quot;6f1c...&quot;, &quot;ver&quot;:3, &quot;scope&quot;:&quot;orders:read orders:write&quot; }
+
+// BAD: personal data, secrets, huge lists
+{ &quot;sub&quot;:&quot;ram&quot;, &quot;email&quot;:&quot;ram@example.com&quot;, &quot;phone&quot;:&quot;+91...&quot;, &quot;address&quot;:&quot;...&quot;, &quot;cardNumber&quot;:&quot;...&quot;, &quot;permissions&quot;:[ ...200 entries... ] }</code></pre><h2>11. Transport and logging</h2><ul><li>HTTPS only, with HSTS. Never send tokens in query strings (they land in browser history, proxy logs and Referer headers).</li><li>Mask the Authorization header and cookies in access logs and error reports.</li><li>Return generic errors: invalid_token without details about why.</li><li>Do not accept tokens from cookies and headers at the same time without thinking about which one wins.</li></ul><h2>12. Abuse control and monitoring</h2><ul><li>Rate limit /auth/login and /auth/refresh per IP and per account.</li><li>Alert on refresh token reuse, many 401 with invalid_token, tokens with unknown kid, and logins from new countries.</li><li>Log security events: token issued, refreshed, revoked, validation failures (without the token itself).</li></ul><h2>Hardened token lifecycle summary</h2><pre class="dia"><code>login (rate limited, lockout, MFA)  ─► access JWT (RS256, kid, iss, aud, 10 min, jti, ver, fgp) + refresh token (opaque, hashed, 7 days, rotating, HttpOnly cookie)
+each API call                        ─► verify signature (pinned alg) ─► exp/nbf ─► iss ─► aud ─► not on deny list ─► ver current ─► fingerprint
+refresh                              ─► rotate; reuse of an old refresh token ─► revoke everything for the user ─► alert
+logout / password change / incident  ─► revoke refresh tokens, deny-list jti, bump token version
+key rotation                         ─► new kid in JWKS, old public key kept until old tokens expire</code></pre><p class="use"><b>Common mistake:</b> Adding revocation lists and fingerprints but keeping 24 hour access tokens and localStorage. Security is the weakest link. First fix the basics (short expiry, correct validation, safe storage), then add the advanced controls your risk needs.</p><h2>Interview questions</h2><h3>What are the top 5 things to do to secure JWT?</h3><p>Use asymmetric signing with a pinned algorithm, validate exp, iss and aud, keep access tokens short, rotate opaque refresh tokens with reuse detection, and store tokens safely (memory plus HttpOnly cookie or a BFF).</p><h3>How can I revoke a JWT immediately?</h3><p>Put its jti on a deny list until it expires, or increase the user&#x27;s token version so all older tokens fail validation, and revoke the refresh tokens.</p><h3>Is encrypting the JWT (JWE) needed?</h3><p>Only if the claims are sensitive. The better rule is to keep sensitive data out of the token and use the token as a key to look up data on the server.</p><div class="np"><a href="/springsecurity/jwt/jwt-implementation/">&larr; JWT Authentication in Spring Security: Complete Implementation with RS256</a><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

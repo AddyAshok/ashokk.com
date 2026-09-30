@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JWT Access and Refresh Token Flow (Complete Design) – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="Short-lived access tokens are safe but annoying, long-lived tokens are convenient but dangerous.">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/jwt/jwt-refresh-token-flow/">
+    <meta property="og:title" content="JWT Access and Refresh Token Flow (Complete Design) – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/" aria-current="page">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/jwt/">JWT in Depth</a> / JWT Access and Refresh Token Flow (Complete Design)</div>
+<h1>JWT Access and Refresh Token Flow (Complete Design)</h1><p>Short-lived access tokens are safe but annoying, long-lived tokens are convenient but dangerous. The standard solution is a short access token plus a long-lived refresh token that is stored (hashed) on the server, rotated at every use and revocable on logout.</p><h2>The flow</h2><pre class="dia"><code>LOGIN     POST /auth/login {user, password}
+            ◄── access token (JWT, 15 min)  +  refresh token (random string, 7 days, HttpOnly cookie)
+API CALL  GET /api/orders   Authorization: Bearer &lt;access token&gt;       ─► 200
+EXPIRED   GET /api/orders   (access token expired)                     ─► 401
+REFRESH   POST /auth/refresh  (cookie carries the refresh token)
+            server: hash(token) ─► find in DB ─► valid and not used? ─► mark it USED
+            ◄── NEW access token + NEW refresh token   (rotation)
+REUSE     an old (used) refresh token is presented again  ─► theft suspected ─► revoke ALL tokens of that user
+LOGOUT    POST /auth/logout ─► delete/revoke the refresh token; the access token just expires</code></pre><table><thead><tr><th>Token</th><th>Lifetime</th><th>Format</th><th>Stored where</th></tr></thead><tbody><tr><td>Access token</td><td>5 to 15 minutes</td><td>Signed JWT</td><td>Client memory. Not stored on the server</td></tr><tr><td>Refresh token</td><td>Days</td><td>Random opaque string (32 bytes)</td><td>Client: HttpOnly Secure cookie. Server: only the SHA-256 HASH in the database</td></tr></tbody></table><h2>Entity and repository</h2><pre><code class="language-java">@Entity
+@Table(name = &quot;refresh_tokens&quot;, indexes = @Index(columnList = &quot;tokenHash&quot;, unique = true))
+public class RefreshToken {
+    @Id @GeneratedValue(strategy = GenerationType.IDENTITY) private Long id;
+    @Column(nullable = false, unique = true) private String tokenHash;
+    @Column(nullable = false) private String username;
+    @Column(nullable = false) private Instant expiresAt;
+    private boolean used;
+    private boolean revoked;
+
+    protected RefreshToken() { }
+    public RefreshToken(String tokenHash, String username, Instant expiresAt) {
+        this.tokenHash = tokenHash; this.username = username; this.expiresAt = expiresAt;
+    }
+    public String getUsername() { return username; }
+    public boolean isUsed() { return used; }
+    public boolean isRevoked() { return revoked; }
+    public boolean isExpired() { return expiresAt.isBefore(Instant.now()); }
+    public void markUsed() { this.used = true; }
+    public void revoke() { this.revoked = true; }
+}
+
+public interface RefreshTokenRepository extends JpaRepository&lt;RefreshToken, Long&gt; {
+    Optional&lt;RefreshToken&gt; findByTokenHash(String tokenHash);
+    @Modifying @Transactional
+    @Query(&quot;update RefreshToken t set t.revoked = true where t.username = :username&quot;)
+    void revokeAllByUsername(@Param(&quot;username&quot;) String username);
+}</code></pre><h2>Refresh token service</h2><pre><code class="language-java">@Service
+public class RefreshTokenService {
+
+    private static final SecureRandom RANDOM = new SecureRandom();
+    private final RefreshTokenRepository repository;
+    private final Duration lifetime = Duration.ofDays(7);
+
+    public RefreshTokenService(RefreshTokenRepository repository) { this.repository = repository; }
+
+    @Transactional
+    public String create(String username) {
+        byte[] bytes = new byte[32];
+        RANDOM.nextBytes(bytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);      // sent to the client ONCE
+        repository.save(new RefreshToken(hash(token), username, Instant.now().plus(lifetime)));
+        return token;
+    }
+
+    /** Validates the token, marks it used and returns the username. Throws if invalid. */
+    @Transactional
+    public String consume(String token) {
+        RefreshToken stored = repository.findByTokenHash(hash(token))
+                .orElseThrow(() -&gt; new BadCredentialsException(&quot;Unknown refresh token&quot;));
+        if (stored.isUsed()) {                                     // reuse = probably stolen
+            repository.revokeAllByUsername(stored.getUsername());
+            throw new BadCredentialsException(&quot;Refresh token reuse detected&quot;);
+        }
+        if (stored.isRevoked() || stored.isExpired()) throw new BadCredentialsException(&quot;Refresh token expired&quot;);
+        stored.markUsed();
+        return stored.getUsername();
+    }
+
+    @Transactional
+    public void revoke(String token) {
+        repository.findByTokenHash(hash(token)).ifPresent(RefreshToken::revoke);
+    }
+
+    private static String hash(String token) {
+        try {
+            byte[] digest = MessageDigest.getInstance(&quot;SHA-256&quot;).digest(token.getBytes(StandardCharsets.UTF_8));
+            return HexFormat.of().formatHex(digest);
+        } catch (NoSuchAlgorithmException e) { throw new IllegalStateException(e); }
+    }
+}</code></pre><h2>Auth controller (uses the TokenService from the JWT page)</h2><pre><code class="language-java">@RestController
+@RequestMapping(&quot;/auth&quot;)
+public class AuthController {
+
+    private final AuthenticationManager authManager;
+    private final TokenService accessTokens;          // creates the signed JWT
+    private final RefreshTokenService refreshTokens;
+    private final UserDetailsService users;
+
+    public AuthController(AuthenticationManager authManager, TokenService accessTokens,
+                          RefreshTokenService refreshTokens, UserDetailsService users) {
+        this.authManager = authManager; this.accessTokens = accessTokens;
+        this.refreshTokens = refreshTokens; this.users = users;
+    }
+
+    @PostMapping(&quot;/login&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; login(@RequestBody LoginRequest request) {
+        Authentication auth = authManager.authenticate(
+                new UsernamePasswordAuthenticationToken(request.username(), request.password()));
+        return tokensFor(auth.getName(), roles(auth.getAuthorities()));
+    }
+
+    @PostMapping(&quot;/refresh&quot;)
+    public ResponseEntity&lt;Map&lt;String, String&gt;&gt; refresh(@CookieValue(name = &quot;refresh_token&quot;, required = false) String token) {
+        if (token == null) return ResponseEntity.status(HttpStatus.UNAUTHORIZED).build();
+        String username = refreshTokens.consume(token);                       // rotation: this token is now used
+        UserDetails user = users.loadUserByUsername(username);
+        return tokensFor(username, roles(user.getAuthorities()));
+    }
+
+    @PostMapping(&quot;/logout&quot;)
+    public ResponseEntity&lt;Void&gt; logout(@CookieValue(name = &quot;refresh_token&quot;, required = false) String token) {
+        if (token != null) refreshTokens.revoke(token);
+        ResponseCookie clear = ResponseCookie.from(&quot;refresh_token&quot;, &quot;&quot;).path(&quot;/auth&quot;).maxAge(0).build();
+        return ResponseEntity.noContent().header(HttpHeaders.SET_COOKIE, clear.toString()).build();
+    }
+
+    private ResponseEntity&lt;Map&lt;String, String&gt;&gt; tokensFor(String username, List&lt;String&gt; roles) {
+        String access = accessTokens.createToken(username, roles);
+        String refresh = refreshTokens.create(username);
+        ResponseCookie cookie = ResponseCookie.from(&quot;refresh_token&quot;, refresh)
+                .httpOnly(true).secure(true).sameSite(&quot;Strict&quot;).path(&quot;/auth&quot;).maxAge(Duration.ofDays(7)).build();
+        return ResponseEntity.ok().header(HttpHeaders.SET_COOKIE, cookie.toString()).body(Map.of(&quot;accessToken&quot;, access));
+    }
+
+    private static List&lt;String&gt; roles(Collection&lt;? extends GrantedAuthority&gt; a) {
+        return a.stream().map(x -&gt; x.getAuthority().replace(&quot;ROLE_&quot;, &quot;&quot;)).toList();
+    }
+}</code></pre><h2>Design notes</h2><ul><li>Why hash the refresh token? A database leak must not give the attacker working tokens. Same idea as password hashing (SHA-256 is enough for high-entropy random tokens).</li><li>Why an HttpOnly cookie with path /auth? JavaScript cannot read it (XSS safe) and the browser sends it only to the auth endpoints. SameSite=Strict reduces CSRF risk.</li><li>Why rotation? Each refresh token works once. A stolen token is detected when the real user or the thief uses the old one.</li><li>Clean up: delete expired rows with a scheduled job.</li><li>Access tokens cannot be revoked, so keep them short. For instant revocation you would need a deny list or opaque tokens with introspection.</li></ul><p class="use"><b>Common mistake:</b> Storing the refresh token in localStorage and never rotating it. Any script injection can steal a long-lived credential. Use an HttpOnly cookie, rotate on every use, and store only a hash on the server.</p><h2>Interview questions</h2><h3>Why not simply make the access token last 30 days?</h3><p>A stolen token would give an attacker access for 30 days and you cannot revoke a JWT. Short access tokens limit the damage.</p><h3>What is refresh token rotation?</h3><p>Every refresh call returns a new refresh token and invalidates the old one, so reuse of an old token reveals theft.</p><h3>Where should the access token live in a browser app?</h3><p>In memory (a JavaScript variable). After a page reload the app gets a new one using the refresh cookie.</p><div class="np"><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">&larr; JWT Attacks and Defenses</a><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

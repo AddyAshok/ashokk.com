@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>OAuth2 Login and Keycloak with Spring Boot – Spring Security – Ashokka Tech</title>
+    <meta name="description" content="Two typical setups: a web application that lets users log in with an external provider (oauth2Login), and an API that trusts tokens issued by Keycloak (resource server) with role mapping..">
+    <link rel="canonical" href="https://ashokka.com/springsecurity/oauth2/oauth2-login-and-keycloak/">
+    <meta property="og:title" content="OAuth2 Login and Keycloak with Spring Boot – Spring Security – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springsecurity/css/springsecurity.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springsecurity/js/springsecurity.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Security menu"><h2><a href="/springsecurity/">Spring Security</a></h2><h3><a href="/springsecurity/fundamentals/">Fundamentals and Default Behavior</a></h3><ul><li><a href="/springsecurity/fundamentals/security-overview/">Application Security and Spring Security Overview</a></li><li><a href="/springsecurity/fundamentals/default-security-configuration/">Default Spring Security Configuration: What Happens When You Add the Starter</a></li><li><a href="/springsecurity/fundamentals/security-architecture/">Security Architecture: FilterChainProxy, SecurityContext and AuthenticationManager</a></li><li><a href="/springsecurity/fundamentals/filter-chain-in-depth/">The Security Filter Chain in Depth: Order, Customization and Multiple Chains</a></li></ul><h3><a href="/springsecurity/authentication/">Authentication</a></h3><ul><li><a href="/springsecurity/authentication/authentication-mechanisms/">Authentication Mechanisms Compared</a></li><li><a href="/springsecurity/authentication/users-and-password-encoding/">Users, UserDetailsService and Password Encoding</a></li><li><a href="/springsecurity/authentication/custom-authentication-provider/">Custom AuthenticationProvider, Handlers, Events and Account Lockout</a></li><li><a href="/springsecurity/authentication/session-management/">Session Management: Fixation, Concurrency, Timeouts and Spring Session</a></li></ul><h3><a href="/springsecurity/authorization/">Authorization</a></h3><ul><li><a href="/springsecurity/authorization/authorization-internals/">Authorization Internals: AuthorizationFilter, AuthorizationManager and Rules</a></li><li><a href="/springsecurity/authorization/method-security/">Method Security: @PreAuthorize, @PostAuthorize and Custom Permission Rules</a></li><li><a href="/springsecurity/authorization/database-users-roles-permissions/">Database Design for Users, Roles and Permissions (RBAC)</a></li></ul><h3><a href="/springsecurity/web-protections/">Web Protections</a></h3><ul><li><a href="/springsecurity/web-protections/csrf-protection/">CSRF Protection in Depth</a></li><li><a href="/springsecurity/web-protections/cors-and-security-headers/">CORS and Security Headers</a></li><li><a href="/springsecurity/web-protections/common-attacks-and-defenses/">Common Attacks and Defenses in Spring Applications</a></li></ul><h3><a href="/springsecurity/jwt/">JWT in Depth</a></h3><ul><li><a href="/springsecurity/jwt/jwt-fundamentals/">JWT Fundamentals: Structure, Signature and Verification</a></li><li><a href="/springsecurity/jwt/jwt-pros-and-cons/">JWT Advantages and Disadvantages (Fayde aur Nuksan) with Decision Guide</a></li><li><a href="/springsecurity/jwt/jwt-implementation/">JWT Authentication in Spring Security: Complete Implementation with RS256</a></li><li><a href="/springsecurity/jwt/jwt-hardening/">Making JWT More Secure: Complete Hardening Guide</a></li><li><a href="/springsecurity/jwt/jwt-attacks-and-defenses/">JWT Attacks and Defenses</a></li><li><a href="/springsecurity/jwt/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a></h3><ul><li><a href="/springsecurity/oauth2/oauth2-and-oidc/">OAuth 2.0 and OpenID Connect Concepts</a></li><li><a href="/springsecurity/oauth2/oauth2-login-and-keycloak/" aria-current="page">OAuth2 Login and Keycloak with Spring Boot</a></li></ul><h3><a href="/springsecurity/production/">Testing, Checklist and Interviews</a></h3><ul><li><a href="/springsecurity/production/security-testing/">Testing Spring Security</a></li><li><a href="/springsecurity/production/security-checklist/">Spring Security Production Checklist</a></li><li><a href="/springsecurity/production/security-interview-questions/">Spring Security Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springsecurity/">Spring Security</a> / <a href="/springsecurity/oauth2/">OAuth2 and OpenID Connect</a> / OAuth2 Login and Keycloak with Spring Boot</div>
+<h1>OAuth2 Login and Keycloak with Spring Boot</h1><p>Two typical setups: a web application that lets users log in with an external provider (oauth2Login), and an API that trusts tokens issued by Keycloak (resource server) with role mapping.</p><h2>Setup A: Login with Google or GitHub (oauth2Login)</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-oauth2-client&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre><pre><code class="language-yaml">spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID}
+            client-secret: ${GOOGLE_CLIENT_SECRET}
+            scope: openid, profile, email
+          github:
+            client-id: ${GITHUB_CLIENT_ID}
+            client-secret: ${GITHUB_CLIENT_SECRET}</code></pre><pre><code class="language-java">@Bean
+SecurityFilterChain chain(HttpSecurity http) throws Exception {
+    http.authorizeHttpRequests(a -&gt; a.requestMatchers(&quot;/&quot;, &quot;/error&quot;).permitAll().anyRequest().authenticated())
+        .oauth2Login(Customizer.withDefaults())                              // adds /oauth2/authorization/google and the redirect handling
+        .logout(l -&gt; l.logoutSuccessUrl(&quot;/&quot;));
+    return http.build();
+}
+
+@RestController
+class ProfileController {
+    @GetMapping(&quot;/profile&quot;)
+    Map&lt;String, Object&gt; profile(@AuthenticationPrincipal OidcUser user) {    // for GitHub (plain OAuth2) use OAuth2User
+        return Map.of(&quot;name&quot;, user.getFullName(), &quot;email&quot;, user.getEmail());
+    }
+}</code></pre><pre class="dia"><code>Browser ─► /oauth2/authorization/google
+        ─► OAuth2AuthorizationRequestRedirectFilter: redirect to Google (code flow, state, nonce)
+        ─► Google login ─► redirect to /login/oauth2/code/google?code=...
+        ─► OAuth2LoginAuthenticationFilter: exchange the code for tokens, verify the ID token, load user info
+        ─► OidcUser stored in the session (normal session security afterwards)</code></pre><p>Redirect URI to register at the provider: {baseUrl}/login/oauth2/code/{registrationId}, for example http://localhost:8080/login/oauth2/code/google.</p><h2>Setup B: API protected by Keycloak (resource server)</h2><pre><code class="language-shell">docker run -d --name keycloak -p 8180:8080 -e KC_BOOTSTRAP_ADMIN_USERNAME=admin -e KC_BOOTSTRAP_ADMIN_PASSWORD=admin \
+  quay.io/keycloak/keycloak:latest start-dev
+# admin console: http://localhost:8180  -&gt; create realm &quot;shop&quot;, client &quot;shop-frontend&quot; (public, PKCE), roles USER and ADMIN, users</code></pre><pre><code class="language-yaml">spring:
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: http://localhost:8180/realms/shop        # Spring downloads the public keys (JWKS) from here</code></pre><pre><code class="language-java">@Configuration
+@EnableWebSecurity
+@EnableMethodSecurity
+public class ApiSecurityConfig {
+
+    @Bean
+    SecurityFilterChain api(HttpSecurity http) throws Exception {
+        http.csrf(csrf -&gt; csrf.disable())
+            .sessionManagement(s -&gt; s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .authorizeHttpRequests(a -&gt; a
+                .requestMatchers(&quot;/actuator/health&quot;).permitAll()
+                .requestMatchers(&quot;/api/admin/**&quot;).hasRole(&quot;ADMIN&quot;)
+                .anyRequest().authenticated())
+            .oauth2ResourceServer(o -&gt; o.jwt(j -&gt; j.jwtAuthenticationConverter(keycloakConverter())));
+        return http.build();
+    }
+
+    // Keycloak puts realm roles in the claim realm_access.roles
+    private JwtAuthenticationConverter keycloakConverter() {
+        JwtAuthenticationConverter converter = new JwtAuthenticationConverter();
+        converter.setJwtGrantedAuthoritiesConverter(jwt -&gt; {
+            Map&lt;String, Object&gt; realmAccess = jwt.getClaimAsMap(&quot;realm_access&quot;);
+            Collection&lt;String&gt; roles = realmAccess == null ? List.of() : (Collection&lt;String&gt;) realmAccess.getOrDefault(&quot;roles&quot;, List.of());
+            return roles.stream().map(r -&gt; (GrantedAuthority) new SimpleGrantedAuthority(&quot;ROLE_&quot; + r.toUpperCase())).toList();
+        });
+        return converter;
+    }
+}</code></pre><pre><code class="language-shell"># get a token for testing (direct access grant enabled on a TEST client only)
+curl -s -d &quot;client_id=shop-test&quot; -d &quot;username=ram&quot; -d &quot;password=ram123&quot; -d &quot;grant_type=password&quot; \
+  http://localhost:8180/realms/shop/protocol/openid-connect/token
+curl -H &quot;Authorization: Bearer &lt;access_token&gt;&quot; http://localhost:8080/api/orders</code></pre><h2>What the resource server validates on every request</h2><ul><li>Signature with the public key from the JWKS endpoint (cached, refreshed when an unknown kid appears).</li><li>exp and nbf (time), iss (issuer equals issuer-uri).</li><li>Add an audience check: your API must only accept tokens meant for it (see the JWT hardening page).</li><li>No call to Keycloak is needed per request. That is why JWT scales, and also why revocation is not immediate.</li></ul><h2>Machine to machine: client credentials</h2><pre><code class="language-yaml">spring:
+  security:
+    oauth2:
+      client:
+        registration:
+          billing:
+            provider: keycloak
+            client-id: order-service
+            client-secret: ${ORDER_SERVICE_SECRET}
+            authorization-grant-type: client_credentials
+            scope: billing.write
+        provider:
+          keycloak:
+            token-uri: http://localhost:8180/realms/shop/protocol/openid-connect/token</code></pre><p>With the OAuth2 client support, RestClient or WebClient can obtain and refresh a token automatically and add it to outgoing calls.</p><p class="use"><b>Common mistake:</b> Enabling the direct access (password) grant in the production Keycloak client to make testing easy. Use it only in a separate test client and use Authorization Code with PKCE for real users.</p><h2>Interview questions</h2><h3>How does the API know a token is valid without calling Keycloak?</h3><p>It verifies the JWT signature with Keycloak&#x27;s public key (JWKS), and checks expiry, issuer and audience. Keys are cached.</p><h3>Why are my roles missing in Spring Security?</h3><p>By default only the scope claim becomes SCOPE_ authorities. Keycloak roles live in realm_access or resource_access and need a custom JwtAuthenticationConverter.</p><h3>Where do users log in when I use Keycloak?</h3><p>On the Keycloak login page. Your Spring Boot applications never see the password, only tokens.</p><div class="np"><a href="/springsecurity/oauth2/oauth2-and-oidc/">&larr; OAuth 2.0 and OpenID Connect Concepts</a><a href="/springsecurity/production/security-testing/">Testing Spring Security &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>
