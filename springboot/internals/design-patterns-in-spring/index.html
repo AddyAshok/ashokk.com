@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Design Patterns Used Inside Spring – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Spring is a very good example of design patterns in real code.">
+    <link rel="canonical" href="https://ashokka.com/springboot/internals/design-patterns-in-spring/">
+    <meta property="og:title" content="Design Patterns Used Inside Spring – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/" aria-current="page">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/internals/">Spring Boot Internals</a> / Design Patterns Used Inside Spring</div>
+<h1>Design Patterns Used Inside Spring</h1><p>Spring is a very good example of design patterns in real code. Knowing where each pattern lives helps you understand the framework and answer senior level interview questions.</p><h2>Pattern map</h2><table><thead><tr><th>Pattern</th><th>Where Spring uses it</th><th>Why</th></tr></thead><tbody><tr><td>Singleton (per container)</td><td>Default bean scope</td><td>Share one instance and save memory</td></tr><tr><td>Factory / Factory Method</td><td>BeanFactory, FactoryBean, @Bean methods</td><td>Hide how objects are created</td></tr><tr><td>Dependency Injection / IoC</td><td>The whole container</td><td>Loose coupling, easy testing</td></tr><tr><td>Proxy</td><td>AOP, @Transactional, @Cacheable, @Async, Spring Data repositories</td><td>Add behavior around a bean without changing it</td></tr><tr><td>Template Method</td><td>JdbcTemplate, RestTemplate, JmsTemplate, TransactionTemplate</td><td>Fixed steps (open, execute, close), you provide only the variable part</td></tr><tr><td>Observer</td><td>ApplicationEvent and @EventListener</td><td>Publish events to many listeners</td></tr><tr><td>Strategy</td><td>PasswordEncoder, HttpMessageConverter, Resource, AuthenticationProvider</td><td>Swap algorithms without changing callers</td></tr><tr><td>Front Controller</td><td>DispatcherServlet</td><td>One entry point for all web requests</td></tr><tr><td>Chain of Responsibility</td><td>Security filter chain, servlet filters, HandlerInterceptor chain</td><td>Each element handles or passes on</td></tr><tr><td>Adapter</td><td>HandlerAdapter, JpaVendorAdapter</td><td>Make different interfaces work together</td></tr><tr><td>Decorator</td><td>BeanWrapper, HttpServletRequestWrapper</td><td>Add features by wrapping</td></tr><tr><td>Builder</td><td>UriComponentsBuilder, HttpSecurity, RestClient.Builder, SpringApplicationBuilder</td><td>Readable step-by-step creation</td></tr></tbody></table><h2>Proxy in action (what @Transactional really does)</h2><pre class="dia"><code>caller ──► [ CGLIB proxy of OrderService ] ──► real OrderService
+                 │  1. begin transaction
+                 │  2. call real method
+                 │  3. commit or rollback
+                 └─ the caller never sees the difference</code></pre><h2>Template Method: JdbcTemplate</h2><p>JdbcTemplate does the boring work (get connection, create statement, handle exceptions, close resources) and calls your code only for the variable part.</p><pre><code class="language-java">@Repository
+public class UserDao {
+    private final JdbcTemplate jdbc;
+    public UserDao(JdbcTemplate jdbc) { this.jdbc = jdbc; }
+
+    public List&lt;String&gt; findNames(int minAge) {
+        return jdbc.query(&quot;select name from users where age &gt;= ?&quot;,
+                (rs, rowNum) -&gt; rs.getString(&quot;name&quot;),      // your part: map one row
+                minAge);
+    }
+}</code></pre><h2>Strategy: pick behavior by name with Map injection</h2><pre><code class="language-java">public interface DiscountStrategy { BigDecimal apply(BigDecimal price); }
+
+@Component(&quot;regular&quot;)
+class RegularDiscount implements DiscountStrategy { public BigDecimal apply(BigDecimal p) { return p; } }
+
+@Component(&quot;festival&quot;)
+class FestivalDiscount implements DiscountStrategy { public BigDecimal apply(BigDecimal p) { return p.multiply(new BigDecimal(&quot;0.80&quot;)); } }
+
+@Service
+public class PricingService {
+    private final Map&lt;String, DiscountStrategy&gt; strategies;      // key = bean name
+
+    public PricingService(Map&lt;String, DiscountStrategy&gt; strategies) { this.strategies = strategies; }
+
+    public BigDecimal price(String type, BigDecimal price) {
+        return strategies.getOrDefault(type, strategies.get(&quot;regular&quot;)).apply(price);
+    }
+}</code></pre><h2>Factory: FactoryBean</h2><pre><code class="language-java">@Component
+public class HttpClientFactoryBean implements FactoryBean&lt;HttpClient&gt; {
+    @Override public HttpClient getObject() { return HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(3)).build(); }
+    @Override public Class&lt;?&gt; getObjectType() { return HttpClient.class; }
+}
+// The bean named &quot;httpClientFactoryBean&quot; gives you an HttpClient (not the factory).
+// Use &quot;&amp;httpClientFactoryBean&quot; to get the factory itself.</code></pre><h2>Observer: events</h2><pre><code class="language-java">public record UserRegistered(String email) { }
+
+@Service
+class RegistrationService {
+    private final ApplicationEventPublisher publisher;
+    RegistrationService(ApplicationEventPublisher publisher) { this.publisher = publisher; }
+    void register(String email) { /* save user */ publisher.publishEvent(new UserRegistered(email)); }
+}
+
+@Component
+class WelcomeMailListener { @EventListener void on(UserRegistered e) { System.out.println(&quot;Welcome mail to &quot; + e.email()); } }
+
+@Component
+class AnalyticsListener { @Async @EventListener void on(UserRegistered e) { System.out.println(&quot;Track &quot; + e.email()); } }</code></pre><p class="use"><b>Common mistake:</b> Learning patterns only as textbook diagrams. Open the framework source (for example JdbcTemplate.execute or DispatcherServlet.doDispatch) once, and you will remember the pattern for life.</p><h2>Interview questions</h2><h3>Which patterns explain how @Transactional works?</h3><p>Proxy (the call is intercepted), Template Method (TransactionTemplate style), and Chain of Responsibility (the advisor chain in the interceptor).</p><h3>Is a Spring singleton the Singleton pattern?</h3><p>No. The Singleton pattern guarantees one instance per class loader. A Spring singleton is one instance per bean definition per container, and you can have several beans of the same class.</p><h3>Where do you see Strategy in Spring Security?</h3><p>PasswordEncoder, AuthenticationProvider, AuthorizationManager and SecurityContextRepository are interfaces with swappable implementations.</p><div class="np"><a href="/springboot/internals/context-refresh-bean-creation/">&larr; Inside the ApplicationContext: refresh() and Bean Creation</a><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

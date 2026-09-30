@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Actuator and Monitoring – Spring Boot – Ashokka Tech</title>
+<meta name="description" content="Actuator gives your application production features: health checks, metrics, environment information and more, all as HTTP endpoints.">
+<link rel="canonical" href="https://ashokka.com/springboot/production/actuator/">
+<meta property="og:title" content="Actuator and Monitoring – Spring Boot – Ashokka Tech">
+<meta property="og:type" content="article">
+<link rel="stylesheet" href="/springboot/css/springboot.css">
+<script src="/component/components.js" defer></script>
+<script src="/component/header.js" defer></script>
+<script src="/springboot/js/springboot.js" defer></script>
+</head>
+<body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/" aria-current="page">Actuator and Monitoring</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/production/">Production and Testing</a> / Actuator and Monitoring</div>
+<h1>Actuator and Monitoring</h1><p>Actuator gives your application production features: health checks, metrics, environment information and more, all as HTTP endpoints. It is the base for monitoring with Prometheus and Grafana.</p><h2>Setup</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-actuator&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre><pre><code class="language-properties">management.endpoints.web.exposure.include=health,info,metrics,prometheus,loggers
+management.endpoint.health.show-details=when-authorized
+management.endpoint.health.probes.enabled=true
+# run management endpoints on a separate internal port
+management.server.port=9090</code></pre><h2>Important endpoints</h2><table><thead><tr><th>Endpoint</th><th>Shows</th></tr></thead><tbody><tr><td>/actuator/health</td><td>UP or DOWN, plus details for database, disk, and so on</td></tr><tr><td>/actuator/info</td><td>Application information (name, version, git commit)</td></tr><tr><td>/actuator/metrics</td><td>Metrics such as jvm.memory.used, http.server.requests</td></tr><tr><td>/actuator/prometheus</td><td>All metrics in Prometheus format</td></tr><tr><td>/actuator/loggers</td><td>View and change log levels at runtime</td></tr><tr><td>/actuator/env, /configprops</td><td>Configuration values (sensitive, protect them)</td></tr><tr><td>/actuator/beans, /mappings, /conditions</td><td>All beans, URL mappings and auto-configuration decisions</td></tr><tr><td>/actuator/threaddump, /heapdump</td><td>Diagnostics (sensitive, protect them)</td></tr></tbody></table><p>By default only health is exposed over HTTP. Expose only what you need and protect the rest with Spring Security or a separate management port.</p><h2>Liveness and readiness (Kubernetes)</h2><pre><code class="language-text">GET /actuator/health/liveness   → is the process alive? (restart if DOWN)
+GET /actuator/health/readiness  → can it accept traffic? (remove from load balancer if DOWN)</code></pre><h2>Custom health indicator</h2><pre><code class="language-java">// Boot 3.x imports. In Boot 4 the health classes moved to org.springframework.boot.health.*
+import org.springframework.boot.actuate.health.Health;
+import org.springframework.boot.actuate.health.HealthIndicator;
+
+@Component
+public class PaymentGatewayHealth implements HealthIndicator {
+
+    private final PaymentClient client;
+    public PaymentGatewayHealth(PaymentClient client) { this.client = client; }
+
+    @Override
+    public Health health() {
+        try {
+            client.ping();
+            return Health.up().withDetail(&quot;gateway&quot;, &quot;reachable&quot;).build();
+        } catch (Exception ex) {
+            return Health.down(ex).withDetail(&quot;gateway&quot;, &quot;unreachable&quot;).build();
+        }
+    }
+}</code></pre><h2>Custom metrics with Micrometer</h2><pre><code class="language-java">@Service
+public class CheckoutService {
+
+    private final Counter orders;
+    private final Timer timer;
+
+    public CheckoutService(MeterRegistry registry) {
+        this.orders = Counter.builder(&quot;shop.orders.created&quot;).description(&quot;Orders created&quot;).register(registry);
+        this.timer = Timer.builder(&quot;shop.checkout.time&quot;).register(registry);
+    }
+
+    public void checkout() {
+        timer.record(() -&gt; {
+            // business work
+            orders.increment();
+        });
+    }
+}</code></pre><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;io.micrometer&lt;/groupId&gt;
+    &lt;artifactId&gt;micrometer-registry-prometheus&lt;/artifactId&gt;
+    &lt;scope&gt;runtime&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre><pre><code class="language-yaml"># prometheus.yml
+scrape_configs:
+  - job_name: shop
+    metrics_path: /actuator/prometheus
+    static_configs:
+      - targets: [&#x27;localhost:9090&#x27;]</code></pre><p>Prometheus collects the metrics and Grafana draws dashboards. Alert on error rate, response time (p95, p99), JVM memory, and database pool usage (hikaricp.connections.active).</p><h2>Info endpoint</h2><pre><code class="language-properties">management.info.env.enabled=true
+info.app.name=shop
+info.app.version=1.0.0</code></pre><p class="use"><b>Common mistake:</b> Exposing all Actuator endpoints (include=*) on the public internet. env, heapdump and beans can leak secrets and internals. Expose only what you need and secure them.</p><h2>Interview questions</h2><h3>What is the difference between liveness and readiness?</h3><p>Liveness tells whether the application should be restarted. Readiness tells whether it can receive traffic right now, for example after startup or during a database outage.</p><h3>What is Micrometer?</h3><p>The metrics facade used by Spring Boot, like SLF4J for metrics. It sends the same metrics to Prometheus, Datadog, CloudWatch and others.</p><h3>How do I trace a request across services?</h3><p>Add Micrometer Tracing with OpenTelemetry. Every request gets a trace id that is passed between services and shown in the logs.</p><div class="np"><a href="/springboot/production/logging/">&larr; Logging</a><a href="/springboot/production/testing/">Testing Spring Boot Applications &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

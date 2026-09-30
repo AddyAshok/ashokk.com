@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Inside the ApplicationContext: refresh() and Bean Creation – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="The ApplicationContext.refresh() method is the heart of Spring.">
+    <link rel="canonical" href="https://ashokka.com/springboot/internals/context-refresh-bean-creation/">
+    <meta property="og:title" content="Inside the ApplicationContext: refresh() and Bean Creation – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/" aria-current="page">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/internals/">Spring Boot Internals</a> / Inside the ApplicationContext: refresh() and Bean Creation</div>
+<h1>Inside the ApplicationContext: refresh() and Bean Creation</h1><p>The ApplicationContext.refresh() method is the heart of Spring. In these twelve steps Spring reads configuration, creates bean definitions, runs post processors and creates every singleton bean. This page explains the algorithm behind getBean(), the three-level cache that solves circular references, and the extension points you can use.</p><h2>BeanFactory vs ApplicationContext</h2><table><thead><tr><th>Feature</th><th>BeanFactory</th><th>ApplicationContext</th></tr></thead><tbody><tr><td>Role</td><td>Basic container: creates and returns beans</td><td>Full container built on BeanFactory</td></tr><tr><td>Singleton creation</td><td>Lazy (on first getBean)</td><td>Eager (at startup, fails fast)</td></tr><tr><td>Events</td><td>No</td><td>Yes (ApplicationEventPublisher)</td></tr><tr><td>Message source (i18n)</td><td>No</td><td>Yes</td></tr><tr><td>Resource loading</td><td>No</td><td>Yes (classpath:, file:)</td></tr><tr><td>Post processors</td><td>Manual registration</td><td>Detected and applied automatically</td></tr><tr><td>Environment and profiles</td><td>No</td><td>Yes</td></tr></tbody></table><h2>What is a BeanDefinition?</h2><p>Spring does not create objects directly from your classes. First it builds a BeanDefinition for each bean: a recipe with the class name, scope, lazy flag, constructor arguments, property values, init and destroy methods, depends-on, primary flag and more. Beans are created from these recipes later. This separation lets post processors change the recipes before any object exists.</p><h2>The twelve steps of refresh()</h2><pre class="dia"><code>AbstractApplicationContext.refresh()
+ 1. prepareRefresh()                     validate required properties, set startup time
+ 2. obtainFreshBeanFactory()             create DefaultListableBeanFactory
+ 3. prepareBeanFactory()                 add standard BeanPostProcessors (ApplicationContextAware ...)
+ 4. postProcessBeanFactory()             subclasses add web scopes (request, session)
+ 5. invokeBeanFactoryPostProcessors()    ★ ConfigurationClassPostProcessor parses @Configuration:
+                                            @ComponentScan, @Import, @Bean, @ImportResource,
+                                            auto-configuration imports  ►  registers BeanDefinitions
+                                          then other BeanFactoryPostProcessors (property placeholders ${...})
+ 6. registerBeanPostProcessors()         create BeanPostProcessor beans (@Autowired, @Transactional proxies, ...)
+ 7. initMessageSource()                  i18n
+ 8. initApplicationEventMulticaster()    event publishing
+ 9. onRefresh()                          ★ creates the embedded web server (not started yet)
+10. registerListeners()                  register ApplicationListener beans
+11. finishBeanFactoryInitialization()    ★ instantiate all non-lazy singleton beans
+12. finishRefresh()                      publish ContextRefreshedEvent, ★ START the web server</code></pre><h2>How one bean is created: getBean() workflow</h2><pre class="dia"><code>getBean(&quot;orderService&quot;)
+ └─ doGetBean
+     ├─ 1. singleton already created?  (cache lookup, see three-level cache)   yes ─► return it
+     ├─ 2. merge BeanDefinition, check @DependsOn (create those first)
+     └─ 3. createBean ─► doCreateBean
+            ├─ a. createBeanInstance      choose constructor, resolve constructor args (recursive getBean)
+            ├─ b. addSingletonFactory     put an &quot;early reference&quot; factory into cache L3
+            ├─ c. populateBean            inject @Autowired fields and setters
+            │        (AutowiredAnnotationBeanPostProcessor)
+            ├─ d. initializeBean
+            │        ├─ Aware callbacks (BeanNameAware, BeanFactoryAware, ApplicationContextAware)
+            │        ├─ BeanPostProcessor.postProcessBeforeInitialization  (@PostConstruct runs here)
+            │        ├─ afterPropertiesSet() and custom init-method
+            │        └─ BeanPostProcessor.postProcessAfterInitialization   ★ AOP proxy is created here
+            └─ e. register destroy callbacks, move bean to cache L1</code></pre><h2>Three-level cache and circular dependencies</h2><table><thead><tr><th>Level</th><th>Field name</th><th>Contains</th></tr></thead><tbody><tr><td>L1</td><td>singletonObjects</td><td>Fully created beans (ready to use)</td></tr><tr><td>L2</td><td>earlySingletonObjects</td><td>Early references: beans created but not yet fully initialized</td></tr><tr><td>L3</td><td>singletonFactories</td><td>Factories (lambdas) that can produce an early reference, and apply AOP proxying if needed</td></tr></tbody></table><pre class="dia"><code>A needs B (field injection), B needs A
+
+create A  ─► instance A created, factory for A put in L3
+          ─► populate A: needs B ─► create B ─► instance B created
+                                    populate B: needs A ─► look in cache:
+                                          L1 no, L2 no, L3 yes ─► get early reference of A, move it to L2
+                                    B finishes, goes to L1
+          ─► A gets B, A finishes, goes to L1
+With CONSTRUCTOR injection A cannot even be instantiated without B, so no early reference exists → BeanCurrentlyInCreationException.
+Why L3 and not just L2? If A will be wrapped in an AOP proxy, B must receive the PROXY, not the raw object.
+The factory in L3 creates the proxy at the last moment (getEarlyBeanReference).</code></pre><p>Since Spring Boot 2.6 circular references are forbidden by default (spring.main.allow-circular-references=false). Treat them as a design smell and remove the cycle.</p><h2>Extension points and when each runs</h2><table><thead><tr><th>Extension point</th><th>Runs at</th><th>Can change</th></tr></thead><tbody><tr><td>BeanDefinitionRegistryPostProcessor</td><td>Step 5, first</td><td>Register new bean definitions</td></tr><tr><td>BeanFactoryPostProcessor</td><td>Step 5, after registration</td><td>Modify existing bean definitions (no beans exist yet)</td></tr><tr><td>BeanPostProcessor</td><td>During bean creation, for every bean</td><td>Wrap or replace beans (proxies)</td></tr><tr><td>ImportSelector / ImportBeanDefinitionRegistrar</td><td>During @Configuration parsing</td><td>Decide which configurations or beans to import</td></tr><tr><td>SmartInitializingSingleton</td><td>After all singletons are created</td><td>Work that needs all beans ready</td></tr></tbody></table><pre><code class="language-java">// 1. BeanPostProcessor: measure initialization time of every bean
+@Component
+public class TimingBeanPostProcessor implements BeanPostProcessor {
+
+    private final Map&lt;String, Long&gt; starts = new ConcurrentHashMap&lt;&gt;();
+
+    @Override
+    public Object postProcessBeforeInitialization(Object bean, String beanName) {
+        starts.put(beanName, System.nanoTime());
+        return bean;
+    }
+
+    @Override
+    public Object postProcessAfterInitialization(Object bean, String beanName) {
+        Long start = starts.remove(beanName);
+        if (start != null) {
+            long micros = (System.nanoTime() - start) / 1_000;
+            if (micros &gt; 50_000) System.out.println(&quot;Slow bean init: &quot; + beanName + &quot; &quot; + micros / 1000 + &quot; ms&quot;);
+        }
+        return bean;
+    }
+}
+
+// 2. BeanDefinitionRegistryPostProcessor: register a bean dynamically
+@Component
+public class DynamicBeanRegistrar implements BeanDefinitionRegistryPostProcessor {
+
+    @Override
+    public void postProcessBeanDefinitionRegistry(BeanDefinitionRegistry registry) {
+        BeanDefinition definition = BeanDefinitionBuilder
+                .genericBeanDefinition(GreetingService.class)
+                .addConstructorArgValue(&quot;Namaste&quot;)
+                .getBeanDefinition();
+        registry.registerBeanDefinition(&quot;dynamicGreeting&quot;, definition);
+    }
+
+    @Override
+    public void postProcessBeanFactory(ConfigurableListableBeanFactory beanFactory) { }
+}
+
+// 3. ImportSelector: import configurations based on logic
+public class FeatureImportSelector implements ImportSelector {
+    @Override
+    public String[] selectImports(AnnotationMetadata metadata) {
+        return new String[] { &quot;com.example.config.MetricsConfig&quot;, &quot;com.example.config.AuditConfig&quot; };
+    }
+}
+// usage: @Import(FeatureImportSelector.class) on a @Configuration class</code></pre><p class="use"><b>Tip:</b> BeanPostProcessor beans are created very early, before other beans. If a BeanPostProcessor injects normal beans, those beans are created too early and are NOT processed by all post processors (you see the log message: Bean is not eligible for getting processed by all BeanPostProcessors). Keep post processors free of injected dependencies, and declare @Bean methods that return them as static.</p><p class="use"><b>Common mistake:</b> Injecting service beans into a BeanPostProcessor or BeanFactoryPostProcessor. Those beans are created early and miss proxies (for example @Transactional does not work on them). Use ObjectProvider or look the bean up lazily.</p><h2>Interview questions</h2><h3>What happens at step 5 of refresh() in a Spring Boot application?</h3><p>ConfigurationClassPostProcessor reads your @SpringBootApplication class, scans components, processes @Import and @Bean methods and the auto-configuration imports, and registers all bean definitions.</p><h3>Why do singleton beans fail fast at startup?</h3><p>The context creates all non-lazy singletons during refresh(), so missing beans and wrong configuration show up at startup and not in production traffic.</p><h3>Where are AOP proxies created?</h3><p>In BeanPostProcessor.postProcessAfterInitialization (or earlier through getEarlyBeanReference for circular references), by the auto proxy creator, which wraps the bean if an advisor matches.</p><div class="np"><a href="/springboot/internals/startup-internals/">&larr; How Spring Boot Starts: SpringApplication.run() Step by Step</a><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Embedded Tomcat Internals and Tuning – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Spring Boot starts Tomcat inside your application.">
+    <link rel="canonical" href="https://ashokka.com/springboot/internals/embedded-server-internals/">
+    <meta property="og:title" content="Embedded Tomcat Internals and Tuning – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/" aria-current="page">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/internals/">Spring Boot Internals</a> / Embedded Tomcat Internals and Tuning</div>
+<h1>Embedded Tomcat Internals and Tuning</h1><p>Spring Boot starts Tomcat inside your application. It is important to know how a request travels through Tomcat and how threads and connections are limited, because most production performance problems and &#x27;connection refused&#x27; or &#x27;timeout&#x27; errors come from these limits.</p><h2>Tomcat architecture</h2><pre class="dia"><code>Server
+ └─ Service
+     ├─ Connector (NIO, port 8080)  ── handles the network
+     │     ├─ Acceptor thread   : accepts new TCP connections
+     │     ├─ Poller thread(s)  : watches sockets, finds those with data (NIO selector)
+     │     └─ Worker threads    : &quot;http-nio-8080-exec-N&quot;, run the servlet code   (pool size = server.tomcat.threads.max)
+     └─ Engine ─► Host ─► Context (your application)
+                                 └─ Filters ─► DispatcherServlet ─► your @RestController</code></pre><h2>Life of a request</h2><pre class="dia"><code>1. Client opens a TCP connection            ─► accept queue (accept-count, default 100, when max-connections is reached)
+2. Acceptor accepts it                       ─► counted in max-connections (default 8192)
+3. Poller waits until request bytes arrive   (idle keep-alive connections cost no thread)
+4. A worker thread is taken from the pool    ─► request parsed, filters, controller, response written
+5. Thread returns to the pool; the connection stays open for keep-alive
+If all 200 worker threads are busy, new requests WAIT in the queue. Slow requests = fewer free threads = higher latency.</code></pre><h2>Important properties</h2><table><thead><tr><th>Property</th><th>Default</th><th>Meaning</th></tr></thead><tbody><tr><td>server.tomcat.threads.max</td><td>200</td><td>Maximum worker threads = maximum requests processed in parallel</td></tr><tr><td>server.tomcat.threads.min-spare</td><td>10</td><td>Threads kept ready</td></tr><tr><td>server.tomcat.max-connections</td><td>8192</td><td>Maximum open connections accepted by the server</td></tr><tr><td>server.tomcat.accept-count</td><td>100</td><td>Waiting queue length when max-connections is reached</td></tr><tr><td>server.tomcat.connection-timeout</td><td>20s</td><td>Time to wait for the request line after a connection is opened</td></tr><tr><td>server.tomcat.keep-alive-timeout</td><td>same as connection-timeout</td><td>How long an idle connection stays open</td></tr><tr><td>server.tomcat.max-swallow-size</td><td>2MB</td><td>How much of an aborted upload is read</td></tr><tr><td>server.max-http-request-header-size</td><td>8KB</td><td>Header size limit (large cookies or JWTs can exceed it: 400 error)</td></tr></tbody></table><p>How many threads do you need? By Little&#x27;s law: concurrent requests = requests per second x average duration in seconds. At 500 requests/second and 200 ms average, about 100 threads are busy. If a downstream call becomes slow (2 seconds), 500 x 2 = 1000 threads would be needed, so the pool is exhausted and the whole service looks down. This is why timeouts and circuit breakers matter.</p><h2>Common configuration</h2><pre><code class="language-properties">server.port=8080
+server.tomcat.threads.max=300
+server.tomcat.accept-count=200
+server.compression.enabled=true
+server.compression.mime-types=application/json,text/html,text/css,application/javascript
+server.compression.min-response-size=1024
+server.shutdown=graceful
+server.forward-headers-strategy=framework      # behind a load balancer or proxy: trust X-Forwarded-* headers
+server.tomcat.accesslog.enabled=true
+server.tomcat.accesslog.directory=logs
+server.error.include-message=never
+server.error.include-stacktrace=never</code></pre><h2>HTTPS (SSL bundles, Boot 3.1+)</h2><pre><code class="language-properties">spring.ssl.bundle.jks.web.keystore.location=classpath:keystore.p12
+spring.ssl.bundle.jks.web.keystore.password=${KEYSTORE_PASSWORD}
+spring.ssl.bundle.jks.web.keystore.type=PKCS12
+server.ssl.bundle=web
+server.port=8443
+server.http2.enabled=true                       # HTTP/2 needs TLS in browsers</code></pre><p>In production TLS is usually terminated by a load balancer, ingress or reverse proxy (NGINX, Envoy, cloud LB), and the Spring Boot application speaks plain HTTP inside the private network.</p><h2>Customize Tomcat in code</h2><pre><code class="language-java">@Component
+public class TomcatCustomizer implements WebServerFactoryCustomizer&lt;TomcatServletWebServerFactory&gt; {
+    @Override
+    public void customize(TomcatServletWebServerFactory factory) {
+        factory.addConnectorCustomizers(connector -&gt; {
+            connector.setProperty(&quot;maxKeepAliveRequests&quot;, &quot;200&quot;);
+            connector.setProperty(&quot;keepAliveTimeout&quot;, &quot;15000&quot;);
+        });
+        factory.setPort(8080);
+    }
+}</code></pre><h2>Virtual threads</h2><p>With Java 21 and spring.threads.virtual.enabled=true, Tomcat runs each request on a virtual thread. Blocking calls (JDBC, HTTP) no longer hold a costly platform thread, so the 200-thread limit stops being the bottleneck. The new limit becomes your downstream resources: the database connection pool, external APIs and CPU. Size the Hikari pool and use timeouts accordingly.</p><pre><code class="language-properties">spring.threads.virtual.enabled=true
+# still important: limit concurrent database work
+spring.datasource.hikari.maximum-pool-size=20</code></pre><h2>Read the real port and inspect threads</h2><pre><code class="language-shell"># when server.port=0 a random free port is used (great for tests)
+curl localhost:8080/actuator/metrics/tomcat.threads.busy
+curl localhost:8080/actuator/metrics/tomcat.threads.current
+curl localhost:8080/actuator/threaddump | head -50
+# enable Tomcat MBean metrics:  server.tomcat.mbeanregistry.enabled=true</code></pre><p class="use"><b>Common mistake:</b> Raising server.tomcat.threads.max to 2000 to fix slowness. More threads only move the bottleneck to the database or CPU and can make things worse. Find the slow downstream call, add timeouts and limits, then size threads and pools together.</p><h2>Interview questions</h2><h3>What does the thread http-nio-8080-exec-3 mean?</h3><p>It is worker thread number 3 of the Tomcat NIO connector on port 8080. It runs your controller code for one request at a time.</p><h3>Why do I get 400 Request Header Is Too Large?</h3><p>Headers (often huge cookies or JWTs) exceeded server.max-http-request-header-size (8KB). Reduce the header size or raise the limit.</p><h3>Tomcat, Jetty or Undertow?</h3><p>All are fine. Tomcat is the default and the most used. Choose another only for a specific need, and measure before changing.</p><div class="np"><a href="/springboot/internals/design-patterns-in-spring/">&larr; Design Patterns Used Inside Spring</a><a href="/springboot/web/rest-controllers/">REST Controllers &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

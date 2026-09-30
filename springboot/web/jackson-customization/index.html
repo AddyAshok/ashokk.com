@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JSON with Jackson: Customization and Pitfalls – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Spring Boot converts objects to JSON and back with Jackson.">
+    <link rel="canonical" href="https://ashokka.com/springboot/web/jackson-customization/">
+    <meta property="og:title" content="JSON with Jackson: Customization and Pitfalls – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/" aria-current="page">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/web/">Web and REST</a> / JSON with Jackson: Customization and Pitfalls</div>
+<h1>JSON with Jackson: Customization and Pitfalls</h1><p>Spring Boot converts objects to JSON and back with Jackson. Most API bugs about dates, null fields, unknown properties and infinite recursion are solved by knowing a handful of annotations and settings. Note: Spring Boot 3.x uses Jackson 2 (packages com.fasterxml.jackson.databind), and Spring Boot 4 uses Jackson 3 (packages tools.jackson.*, annotations stay in com.fasterxml.jackson.annotation). The ideas on this page are the same; imports and a few class names differ.</p><h2>How it works</h2><pre class="dia"><code>@RestController returns ProductResponse
+   ▼
+HttpMessageConverter (MappingJackson2HttpMessageConverter)
+   ▼
+ObjectMapper  (a Spring bean configured by JacksonAutoConfiguration)
+   ├─ modules auto-registered: JavaTimeModule (java.time), Jdk8Module (Optional), ParameterNamesModule (records/constructors)
+   ├─ settings from spring.jackson.* properties
+   └─ Jackson2ObjectMapperBuilderCustomizer beans
+   ▼
+JSON text in the HTTP response
+
+Request: JSON ─► ObjectMapper.readValue ─► your @RequestBody object (needs a constructor/record/setters)</code></pre><h2>Global settings</h2><pre><code class="language-properties">spring.jackson.default-property-inclusion=non_null
+spring.jackson.serialization.write-dates-as-timestamps=false
+spring.jackson.deserialization.fail-on-unknown-properties=false
+spring.jackson.time-zone=UTC
+spring.jackson.property-naming-strategy=SNAKE_CASE</code></pre><h2>Most used annotations</h2><pre><code class="language-java">import com.fasterxml.jackson.annotation.*;
+
+@JsonInclude(JsonInclude.Include.NON_NULL)                 // skip null fields for this class
+public class UserDto {
+
+    @JsonProperty(&quot;user_name&quot;)                             // different JSON name
+    private String name;
+
+    @JsonAlias({&quot;mail&quot;, &quot;e-mail&quot;})                         // accept several names when reading
+    private String email;
+
+    @JsonIgnore                                            // never in JSON
+    private String passwordHash;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;dd-MM-yyyy&quot;)
+    private LocalDate birthDate;
+
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd&#x27;T&#x27;HH:mm:ss&#x27;Z&#x27;&quot;, timezone = &quot;UTC&quot;)
+    private Instant createdAt;
+
+    @JsonIgnoreProperties(ignoreUnknown = true)            // (class level in real code)
+    private Map&lt;String, Object&gt; extra;
+
+    // getters and setters
+}</code></pre><table><thead><tr><th>Annotation</th><th>Use</th></tr></thead><tbody><tr><td>@JsonProperty</td><td>Rename a field or force it to be included</td></tr><tr><td>@JsonIgnore / @JsonIgnoreProperties</td><td>Hide fields (passwords, internal ids)</td></tr><tr><td>@JsonInclude(NON_NULL / NON_EMPTY)</td><td>Skip null or empty values</td></tr><tr><td>@JsonAlias</td><td>Accept more names on input</td></tr><tr><td>@JsonFormat</td><td>Date and enum formats</td></tr><tr><td>@JsonCreator + @JsonProperty</td><td>Choose the constructor or factory used to create the object</td></tr><tr><td>@JsonTypeInfo + @JsonSubTypes</td><td>Polymorphic types (Dog and Cat behind Animal)</td></tr><tr><td>@JsonView</td><td>Different field sets for different API views</td></tr></tbody></table><h2>Records and immutable objects</h2><pre><code class="language-java">public record CreateOrderRequest(String customerId, List&lt;OrderLine&gt; lines) {
+    public record OrderLine(String sku, int qty) { }
+}
+// Jackson 2.12+ supports records. No annotations needed when the parameter names are available.</code></pre><h2>Custom serializer and deserializer</h2><pre><code class="language-java">// Money is written as &quot;12.50 INR&quot; and read back
+public class MoneySerializer extends JsonSerializer&lt;Money&gt; {
+    @Override
+    public void serialize(Money value, JsonGenerator gen, SerializerProvider provider) throws IOException {
+        gen.writeString(value.amount().setScale(2, RoundingMode.HALF_UP) + &quot; &quot; + value.currency());
+    }
+}
+
+public class MoneyDeserializer extends JsonDeserializer&lt;Money&gt; {
+    @Override
+    public Money deserialize(JsonParser p, DeserializationContext ctxt) throws IOException {
+        String[] parts = p.getValueAsString().split(&quot; &quot;);
+        return new Money(new BigDecimal(parts[0]), parts[1]);
+    }
+}
+
+@JsonComponent                          // Spring Boot 3.x. In Boot 4 this is @JacksonComponent
+public class MoneyJsonComponent {
+    public static class Ser extends MoneySerializer { }
+    public static class Deser extends MoneyDeserializer { }
+}
+
+// Alternative: annotate the class directly
+// @JsonSerialize(using = MoneySerializer.class) @JsonDeserialize(using = MoneyDeserializer.class)
+public record Money(BigDecimal amount, String currency) { }</code></pre><h2>Customize the shared ObjectMapper (Boot 3.x)</h2><pre><code class="language-java">@Configuration
+public class JacksonConfig {
+    @Bean
+    public Jackson2ObjectMapperBuilderCustomizer jsonCustomizer() {
+        return builder -&gt; builder
+                .featuresToDisable(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS)
+                .featuresToEnable(DeserializationFeature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
+                .serializationInclusion(JsonInclude.Include.NON_NULL);
+    }
+}</code></pre><h2>Polymorphism</h2><pre><code class="language-java">@JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = &quot;type&quot;)
+@JsonSubTypes({
+    @JsonSubTypes.Type(value = CardPayment.class, name = &quot;card&quot;),
+    @JsonSubTypes.Type(value = UpiPayment.class, name = &quot;upi&quot;)
+})
+public interface Payment { }
+public record CardPayment(String cardNumber) implements Payment { }
+public record UpiPayment(String vpa) implements Payment { }
+// {&quot;type&quot;:&quot;upi&quot;,&quot;vpa&quot;:&quot;ram@bank&quot;}  becomes a UpiPayment</code></pre><h2>Typical problems</h2><table><thead><tr><th>Problem</th><th>Cause</th><th>Fix</th></tr></thead><tbody><tr><td>Infinite recursion / StackOverflowError</td><td>Bidirectional JPA relations (Customer has orders, order has customer)</td><td>Return DTOs. Otherwise @JsonManagedReference / @JsonBackReference or @JsonIgnore on one side</td></tr><tr><td>Dates shown as numbers</td><td>WRITE_DATES_AS_TIMESTAMPS is on</td><td>Set spring.jackson.serialization.write-dates-as-timestamps=false</td></tr><tr><td>400 Unrecognized field</td><td>Client sends an unknown property and fail-on-unknown is true</td><td>Fix the client, or set fail-on-unknown-properties=false (understand the risk)</td></tr><tr><td>LazyInitializationException while writing JSON</td><td>Serializer touches a lazy field after the session closed</td><td>Map to a DTO inside the service</td></tr><tr><td>Big decimals become floating numbers in JavaScript</td><td>JS numbers lose precision</td><td>Send money as string, or use minor units (paise)</td></tr></tbody></table><h2>Use ObjectMapper directly</h2><pre><code class="language-java">@Service
+public class JsonService {
+    private final ObjectMapper mapper;                         // the Spring-configured instance
+    public JsonService(ObjectMapper mapper) { this.mapper = mapper; }
+
+    public String toJson(Object o) throws JsonProcessingException { return mapper.writeValueAsString(o); }
+
+    public &lt;T&gt; T fromJson(String json, Class&lt;T&gt; type) throws JsonProcessingException { return mapper.readValue(json, type); }
+
+    public List&lt;UserDto&gt; fromJsonList(String json) throws JsonProcessingException {
+        return mapper.readValue(json, new TypeReference&lt;List&lt;UserDto&gt;&gt;() { });
+    }
+}</code></pre><p class="use"><b>Common mistake:</b> Creating a new ObjectMapper with new ObjectMapper() in your code. It ignores all Spring Boot settings (date format, modules, naming). Inject the Spring-managed ObjectMapper.</p><h2>Interview questions</h2><h3>How do I hide a field from the JSON response?</h3><p>Use @JsonIgnore on the field or, better, do not include it in the response DTO.</p><h3>Why did Jackson fail with &#x27;no Creators, like default constructor&#x27;?</h3><p>It cannot create your class. Add a default constructor and setters, use a record, or annotate a constructor with @JsonCreator.</p><h3>What changes in Spring Boot 4?</h3><p>Jackson 3 becomes the default: packages move to tools.jackson, some class names change (for example @JacksonComponent), and exceptions are unchecked. Annotations from com.fasterxml.jackson.annotation stay the same.</p><div class="np"><a href="/springboot/web/spring-mvc-internals/">&larr; Spring MVC Internals</a><a href="/springboot/web/file-upload-download/">File Upload and Download &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

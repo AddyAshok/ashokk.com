@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>How Spring Boot Starts: SpringApplication.run() Step by Step – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Every Spring Boot application starts with one line: SpringApplication.run().">
+    <link rel="canonical" href="https://ashokka.com/springboot/internals/startup-internals/">
+    <meta property="og:title" content="How Spring Boot Starts: SpringApplication.run() Step by Step – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/" aria-current="page">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/internals/">Spring Boot Internals</a> / How Spring Boot Starts: SpringApplication.run() Step by Step</div>
+<h1>How Spring Boot Starts: SpringApplication.run() Step by Step</h1><p>Every Spring Boot application starts with one line: SpringApplication.run(). Behind it are about ten well-defined phases, and each phase publishes an event that you can hook into. If you understand this workflow, you can debug slow startups, write EnvironmentPostProcessors, custom listeners and failure analyzers with confidence.</p><h2>The big picture</h2><pre class="dia"><code>SpringApplication.run(App.class, args)
+ │
+ ├─ [A] new SpringApplication(App.class)
+ │      ├─ deduce application type: SERVLET / REACTIVE / NONE (look at the classpath)
+ │      ├─ load ApplicationContextInitializer + ApplicationListener (META-INF/spring.factories)
+ │      └─ deduce the main class
+ │
+ └─ [B] run(args)
+        1. StopWatch starts, BootstrapContext created
+        2. RunListeners  ─► event: ApplicationStartingEvent
+        3. prepareEnvironment
+              ├─ create Environment (system props, env vars, command line args)
+              ├─ event: ApplicationEnvironmentPreparedEvent
+              │     └─ EnvironmentPostProcessors run: application.yml, profiles, spring.config.import
+              └─ bind spring.main.* properties to the SpringApplication
+        4. print the banner
+        5. createApplicationContext()   (AnnotationConfigServletWebServerApplicationContext)
+        6. prepareContext
+              ├─ set Environment, run ApplicationContextInitializers
+              ├─ event: ApplicationContextInitializedEvent
+              ├─ register the main class as a bean definition
+              └─ event: ApplicationPreparedEvent
+        7. refreshContext  ──►  context.refresh()   (see the next page for the 12 steps)
+              ├─ scan components, run auto-configuration, create all singleton beans
+              └─ create and START the embedded Tomcat
+        8. event: ApplicationStartedEvent
+        9. callRunners: ApplicationRunner and CommandLineRunner beans (ordered)
+       10. event: ApplicationReadyEvent   ◄── the application is now ready for traffic
+       (on any exception) event: ApplicationFailedEvent + FailureAnalyzers print a friendly message</code></pre><h2>Events in order and what you can do in each</h2><table><thead><tr><th>Event</th><th>When</th><th>Typical use</th></tr></thead><tbody><tr><td>ApplicationStartingEvent</td><td>Very early, before Environment and context exist</td><td>Register early logging or system setup. Only listeners registered in spring.factories or via SpringApplication see it</td></tr><tr><td>ApplicationEnvironmentPreparedEvent</td><td>Environment ready, context not created</td><td>Add or change property sources (EnvironmentPostProcessor)</td></tr><tr><td>ApplicationContextInitializedEvent</td><td>Context created, no bean definitions loaded</td><td>Rarely used</td></tr><tr><td>ApplicationPreparedEvent</td><td>Bean definitions loaded, beans not created</td><td>Change bean definitions programmatically</td></tr><tr><td>ContextRefreshedEvent</td><td>Context refreshed (this is a Spring event)</td><td>Runs also for child contexts, be careful</td></tr><tr><td>WebServerInitializedEvent</td><td>Web server started</td><td>Read the real port when server.port=0</td></tr><tr><td>ApplicationStartedEvent</td><td>Context refreshed, runners not called yet</td><td>Warm-up tasks that should run before runners</td></tr><tr><td>AvailabilityChangeEvent (LIVENESS)</td><td>Application is alive</td><td>Health probes</td></tr><tr><td>ApplicationReadyEvent</td><td>Runners finished, app is ready</td><td>Start background consumers, log &#x27;ready&#x27;, prime caches</td></tr><tr><td>AvailabilityChangeEvent (READINESS)</td><td>Ready to accept traffic</td><td>Kubernetes readiness</td></tr><tr><td>ApplicationFailedEvent</td><td>Startup failed</td><td>Send an alert, clean up</td></tr></tbody></table><h2>Hooking into the phases: examples</h2><pre><code class="language-java">// 1. Listener for ApplicationReadyEvent (works as a normal bean)
+@Component
+public class ReadyLogger {
+    private static final Logger log = LoggerFactory.getLogger(ReadyLogger.class);
+
+    @EventListener(ApplicationReadyEvent.class)
+    public void onReady(ApplicationReadyEvent event) {
+        log.info(&quot;Application ready in {}&quot;, event.getTimeTaken());
+    }
+
+    @EventListener
+    public void onWebServer(WebServerInitializedEvent event) {
+        log.info(&quot;Web server is listening on port {}&quot;, event.getWebServer().getPort());
+    }
+}
+
+// 2. Runners with an order
+@Component @Order(1)
+class FirstRunner implements ApplicationRunner {
+    public void run(ApplicationArguments args) { System.out.println(&quot;runner 1, option names=&quot; + args.getOptionNames()); }
+}
+@Component @Order(2)
+class SecondRunner implements CommandLineRunner {
+    public void run(String... args) { System.out.println(&quot;runner 2, raw args=&quot; + Arrays.toString(args)); }
+}</code></pre><h2>EnvironmentPostProcessor: add configuration before beans exist</h2><p>This runs in the phase after the Environment is prepared. Use it to load secrets, decrypt values or compute properties. It must be registered in META-INF/spring/org.springframework.boot.EnvironmentPostProcessor.imports (Boot 3.x older versions used spring.factories).</p><pre><code class="language-java">public class SecretsEnvironmentPostProcessor implements EnvironmentPostProcessor {
+
+    @Override
+    public void postProcessEnvironment(ConfigurableEnvironment env, SpringApplication application) {
+        Map&lt;String, Object&gt; secrets = new HashMap&lt;&gt;();
+        secrets.put(&quot;app.api-key&quot;, System.getenv().getOrDefault(&quot;MY_API_KEY&quot;, &quot;dev-key&quot;));
+        // added with the HIGHEST priority
+        env.getPropertySources().addFirst(new MapPropertySource(&quot;secrets&quot;, secrets));
+    }
+}
+// file: META-INF/spring/org.springframework.boot.EnvironmentPostProcessor.imports
+// com.example.SecretsEnvironmentPostProcessor</code></pre><h2>Customize SpringApplication</h2><pre><code class="language-java">public static void main(String[] args) {
+    SpringApplication app = new SpringApplication(DemoApplication.class);
+    app.setBannerMode(Banner.Mode.OFF);
+    app.setAdditionalProfiles(&quot;metrics&quot;);
+    app.setLazyInitialization(false);
+    app.addListeners(new MyStartingListener());
+    app.run(args);
+}
+// Fluent style:
+// new SpringApplicationBuilder(DemoApplication.class).web(WebApplicationType.NONE).run(args);</code></pre><h2>Find out why startup is slow</h2><pre><code class="language-java">SpringApplication app = new SpringApplication(DemoApplication.class);
+app.setApplicationStartup(new BufferingApplicationStartup(4096));   // records every startup step
+app.run(args);
+// then: management.endpoints.web.exposure.include=startup
+//       curl -X POST localhost:8080/actuator/startup   (JSON timeline of bean creation)</code></pre><ul><li>Typical slow parts: many auto-configurations, slow bean constructors, Hibernate schema validation, connecting to remote systems in @PostConstruct.</li><li>Try spring.main.lazy-initialization=true to see if bean creation is the cause. It moves cost to first use, so it is a diagnostic tool, not a fix.</li><li>Measure with the startup endpoint, then fix the slowest beans. Native image and CDS/AOT cache improve startup at the platform level.</li></ul><h2>Friendly failure messages: FailureAnalyzer</h2><pre><code class="language-java">public class MissingApiKeyFailureAnalyzer extends AbstractFailureAnalyzer&lt;MissingApiKeyException&gt; {
+    @Override
+    protected FailureAnalysis analyze(Throwable rootFailure, MissingApiKeyException cause) {
+        return new FailureAnalysis(&quot;The property app.api-key is missing.&quot;,
+                &quot;Set the environment variable MY_API_KEY or the property app.api-key.&quot;, cause);
+    }
+}
+// Register in META-INF/spring.factories:
+// org.springframework.boot.diagnostics.FailureAnalyzer=com.example.MissingApiKeyFailureAnalyzer</code></pre><p>Example of the built-in analyzers: the well known message &#x27;APPLICATION FAILED TO START, Description: ... Action: ...&#x27; for Port 8080 was already in use is produced by a FailureAnalyzer.</p><p class="use"><b>Common mistake:</b> Doing heavy work in a constructor or @PostConstruct of many beans (for example calling remote services). All startup work runs on the main thread, one bean after another, and delays readiness. Move slow warm-up work to an ApplicationReadyEvent listener or an async task.</p><h2>Interview questions</h2><h3>What is the difference between ApplicationStartedEvent and ApplicationReadyEvent?</h3><p>Started is published after the context is refreshed but before the runners run. Ready is published after all ApplicationRunner and CommandLineRunner beans finished, so it is the real signal that the application is ready.</p><h3>Where do I put code that must run before any bean is created?</h3><p>In an EnvironmentPostProcessor, an ApplicationContextInitializer or a BeanFactoryPostProcessor, depending on what you need to change.</p><h3>How does Spring Boot decide it is a web application?</h3><p>By the classpath: if Servlet API and Spring MVC are present it is SERVLET, if Spring WebFlux is present and MVC is not it is REACTIVE, otherwise NONE. You can override it with spring.main.web-application-type.</p><div class="np"><a href="/springboot/core/aop/">&larr; Aspect-Oriented Programming (AOP)</a><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

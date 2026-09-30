@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>JdbcTemplate, MongoDB and Redis with Spring Boot – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Not every problem needs JPA.">
+    <link rel="canonical" href="https://ashokka.com/springboot/data/other-data-stores/">
+    <meta property="og:title" content="JdbcTemplate, MongoDB and Redis with Spring Boot – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/" aria-current="page">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/data/">Data and Transactions</a> / JdbcTemplate, MongoDB and Redis with Spring Boot</div>
+<h1>JdbcTemplate, MongoDB and Redis with Spring Boot</h1><p>Not every problem needs JPA. Spring Boot supports plain SQL with JdbcTemplate, document data with MongoDB and fast key-value access with Redis, all with the same repository style and auto-configuration.</p><h2>Choose the right tool</h2><table><thead><tr><th>Need</th><th>Use</th><th>Why</th></tr></thead><tbody><tr><td>Complex SQL, reports, bulk operations, full control</td><td>JdbcTemplate / Spring Data JDBC</td><td>No entity state, no lazy loading surprises, faster for reads and batches</td></tr><tr><td>Rich domain model with relations</td><td>Spring Data JPA</td><td>Mapping and productivity</td></tr><tr><td>Flexible documents without fixed schema</td><td>MongoDB</td><td>Nested JSON documents, easy schema changes</td></tr><tr><td>Cache, sessions, counters, rate limits, leaderboards</td><td>Redis</td><td>In-memory speed, TTL, atomic operations</td></tr></tbody></table><h2>JdbcTemplate</h2><pre><code class="language-java">@Repository
+public class OrderDao {
+
+    private final JdbcTemplate jdbc;
+    private final NamedParameterJdbcTemplate named;
+
+    public OrderDao(JdbcTemplate jdbc, NamedParameterJdbcTemplate named) {
+        this.jdbc = jdbc;
+        this.named = named;
+    }
+
+    public record OrderRow(long id, String customer, BigDecimal total) { }
+
+    private static final RowMapper&lt;OrderRow&gt; MAPPER =
+            (rs, i) -&gt; new OrderRow(rs.getLong(&quot;id&quot;), rs.getString(&quot;customer&quot;), rs.getBigDecimal(&quot;total&quot;));
+
+    public List&lt;OrderRow&gt; findByCustomer(String customer) {
+        return named.query(&quot;select id, customer, total from orders where customer = :c order by id&quot;,
+                Map.of(&quot;c&quot;, customer), MAPPER);
+    }
+
+    public Optional&lt;OrderRow&gt; findById(long id) {
+        return jdbc.query(&quot;select id, customer, total from orders where id = ?&quot;, MAPPER, id).stream().findFirst();
+    }
+
+    public long insert(String customer, BigDecimal total) {
+        KeyHolder keys = new GeneratedKeyHolder();
+        jdbc.update(con -&gt; {
+            PreparedStatement ps = con.prepareStatement(
+                    &quot;insert into orders(customer, total) values (?, ?)&quot;, new String[] { &quot;id&quot; });
+            ps.setString(1, customer);
+            ps.setBigDecimal(2, total);
+            return ps;
+        }, keys);
+        return keys.getKey().longValue();
+    }
+
+    public int[] batchInsert(List&lt;OrderRow&gt; rows) {
+        return jdbc.batchUpdate(&quot;insert into orders(customer, total) values (?, ?)&quot;, new BatchPreparedStatementSetter() {
+            public void setValues(PreparedStatement ps, int i) throws SQLException {
+                ps.setString(1, rows.get(i).customer());
+                ps.setBigDecimal(2, rows.get(i).total());
+            }
+            public int getBatchSize() { return rows.size(); }
+        });
+    }
+}</code></pre><p>Spring translates SQLException into unchecked DataAccessException subclasses (for example DuplicateKeyException), so your code is independent of the database vendor.</p><h2>MongoDB</h2><pre><code class="language-properties">spring.data.mongodb.uri=mongodb://localhost:27017/shop</code></pre><pre><code class="language-java">@Document(collection = &quot;reviews&quot;)
+public class Review {
+    @Id private String id;
+    @Indexed private String productId;
+    private int rating;
+    private String text;
+    private List&lt;String&gt; tags = new ArrayList&lt;&gt;();
+    private Instant createdAt = Instant.now();
+    // getters and setters
+}
+
+public interface ReviewRepository extends MongoRepository&lt;Review, String&gt; {
+    List&lt;Review&gt; findByProductIdOrderByCreatedAtDesc(String productId);
+    List&lt;Review&gt; findByRatingGreaterThanEqual(int rating);
+    @Query(&quot;{ &#x27;tags&#x27;: ?0 }&quot;)
+    List&lt;Review&gt; findByTag(String tag);
+}
+
+@Service
+public class ReviewStats {
+    private final MongoTemplate mongo;
+    public ReviewStats(MongoTemplate mongo) { this.mongo = mongo; }
+
+    public List&lt;Document&gt; averageRatingPerProduct() {
+        Aggregation agg = Aggregation.newAggregation(
+                Aggregation.group(&quot;productId&quot;).avg(&quot;rating&quot;).as(&quot;avgRating&quot;).count().as(&quot;reviews&quot;),
+                Aggregation.sort(Sort.Direction.DESC, &quot;avgRating&quot;));
+        return mongo.aggregate(agg, &quot;reviews&quot;, Document.class).getMappedResults();
+    }
+}</code></pre><h2>Redis</h2><pre><code class="language-properties">spring.data.redis.host=localhost
+spring.data.redis.port=6379
+spring.cache.type=redis
+spring.cache.redis.time-to-live=10m</code></pre><pre><code class="language-java">@Service
+public class OtpService {
+
+    private final StringRedisTemplate redis;
+    public OtpService(StringRedisTemplate redis) { this.redis = redis; }
+
+    public void save(String phone, String otp) {
+        redis.opsForValue().set(&quot;otp:&quot; + phone, otp, Duration.ofMinutes(5));   // expires automatically
+    }
+
+    public boolean verify(String phone, String otp) {
+        String stored = redis.opsForValue().get(&quot;otp:&quot; + phone);
+        return otp.equals(stored) &amp;&amp; Boolean.TRUE.equals(redis.delete(&quot;otp:&quot; + phone));
+    }
+
+    public long hit(String userId) {                                           // simple rate limit counter
+        String key = &quot;rate:&quot; + userId;
+        Long count = redis.opsForValue().increment(key);
+        if (count != null &amp;&amp; count == 1) redis.expire(key, Duration.ofMinutes(1));
+        return count == null ? 0 : count;
+    }
+}</code></pre><ul><li>Redis data types: String, Hash, List, Set, Sorted Set. Use RedisTemplate opsForHash, opsForList, opsForZSet.</li><li>Choose a serializer on purpose. The default JDK serialization is unreadable and fragile. Use StringRedisSerializer for keys and a JSON serializer for values.</li><li>Always set an expiry (TTL) on cache and session keys, or memory will grow without limit.</li></ul><p class="use"><b>Common mistake:</b> Using Redis as the only store for important business data without persistence and backup planning. Redis is memory first. Treat it as cache and fast state unless you have configured persistence (AOF or RDB) and replication.</p><h2>Interview questions</h2><h3>JdbcTemplate or JPA?</h3><p>JPA for domain models with many relations and CRUD. JdbcTemplate for reports, batch jobs, bulk changes and when you want exact SQL. Many projects use both.</p><h3>How does MongoDB differ from a relational database?</h3><p>It stores JSON-like documents in collections without a fixed schema, and you embed related data in one document instead of joining tables.</p><h3>What is the difference between Redis as cache and as a database?</h3><p>As cache the data can be rebuilt and expires. As a database you must configure persistence and accept memory cost.</p><div class="np"><a href="/springboot/data/transactions/">&larr; Transactions with @Transactional</a><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>
