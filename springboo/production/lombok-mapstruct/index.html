@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Lombok and MapStruct: Less Boilerplate – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Lombok generates getters, constructors and builders at compile time.">
+    <link rel="canonical" href="https://ashokka.com/springboot/production/lombok-mapstruct/">
+    <meta property="og:title" content="Lombok and MapStruct: Less Boilerplate – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/" aria-current="page">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/production/">Production and Testing</a> / Lombok and MapStruct: Less Boilerplate</div>
+<h1>Lombok and MapStruct: Less Boilerplate</h1><p>Lombok generates getters, constructors and builders at compile time. MapStruct generates type-safe mapping code between entities and DTOs. Both save many lines, but need correct setup and some care with JPA.</p><h2>Lombok annotations</h2><table><thead><tr><th>Annotation</th><th>Generates</th></tr></thead><tbody><tr><td>@Getter / @Setter</td><td>Getters and setters</td></tr><tr><td>@ToString, @EqualsAndHashCode</td><td>toString, equals and hashCode</td></tr><tr><td>@NoArgsConstructor / @AllArgsConstructor / @RequiredArgsConstructor</td><td>Constructors (Required = final fields only, perfect for constructor injection)</td></tr><tr><td>@Data</td><td>Getter, setter, toString, equals, hashCode, required-args constructor</td></tr><tr><td>@Value</td><td>Immutable class (all fields private final)</td></tr><tr><td>@Builder</td><td>Builder pattern</td></tr><tr><td>@Slf4j</td><td>private static final Logger log</td></tr><tr><td>@With</td><td>Copy with one field changed</td></tr></tbody></table><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.projectlombok&lt;/groupId&gt;
+    &lt;artifactId&gt;lombok&lt;/artifactId&gt;
+    &lt;optional&gt;true&lt;/optional&gt;
+&lt;/dependency&gt;</code></pre><pre><code class="language-java">@Slf4j
+@Service
+@RequiredArgsConstructor                     // constructor injection without writing the constructor
+public class OrderService {
+
+    private final OrderRepository repository;
+    private final PaymentClient payments;
+
+    public void place(Long id) {
+        log.info(&quot;Placing order {}&quot;, id);
+        // ...
+    }
+}
+
+@Value
+@Builder
+public class CreateUserRequest {
+    String name;
+    String email;
+    @Builder.Default int age = 18;
+}
+// CreateUserRequest r = CreateUserRequest.builder().name(&quot;Ram&quot;).email(&quot;ram@x.com&quot;).build();</code></pre><h2>Lombok and JPA entities: be careful</h2><ul><li>Do not use @Data on entities. equals/hashCode based on all fields breaks Hibernate proxies and changes hash codes after save. toString can trigger lazy loading or infinite loops in bidirectional relations.</li><li>Use @Getter and @Setter (or none), and write equals/hashCode based on the id, or a business key.</li><li>Use @NoArgsConstructor(access = AccessLevel.PROTECTED) for JPA.</li><li>Exclude lazy collections from toString: @ToString.Exclude.</li></ul><pre><code class="language-java">@Entity
+@Getter @Setter
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+public class Customer {
+    @Id @GeneratedValue private Long id;
+    private String name;
+
+    @OneToMany(mappedBy = &quot;customer&quot;)
+    @ToString.Exclude
+    private List&lt;OrderEntity&gt; orders = new ArrayList&lt;&gt;();
+
+    @Override public boolean equals(Object o) {
+        return this == o || (o instanceof Customer c &amp;&amp; id != null &amp;&amp; id.equals(c.id));
+    }
+    @Override public int hashCode() { return getClass().hashCode(); }       // stable, works before and after save
+}</code></pre><p>Java records give you immutability, equals, hashCode and toString without Lombok. Use records for DTOs, and Lombok mainly for entities and services.</p><h2>MapStruct: generate mappers at compile time</h2><pre><code class="language-xml">&lt;properties&gt;&lt;mapstruct.version&gt;1.6.3&lt;/mapstruct.version&gt;&lt;/properties&gt;
+
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;org.mapstruct&lt;/groupId&gt;
+        &lt;artifactId&gt;mapstruct&lt;/artifactId&gt;
+        &lt;version&gt;${mapstruct.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+&lt;build&gt;
+  &lt;plugins&gt;
+    &lt;plugin&gt;
+      &lt;groupId&gt;org.apache.maven.plugins&lt;/groupId&gt;
+      &lt;artifactId&gt;maven-compiler-plugin&lt;/artifactId&gt;
+      &lt;configuration&gt;
+        &lt;annotationProcessorPaths&gt;
+          &lt;path&gt;&lt;groupId&gt;org.projectlombok&lt;/groupId&gt;&lt;artifactId&gt;lombok&lt;/artifactId&gt;&lt;version&gt;${lombok.version}&lt;/version&gt;&lt;/path&gt;
+          &lt;path&gt;&lt;groupId&gt;org.projectlombok&lt;/groupId&gt;&lt;artifactId&gt;lombok-mapstruct-binding&lt;/artifactId&gt;&lt;version&gt;0.2.0&lt;/version&gt;&lt;/path&gt;
+          &lt;path&gt;&lt;groupId&gt;org.mapstruct&lt;/groupId&gt;&lt;artifactId&gt;mapstruct-processor&lt;/artifactId&gt;&lt;version&gt;${mapstruct.version}&lt;/version&gt;&lt;/path&gt;
+        &lt;/annotationProcessorPaths&gt;
+      &lt;/configuration&gt;
+    &lt;/plugin&gt;
+  &lt;/plugins&gt;
+&lt;/build&gt;</code></pre><p>The order matters: Lombok first, then the lombok-mapstruct-binding, then MapStruct, so MapStruct sees the getters generated by Lombok.</p><pre><code class="language-java">@Mapper(componentModel = &quot;spring&quot;, unmappedTargetPolicy = ReportingPolicy.ERROR)   // missing mappings fail the build
+public interface ProductMapper {
+
+    @Mapping(source = &quot;category.name&quot;, target = &quot;categoryName&quot;)
+    @Mapping(target = &quot;price&quot;, expression = &quot;java(entity.getPrice().setScale(2, java.math.RoundingMode.HALF_UP))&quot;)
+    ProductResponse toResponse(Product entity);
+
+    List&lt;ProductResponse&gt; toResponses(List&lt;Product&gt; entities);
+
+    @Mapping(target = &quot;id&quot;, ignore = true)
+    Product toEntity(ProductRequest request);
+
+    @Mapping(target = &quot;id&quot;, ignore = true)
+    void update(ProductRequest request, @MappingTarget Product entity);             // update an existing entity
+}
+
+@Service
+@RequiredArgsConstructor
+public class ProductService {
+    private final ProductRepository repository;
+    private final ProductMapper mapper;                    // a Spring bean generated by MapStruct
+
+    public ProductResponse get(Long id) { return mapper.toResponse(repository.findById(id).orElseThrow()); }
+}</code></pre><table><thead><tr><th>Mapping approach</th><th>Pros</th><th>Cons</th></tr></thead><tbody><tr><td>Manual mapping code</td><td>Clear, no magic</td><td>Boring, easy to forget a field</td></tr><tr><td>MapStruct</td><td>Fast (plain generated Java), compile time errors</td><td>Annotation processor setup</td></tr><tr><td>ModelMapper / reflection mappers</td><td>Little code</td><td>Runtime errors, slower, magic</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Putting @Data on JPA entities. Generated equals, hashCode and toString touch lazy collections and produce LazyInitializationException, infinite recursion or wrong behavior in HashSets. Use focused annotations on entities.</p><h2>Interview questions</h2><h3>Does Lombok work at runtime?</h3><p>No. It is an annotation processor that changes the compiled class at build time. Your IDE needs the Lombok plugin support (built in modern IDEs).</p><h3>Why does MapStruct not see my Lombok getters?</h3><p>The annotation processors are in the wrong order or lombok-mapstruct-binding is missing. Lombok must run before MapStruct.</p><h3>Records or Lombok?</h3><p>Records for immutable DTOs and value objects. Lombok for entities (with care) and to remove constructor boilerplate in services.</p><div class="np"><a href="/springboot/production/performance-tuning/">&larr; Performance Tuning: A Practical Method</a><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

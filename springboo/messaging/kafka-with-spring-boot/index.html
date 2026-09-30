@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Apache Kafka with Spring Boot – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Kafka is the standard choice for event streaming between services.">
+    <link rel="canonical" href="https://ashokka.com/springboot/messaging/kafka-with-spring-boot/">
+    <meta property="og:title" content="Apache Kafka with Spring Boot – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/" aria-current="page">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/messaging/">Messaging and Microservices</a> / Apache Kafka with Spring Boot</div>
+<h1>Apache Kafka with Spring Boot</h1><p>Kafka is the standard choice for event streaming between services. This page shows how Spring Boot connects to Kafka, how the producer and consumer work internally, and how to build reliable, retrying, idempotent consumers with a dead letter topic.</p><h2>Kafka in 60 seconds</h2><pre class="dia"><code>Producer ──► Topic &quot;orders&quot; (3 partitions, replicated over brokers) ──► Consumer group &quot;payment-service&quot;
+                P0 [0][1][2]                                                      consumer A ◄─ P0, P1
+                P1 [0][1]                                                         consumer B ◄─ P2
+                P2 [0][1][2][3]
+Records with the same KEY go to the same partition (order is kept). A partition is read by ONE consumer per group.
+Each group keeps its own OFFSET per partition (stored in the topic __consumer_offsets).</code></pre><h2>Dependency and configuration</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.kafka&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-kafka&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;!-- Boot 4 also offers spring-boot-starter-kafka --&gt;</code></pre><pre><code class="language-yaml">spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    producer:
+      acks: all
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      properties:
+        enable.idempotence: true
+        linger.ms: 10
+        compression.type: lz4
+    consumer:
+      group-id: payment-service
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: com.example.events
+        spring.json.value.default.type: com.example.events.OrderPlaced
+    listener:
+      ack-mode: record
+      concurrency: 3</code></pre><h2>Internal workflow of sending</h2><pre class="dia"><code>kafkaTemplate.send(&quot;orders&quot;, key, event)
+   ├─ 1. serialize key and value (JsonSerializer)
+   ├─ 2. choose the partition: hash(key) % numberOfPartitions
+   ├─ 3. add the record to a per-partition BATCH in the RecordAccumulator (memory buffer)
+   ├─ 4. Sender thread (background) sends the batch when it is full (batch.size) or linger.ms passed
+   ├─ 5. leader broker appends it to the log, followers replicate it
+   ├─ 6. leader replies after acks condition (acks=all: all in-sync replicas)
+   └─ 7. the CompletableFuture completes: metadata (partition, offset) or exception (retried automatically)</code></pre><h2>Producer code</h2><pre><code class="language-java">public record OrderPlaced(String orderId, String customerId, BigDecimal total) { }
+
+@Configuration
+public class KafkaTopics {
+    @Bean
+    NewTopic ordersTopic() {
+        return TopicBuilder.name(&quot;orders&quot;).partitions(3).replicas(1).build();     // replicas(3) in production
+    }
+}
+
+@Service
+public class OrderEventPublisher {
+
+    private static final Logger log = LoggerFactory.getLogger(OrderEventPublisher.class);
+    private final KafkaTemplate&lt;String, OrderPlaced&gt; kafka;
+
+    public OrderEventPublisher(KafkaTemplate&lt;String, OrderPlaced&gt; kafka) { this.kafka = kafka; }
+
+    public void publish(OrderPlaced event) {
+        kafka.send(&quot;orders&quot;, event.customerId(), event)          // key = customerId keeps one customer&#x27;s events in order
+             .whenComplete((result, ex) -&gt; {
+                 if (ex != null) log.error(&quot;Send failed for order {}&quot;, event.orderId(), ex);
+                 else log.info(&quot;Sent to partition {} offset {}&quot;, result.getRecordMetadata().partition(),
+                               result.getRecordMetadata().offset());
+             });
+    }
+}</code></pre><h2>Consumer code</h2><pre><code class="language-java">@Component
+public class PaymentListener {
+
+    private static final Logger log = LoggerFactory.getLogger(PaymentListener.class);
+    private final PaymentService payments;
+
+    public PaymentListener(PaymentService payments) { this.payments = payments; }
+
+    @KafkaListener(topics = &quot;orders&quot;, groupId = &quot;payment-service&quot;)
+    public void onOrder(ConsumerRecord&lt;String, OrderPlaced&gt; record) {
+        OrderPlaced event = record.value();
+        log.info(&quot;Received {} from partition {} offset {}&quot;, event.orderId(), record.partition(), record.offset());
+        payments.charge(event);                                     // must be idempotent
+    }
+}</code></pre><h2>Internal workflow of consuming</h2><pre class="dia"><code>ConcurrentMessageListenerContainer (concurrency = 3)  ─► 3 KafkaMessageListenerContainer threads
+   each thread runs a loop:
+     1. consumer.poll(timeout)  ─► fetches a batch of records from assigned partitions
+     2. for each record: deserialize ─► call your @KafkaListener method
+     3. if the method returns normally  ─► commit the offset (by ack-mode: record, batch, manual ...)
+     4. if it throws ─► DefaultErrorHandler: retry with back off ─► after the last retry: Dead Letter Topic
+   Group coordinator (a broker): heartbeats, partition assignment, rebalance when consumers join or leave</code></pre><h2>Errors, retries and dead letter topic</h2><pre><code class="language-java">@Configuration
+public class KafkaErrorConfig {
+
+    @Bean
+    DefaultErrorHandler errorHandler(KafkaTemplate&lt;Object, Object&gt; template) {
+        // failed records go to &quot;&lt;topic&gt;.DLT&quot;
+        DeadLetterPublishingRecoverer recoverer = new DeadLetterPublishingRecoverer(template);
+        DefaultErrorHandler handler = new DefaultErrorHandler(recoverer, new FixedBackOff(1000L, 3L));   // 3 retries, 1 s apart
+        handler.addNotRetryableExceptions(IllegalArgumentException.class);                                // bad data will never succeed
+        return handler;
+    }
+}
+
+@Component
+class DeadLetterListener {
+    @KafkaListener(topics = &quot;orders.DLT&quot;, groupId = &quot;dlt-monitor&quot;)
+    void onDead(ConsumerRecord&lt;String, String&gt; record) {
+        // alert, store for manual review, or replay later
+    }
+}</code></pre><p>Alternative: @RetryableTopic creates retry topics (orders-retry-0, orders-retry-1) with delays, so a failing message does not block the partition. This is called non-blocking retry.</p><pre><code class="language-java">@RetryableTopic(attempts = &quot;4&quot;, backoff = @Backoff(delay = 2000, multiplier = 2.0), dltStrategy = DltStrategy.FAIL_ON_ERROR)
+@KafkaListener(topics = &quot;orders&quot;, groupId = &quot;payment-service&quot;)
+public void onOrder(OrderPlaced event) { payments.charge(event); }
+
+@DltHandler
+public void dlt(OrderPlaced event) { /* last chance handling */ }</code></pre><h2>Delivery guarantees you must design for</h2><table><thead><tr><th>Topic</th><th>Rule</th></tr></thead><tbody><tr><td>At-least-once</td><td>With retries and manual commits a record can be delivered twice. Your consumer must be idempotent</td></tr><tr><td>Idempotent consumer</td><td>Store a processed id (unique key in a database table) and ignore duplicates</td></tr><tr><td>Order</td><td>Guaranteed only per partition. Use a good key. Do not use several threads per partition inside the listener</td></tr><tr><td>Dual write problem</td><td>Saving to the database AND sending to Kafka are two systems, not one transaction. Use the Transactional Outbox pattern: save the event in an outbox table in the same transaction and publish it from there (Debezium or a poller)</td></tr><tr><td>Poison messages</td><td>A record that always fails blocks the partition. Send it to a DLT and continue</td></tr></tbody></table><pre><code class="language-java">@Transactional
+public void charge(OrderPlaced event) {
+    if (processedRepo.existsById(event.orderId())) return;         // duplicate: ignore
+    // ... business work ...
+    processedRepo.save(new ProcessedEvent(event.orderId()));        // same transaction as the work
+}</code></pre><h2>Testing</h2><pre><code class="language-java">@SpringBootTest
+@Testcontainers
+class OrderFlowIT {
+    @Container
+    @ServiceConnection
+    static KafkaContainer kafka = new KafkaContainer(DockerImageName.parse(&quot;apache/kafka:4.3.1&quot;));
+
+    @Autowired OrderEventPublisher publisher;
+
+    @Test
+    void publishesAndConsumes() {
+        publisher.publish(new OrderPlaced(&quot;o-1&quot;, &quot;c-1&quot;, BigDecimal.TEN));
+        // await() from Awaitility: wait until the listener side effect is visible
+    }
+}</code></pre><h2>Useful commands</h2><pre><code class="language-shell">bin/kafka-topics.sh --bootstrap-server localhost:9092 --describe --topic orders
+bin/kafka-consumer-groups.sh --bootstrap-server localhost:9092 --describe --group payment-service   # shows LAG
+bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --topic orders --from-beginning --property print.key=true</code></pre><p class="use"><b>Common mistake:</b> Assuming a message is processed exactly once. With retries, rebalances and restarts, duplicates will happen. Design consumers to be idempotent, and use an outbox for reliable publishing after database changes.</p><h2>Interview questions</h2><h3>How many consumers can read one topic in parallel?</h3><p>As many as the number of partitions inside one consumer group. More consumers than partitions stay idle.</p><h3>What causes a rebalance?</h3><p>A consumer joins or leaves, a consumer misses the heartbeat or max.poll.interval.ms (processing too slow), or partitions change. During a rebalance consumption pauses for the group.</p><h3>Why is my consumer lag growing?</h3><p>The consumer processes slower than the producer writes. Increase consumers (up to the partition count), speed up processing, or use batch listeners. Check for slow downstream calls.</p><div class="np"><a href="/springboot/data/complete-crud-project/">&larr; Complete CRUD REST API (All Layers)</a><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP) &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

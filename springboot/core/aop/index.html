@@ -84,7 +84,78 @@ public class AuditAspect {
 public class UserService {
     @Audit(action = &quot;DELETE_USER&quot;)
     public void deleteUser(Long id) { /* ... */ }
-}</code></pre><h2>Limits of proxy based AOP</h2><ul><li>Self-invocation: if a method calls another method of the same class with this.method(), the proxy is bypassed and the advice does not run.</li><li>Only calls from outside the bean are intercepted, and only public methods are advised by default.</li><li>final classes and final methods cannot be proxied with CGLIB.</li><li>For advice on private methods or self calls, use full AspectJ weaving.</li></ul><p class="use"><b>Common mistake:</b> Calling an @Around or @Transactional method from another method in the same class and expecting the aspect to run. The call does not go through the proxy.</p><h2>Interview questions</h2><h3>What is the difference between @Before, @After and @Around?</h3><p>@Before runs before the method, @After after it (always), and @Around wraps the call and controls whether and how the method is executed.</p><h3>Which proxy types does Spring use?</h3><p>JDK dynamic proxies for beans that implement interfaces, CGLIB subclass proxies otherwise. Spring Boot uses CGLIB by default (spring.aop.proxy-target-class=true).</p><h3>Where does Spring itself use AOP?</h3><p>Transactions (@Transactional), caching (@Cacheable), async (@Async), method security (@PreAuthorize) and retry.</p><div class="np"><a href="/springboot/core/configuration-profiles/">&larr; Configuration, Properties and Profiles</a><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step &rarr;</a></div></article>
+}</code></pre><h2>Limits of proxy based AOP</h2><ul><li>Self-invocation: if a method calls another method of the same class with this.method(), the proxy is bypassed and the advice does not run.</li><li>Only calls from outside the bean are intercepted, and only public methods are advised by default.</li><li>final classes and final methods cannot be proxied with CGLIB.</li><li>For advice on private methods or self calls, use full AspectJ weaving.</li></ul><h2>Internal workflow: how a proxy is created and how a call flows</h2><pre class="dia"><code>STARTUP
+ AnnotationAwareAspectJAutoProxyCreator (a BeanPostProcessor, registered by AopAutoConfiguration)
+   for every bean, after initialization:
+     1. find all advisors: @Aspect classes (advice + pointcut) and infrastructure advisors (@Transactional, @Cacheable, @Async, @PreAuthorize)
+     2. does any pointcut match a method of this bean?  no ─► the bean is used as it is
+     3. yes ─► ProxyFactory creates a proxy:  CGLIB subclass (Boot default) or JDK dynamic proxy, holding the advisor chain and the target
+
+CALL  caller ─► proxy.placeOrder()
+   ▼ CglibAopProxy.DynamicAdvisedInterceptor.intercept
+   1. get the interceptor chain for this method (cached): [TransactionInterceptor, LoggingAspect@Around, ...] sorted by @Order
+   2. ReflectiveMethodInvocation.proceed()   ── each interceptor calls proceed() to go to the next one ──►
+        TransactionInterceptor: begin tx ─► proceed ─►  LoggingAspect: log ─► proceed ─► TARGET method ─► back out: log, commit tx
+   3. result (or exception) returns through the same chain in reverse order</code></pre><pre><code class="language-java">// The same thing without Boot magic: create a proxy by hand to see the mechanism
+ProxyFactory factory = new ProxyFactory(new OrderService());
+factory.addAdvice((MethodInterceptor) invocation -&gt; {
+    System.out.println(&quot;before &quot; + invocation.getMethod().getName());
+    Object result = invocation.proceed();                              // next interceptor or the real method
+    System.out.println(&quot;after &quot; + invocation.getMethod().getName());
+    return result;
+});
+OrderService proxy = (OrderService) factory.getProxy();
+proxy.placeOrder(42);                                                  // prints: before placeOrder ... after placeOrder</code></pre><table><thead><tr><th></th><th>JDK dynamic proxy</th><th>CGLIB proxy</th></tr></thead><tbody><tr><td>Mechanism</td><td>java.lang.reflect.Proxy implements the interfaces</td><td>Generates a SUBCLASS of your class at runtime</td></tr><tr><td>Needs an interface</td><td>Yes</td><td>No</td></tr><tr><td>final class / final method</td><td>Not relevant</td><td>Cannot be proxied (final methods are not intercepted)</td></tr><tr><td>Injection type</td><td>Only by interface</td><td>By class or interface</td></tr><tr><td>Spring Boot default</td><td>spring.aop.proxy-target-class=false to force</td><td>true (default)</td></tr></tbody></table><h2>Pointcut expressions you will use</h2><table><thead><tr><th>Designator</th><th>Example</th><th>Matches</th></tr></thead><tbody><tr><td>execution</td><td>execution(public * com.example.service..*Service.*(..))</td><td>Methods by signature (most common)</td></tr><tr><td>within</td><td>within(com.example.web..*)</td><td>All methods in these types</td></tr><tr><td>@annotation</td><td>@annotation(com.example.Audit)</td><td>Methods with an annotation</td></tr><tr><td>@within</td><td>@within(org.springframework.stereotype.Service)</td><td>All methods of classes with an annotation</td></tr><tr><td>bean</td><td>bean(*Repository)</td><td>Beans by name (Spring only)</td></tr><tr><td>args</td><td>args(String, ..)</td><td>Methods by argument types</td></tr></tbody></table><h2>Advice order</h2><pre><code class="language-java">@Aspect @Component @Order(1)     // lower number = outer = runs first on the way in, last on the way out
+class SecurityAspect { }
+
+@Aspect @Component @Order(2)
+class TimingAspect { }
+// call order: SecurityAspect(before) -&gt; TimingAspect(before) -&gt; method -&gt; TimingAspect(after) -&gt; SecurityAspect(after)
+// Within ONE aspect: @Around wraps, then @Before, then the method, then @AfterReturning/@AfterThrowing, then @After</code></pre><h2>Example: retry aspect for flaky calls</h2><pre><code class="language-java">@Target(ElementType.METHOD)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface RetryOnFailure {
+    int attempts() default 3;
+    long delayMs() default 200;
+}
+
+@Aspect
+@Component
+public class RetryAspect {
+
+    private static final Logger log = LoggerFactory.getLogger(RetryAspect.class);
+
+    @Around(&quot;@annotation(retry)&quot;)
+    public Object retry(ProceedingJoinPoint pjp, RetryOnFailure retry) throws Throwable {
+        Throwable last = null;
+        for (int attempt = 1; attempt &lt;= retry.attempts(); attempt++) {
+            try {
+                return pjp.proceed();
+            } catch (Throwable ex) {
+                last = ex;
+                log.warn(&quot;Attempt {}/{} of {} failed: {}&quot;, attempt, retry.attempts(), pjp.getSignature().getName(), ex.toString());
+                if (attempt &lt; retry.attempts()) Thread.sleep(retry.delayMs() * attempt);      // simple linear backoff
+            }
+        }
+        throw last;
+    }
+}</code></pre><h2>Fixing self-invocation (calls inside the same class)</h2><pre><code class="language-java">// Problem: this.inner() does not go through the proxy, so @Transactional/@Cacheable/@Async/@PreAuthorize on inner() are ignored
+@Service
+public class ReportService {
+    public void run() { inner(); }
+    @Transactional public void inner() { }
+}
+
+// Fix 1 (best): move inner() to another bean and inject it
+// Fix 2: self injection
+@Service
+public class ReportService2 {
+    private final ReportService2 self;
+    public ReportService2(@Lazy ReportService2 self) { this.self = self; }
+    public void run() { self.inner(); }                    // goes through the proxy
+    @Transactional public void inner() { }
+}
+// Fix 3: @EnableAspectJAutoProxy(exposeProxy = true) and ((ReportService3) AopContext.currentProxy()).inner()   (ugly)
+// Fix 4: AspectJ compile-time or load-time weaving (real bytecode weaving, no proxies)</code></pre><p class="use"><b>Common mistake:</b> Calling an @Around or @Transactional method from another method in the same class and expecting the aspect to run. The call does not go through the proxy.</p><h2>Interview questions</h2><h3>What is the difference between @Before, @After and @Around?</h3><p>@Before runs before the method, @After after it (always), and @Around wraps the call and controls whether and how the method is executed.</p><h3>Which proxy types does Spring use?</h3><p>JDK dynamic proxies for beans that implement interfaces, CGLIB subclass proxies otherwise. Spring Boot uses CGLIB by default (spring.aop.proxy-target-class=true).</p><h3>Where does Spring itself use AOP?</h3><p>Transactions (@Transactional), caching (@Cacheable), async (@Async), method security (@PreAuthorize) and retry.</p><h3>Why does an @Around advice on a private or final method do nothing?</h3><p>Proxies intercept public and protected method calls that arrive through the proxy. Private methods are never called through it, and CGLIB cannot override final methods.</p><h3>What is the difference between Spring AOP and AspectJ?</h3><p>Spring AOP is proxy based, works only on Spring beans and method executions. AspectJ weaves bytecode at compile or load time, so it can advise any class, field access, constructors and self invocations.</p><div class="np"><a href="/springboot/core/configuration-profiles/">&larr; Configuration, Properties and Profiles</a><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

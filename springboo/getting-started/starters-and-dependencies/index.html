@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Starters and Dependency Management – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="A starter is a single dependency that pulls in everything you need for one feature, with versions that are tested together.">
+    <link rel="canonical" href="https://ashokka.com/springboot/getting-started/starters-and-dependencies/">
+    <meta property="og:title" content="Starters and Dependency Management – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/" aria-current="page">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/getting-started/">Getting Started</a> / Starters and Dependency Management</div>
+<h1>Starters and Dependency Management</h1><p>A starter is a single dependency that pulls in everything you need for one feature, with versions that are tested together. Spring Boot manages the versions of hundreds of libraries for you through a Bill of Materials (BOM).</p><h2>Common starters</h2><table><thead><tr><th>Starter (Boot 3.x names)</th><th>Gives you</th></tr></thead><tbody><tr><td>spring-boot-starter-web</td><td>Spring MVC, embedded Tomcat, Jackson (Boot 4 name: spring-boot-starter-webmvc)</td></tr><tr><td>spring-boot-starter-webflux</td><td>Reactive web with Netty</td></tr><tr><td>spring-boot-starter-data-jpa</td><td>Spring Data JPA, Hibernate, HikariCP</td></tr><tr><td>spring-boot-starter-data-jdbc / jdbc</td><td>JDBC with JdbcTemplate and Hikari</td></tr><tr><td>spring-boot-starter-data-mongodb / redis</td><td>MongoDB and Redis support</td></tr><tr><td>spring-boot-starter-security</td><td>Spring Security</td></tr><tr><td>spring-boot-starter-oauth2-resource-server</td><td>JWT and OAuth2 resource server</td></tr><tr><td>spring-boot-starter-validation</td><td>Bean Validation (Hibernate Validator)</td></tr><tr><td>spring-boot-starter-actuator</td><td>Health, metrics and management endpoints</td></tr><tr><td>spring-boot-starter-thymeleaf</td><td>Server-side HTML templates</td></tr><tr><td>spring-boot-starter-cache / mail / aop</td><td>Caching, email sending, AOP</td></tr><tr><td>spring-boot-starter-test</td><td>JUnit 5, Mockito, AssertJ, MockMvc, JsonPath</td></tr></tbody></table><h2>What spring-boot-starter-parent gives you</h2><ul><li>Default Java version and UTF-8 encoding.</li><li>Dependency management: versions for hundreds of libraries, so you write no version numbers.</li><li>Sensible plugin configuration (compiler, resources, repackage).</li><li>Property based overriding of versions.</li></ul><h2>Override a version</h2><pre><code class="language-xml">&lt;properties&gt;
+    &lt;java.version&gt;21&lt;/java.version&gt;
+    &lt;postgresql.version&gt;42.7.4&lt;/postgresql.version&gt;   &lt;!-- override the managed version --&gt;
+&lt;/properties&gt;</code></pre><h2>If you cannot use the parent: import the BOM</h2><pre><code class="language-xml">&lt;dependencyManagement&gt;
+    &lt;dependencies&gt;
+        &lt;dependency&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-dependencies&lt;/artifactId&gt;
+            &lt;version&gt;3.5.10&lt;/version&gt;
+            &lt;type&gt;pom&lt;/type&gt;
+            &lt;scope&gt;import&lt;/scope&gt;
+        &lt;/dependency&gt;
+    &lt;/dependencies&gt;
+&lt;/dependencyManagement&gt;</code></pre><h2>Gradle version</h2><pre><code class="language-groovy">plugins {
+    id &#x27;java&#x27;
+    id &#x27;org.springframework.boot&#x27; version &#x27;3.5.10&#x27;
+    id &#x27;io.spring.dependency-management&#x27; version &#x27;1.1.7&#x27;
+}
+
+dependencies {
+    implementation &#x27;org.springframework.boot:spring-boot-starter-web&#x27;
+    testImplementation &#x27;org.springframework.boot:spring-boot-starter-test&#x27;
+}</code></pre><h2>Switch the embedded server from Tomcat to Jetty</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-web&lt;/artifactId&gt;
+    &lt;exclusions&gt;
+        &lt;exclusion&gt;
+            &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+            &lt;artifactId&gt;spring-boot-starter-tomcat&lt;/artifactId&gt;
+        &lt;/exclusion&gt;
+    &lt;/exclusions&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-jetty&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre><h2>See the dependency tree</h2><pre><code class="language-shell">./mvnw dependency:tree
+./gradlew dependencies</code></pre><p class="use"><b>Common mistake:</b> Writing version numbers for libraries that Spring Boot already manages. This can create version conflicts. Remove the version and let the BOM decide, or override it with a property.</p><h2>Interview questions</h2><h3>What is the difference between a starter and a normal library?</h3><p>A starter has almost no code. It is a pom that brings a group of compatible libraries, and auto-configuration then wires them.</p><h3>How do I write my own starter?</h3><p>Create an autoconfigure module with the auto-configuration and the imports file, and a starter module named xyz-spring-boot-starter that depends on it.</p><h3>Why do I get a version conflict?</h3><p>Usually because a version is set manually. Check with dependency:tree and remove the manual version.</p><div class="np"><a href="/springboot/getting-started/auto-configuration/">&larr; Auto-Configuration Internals</a><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

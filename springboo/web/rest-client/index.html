@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Calling Other APIs: RestClient and WebClient – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Most applications call other services.">
+    <link rel="canonical" href="https://ashokka.com/springboot/web/rest-client/">
+    <meta property="og:title" content="Calling Other APIs: RestClient and WebClient – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/" aria-current="page">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/web/">Web and REST</a> / Calling Other APIs: RestClient and WebClient</div>
+<h1>Calling Other APIs: RestClient and WebClient</h1><p>Most applications call other services. Spring gives you RestClient (modern, blocking, fluent), WebClient (reactive) and declarative HTTP interfaces. RestTemplate still works but is in maintenance mode.</p><h2>Which client should I use?</h2><table><thead><tr><th>Client</th><th>Style</th><th>Use when</th></tr></thead><tbody><tr><td>RestClient (Spring 6.1, Boot 3.2+)</td><td>Blocking, fluent API</td><td>Default choice in a normal Spring MVC application</td></tr><tr><td>WebClient</td><td>Non-blocking, reactive</td><td>Reactive applications or streaming</td></tr><tr><td>HTTP interface (@HttpExchange)</td><td>Declarative, like Feign</td><td>You want a typed client from an interface</td></tr><tr><td>RestTemplate</td><td>Blocking, older API</td><td>Existing code only. Avoid in new code</td></tr></tbody></table><h2>RestClient configuration and use</h2><pre><code class="language-java">import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.web.client.RestClient;
+
+public record GitHubUser(String login, String name) { }
+
+@Configuration
+public class ClientConfig {
+    @Bean
+    public RestClient githubClient(RestClient.Builder builder) {
+        return builder
+                .baseUrl(&quot;https://api.github.com&quot;)
+                .defaultHeader(&quot;Accept&quot;, &quot;application/vnd.github+json&quot;)
+                .build();
+    }
+}
+
+@Service
+public class GitHubService {
+    private final RestClient client;
+
+    public GitHubService(RestClient githubClient) { this.client = githubClient; }
+
+    public GitHubUser getUser(String username) {
+        return client.get()
+                .uri(&quot;/users/{u}&quot;, username)
+                .retrieve()
+                .onStatus(status -&gt; status.value() == 404,
+                        (req, res) -&gt; { throw new NotFoundException(&quot;No GitHub user &quot; + username); })
+                .body(GitHubUser.class);
+    }
+
+    public String createIssueExample(Object payload) {
+        return client.post()
+                .uri(&quot;/repos/owner/repo/issues&quot;)
+                .contentType(MediaType.APPLICATION_JSON)
+                .body(payload)
+                .retrieve()
+                .body(String.class);
+    }
+}</code></pre><h2>Timeouts (Boot 3.4 and newer)</h2><pre><code class="language-properties">spring.http.client.connect-timeout=2s
+spring.http.client.read-timeout=5s</code></pre><p>Always set timeouts. A call without a timeout can block a thread for a very long time when the other service is slow.</p><h2>Declarative HTTP interface</h2><pre><code class="language-java">import org.springframework.web.service.annotation.GetExchange;
+import org.springframework.web.service.annotation.HttpExchange;
+import org.springframework.web.client.support.RestClientAdapter;
+import org.springframework.web.service.invoker.HttpServiceProxyFactory;
+
+@HttpExchange(&quot;/users&quot;)
+public interface UserClient {
+    @GetExchange(&quot;/{login}&quot;)
+    GitHubUser get(@PathVariable String login);
+}
+
+@Configuration
+public class HttpInterfaceConfig {
+    @Bean
+    public UserClient userClient(RestClient githubClient) {
+        HttpServiceProxyFactory factory =
+                HttpServiceProxyFactory.builderFor(RestClientAdapter.create(githubClient)).build();
+        return factory.createClient(UserClient.class);
+    }
+}</code></pre><h2>WebClient (reactive)</h2><pre><code class="language-java">WebClient client = WebClient.builder().baseUrl(&quot;https://api.github.com&quot;).build();
+
+Mono&lt;GitHubUser&gt; user = client.get().uri(&quot;/users/{u}&quot;, &quot;octocat&quot;)
+        .retrieve()
+        .bodyToMono(GitHubUser.class);
+// user.block() waits for the result. Avoid block() inside reactive code.</code></pre><p class="use"><b>Common mistake:</b> Calling another service without timeouts and without error handling. A slow dependency then blocks all your threads. Set timeouts, handle errors and consider a circuit breaker such as Resilience4j.</p><h2>Interview questions</h2><h3>Is RestTemplate deprecated?</h3><p>It is in maintenance mode: it still works but gets no new features. Use RestClient for new code.</p><h3>Can I use WebClient in a Spring MVC application?</h3><p>Yes, but you must call block() to get results, and you need the webflux dependency. RestClient is simpler for blocking code.</p><h3>How do I retry failed calls?</h3><p>Use Spring Framework 7 retry support, Spring Retry, or Resilience4j, and retry only safe (idempotent) requests.</p><div class="np"><a href="/springboot/web/file-upload-download/">&larr; File Upload and Download</a><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

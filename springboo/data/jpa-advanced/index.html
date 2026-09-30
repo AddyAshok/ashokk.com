@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Advanced JPA: Specifications, Auditing, Locking and Mapping – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="These are the features that separate demo projects from real systems: dynamic filters, automatic created and updated timestamps, protection against lost updates, soft delete and richer mappings..">
+    <link rel="canonical" href="https://ashokka.com/springboot/data/jpa-advanced/">
+    <meta property="og:title" content="Advanced JPA: Specifications, Auditing, Locking and Mapping – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/" aria-current="page">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/data/">Data and Transactions</a> / Advanced JPA: Specifications, Auditing, Locking and Mapping</div>
+<h1>Advanced JPA: Specifications, Auditing, Locking and Mapping</h1><p>These are the features that separate demo projects from real systems: dynamic filters, automatic created and updated timestamps, protection against lost updates, soft delete and richer mappings.</p><h2>1. Dynamic search with Specifications</h2><p>When users can combine optional filters (name, category, price range), writing many repository methods does not scale. A Specification builds the WHERE condition step by step.</p><pre><code class="language-java">public interface ProductRepository extends JpaRepository&lt;Product, Long&gt;, JpaSpecificationExecutor&lt;Product&gt; { }
+
+public class ProductSpecs {
+
+    public static Specification&lt;Product&gt; nameContains(String text) {
+        return (root, query, cb) -&gt; text == null ? null
+                : cb.like(cb.lower(root.get(&quot;name&quot;)), &quot;%&quot; + text.toLowerCase() + &quot;%&quot;);
+    }
+    public static Specification&lt;Product&gt; category(String category) {
+        return (root, query, cb) -&gt; category == null ? null : cb.equal(root.get(&quot;category&quot;), category);
+    }
+    public static Specification&lt;Product&gt; priceBetween(BigDecimal min, BigDecimal max) {
+        return (root, query, cb) -&gt; {
+            if (min == null &amp;&amp; max == null) return null;
+            if (min == null) return cb.lessThanOrEqualTo(root.get(&quot;price&quot;), max);
+            if (max == null) return cb.greaterThanOrEqualTo(root.get(&quot;price&quot;), min);
+            return cb.between(root.get(&quot;price&quot;), min, max);
+        };
+    }
+}
+
+@Service
+public class ProductSearchService {
+    private final ProductRepository repository;
+    public ProductSearchService(ProductRepository repository) { this.repository = repository; }
+
+    public Page&lt;Product&gt; search(String name, String category, BigDecimal min, BigDecimal max, Pageable pageable) {
+        Specification&lt;Product&gt; spec = Specification
+                .where(ProductSpecs.nameContains(name))
+                .and(ProductSpecs.category(category))
+                .and(ProductSpecs.priceBetween(min, max));
+        return repository.findAll(spec, pageable);
+    }
+}</code></pre><p>A specification that returns null is ignored. Only the filters the user sent are added to the SQL.</p><h2>2. Auditing: who created it and when</h2><pre><code class="language-java">@Configuration
+@EnableJpaAuditing
+public class AuditConfig {
+    @Bean
+    public AuditorAware&lt;String&gt; auditorProvider() {
+        return () -&gt; Optional.ofNullable(SecurityContextHolder.getContext().getAuthentication())
+                .map(Authentication::getName).or(() -&gt; Optional.of(&quot;system&quot;));
+    }
+}
+
+@MappedSuperclass
+@EntityListeners(AuditingEntityListener.class)
+public abstract class Auditable {
+    @CreatedDate       @Column(updatable = false) private Instant createdAt;
+    @LastModifiedDate  private Instant updatedAt;
+    @CreatedBy         @Column(updatable = false) private String createdBy;
+    @LastModifiedBy    private String updatedBy;
+    // getters
+}
+
+@Entity
+public class Invoice extends Auditable {
+    @Id @GeneratedValue private Long id;
+    private BigDecimal amount;
+}</code></pre><h2>3. Optimistic locking: prevent lost updates</h2><pre class="dia"><code>Two users edit product 5 (version = 3) at the same time:
+ User A reads (v3)                 User B reads (v3)
+ User A saves:  update ... set price=?, version=4 where id=5 and version=3   ► 1 row updated  OK
+ User B saves:  update ... set price=?, version=4 where id=5 and version=3   ► 0 rows updated
+                                                          ► ObjectOptimisticLockingFailureException</code></pre><pre><code class="language-java">@Entity
+public class Product {
+    @Id @GeneratedValue private Long id;
+    @Version private Long version;         // Hibernate manages it
+    private BigDecimal price;
+}
+
+@RestControllerAdvice
+class LockingHandler {
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    ProblemDetail conflict() {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, &quot;The record was changed by someone else. Reload and try again.&quot;);
+    }
+}</code></pre><h2>4. Pessimistic locking: lock the row now</h2><pre><code class="language-java">public interface AccountRepository extends JpaRepository&lt;Account, Long&gt; {
+    @Lock(LockModeType.PESSIMISTIC_WRITE)                // select ... for update
+    @Query(&quot;select a from Account a where a.id = :id&quot;)
+    Optional&lt;Account&gt; findByIdForUpdate(@Param(&quot;id&quot;) Long id);
+}</code></pre><table><thead><tr><th>Approach</th><th>Best when</th><th>Cost</th></tr></thead><tbody><tr><td>Optimistic (@Version)</td><td>Conflicts are rare (most web apps)</td><td>Retry or error on conflict, no database locks held</td></tr><tr><td>Pessimistic (FOR UPDATE)</td><td>Conflicts are frequent (stock, balance)</td><td>Blocks other transactions, risk of deadlocks. Keep transactions short</td></tr></tbody></table><h2>5. Soft delete</h2><pre><code class="language-java">@Entity
+@SQLDelete(sql = &quot;update customer set deleted = true where id = ?&quot;)
+@SQLRestriction(&quot;deleted = false&quot;)          // Hibernate 6.3+ (older versions: @Where(clause = &quot;deleted = false&quot;))
+public class Customer {
+    @Id @GeneratedValue private Long id;
+    private String name;
+    private boolean deleted = false;
+}
+// repository.delete(customer) now runs an UPDATE. All queries automatically ignore deleted rows.</code></pre><h2>6. Embedded objects and enums</h2><pre><code class="language-java">@Embeddable
+public class Address {
+    private String street;
+    private String city;
+    @Column(name = &quot;zip_code&quot;) private String zipCode;
+}
+
+@Entity
+public class Person {
+    @Id @GeneratedValue private Long id;
+    @Embedded private Address address;                    // columns street, city, zip_code in the person table
+
+    @Enumerated(EnumType.STRING)                          // never use ORDINAL: reordering the enum breaks data
+    private Status status;
+}</code></pre><h2>7. Inheritance mapping</h2><table><thead><tr><th>Strategy</th><th>Tables</th><th>Good</th><th>Bad</th></tr></thead><tbody><tr><td>SINGLE_TABLE (default)</td><td>One table with a type column</td><td>Fast queries, simple</td><td>Many nullable columns</td></tr><tr><td>JOINED</td><td>One table per class, joined by id</td><td>Normalized, no nulls</td><td>Joins slow down queries</td></tr><tr><td>TABLE_PER_CLASS</td><td>One full table per concrete class</td><td>No joins for one type</td><td>Polymorphic queries use UNION, avoid</td></tr><tr><td>@MappedSuperclass</td><td>No table for the parent, only shared fields</td><td>Simple reuse of id and audit fields</td><td>Parent cannot be queried</td></tr></tbody></table><h2>8. Projection with constructor expression</h2><pre><code class="language-java">public record ProductStat(String category, long count, BigDecimal avgPrice) { }
+
+@Query(&quot;select new com.example.ProductStat(p.category, count(p), avg(p.price)) from Product p group by p.category&quot;)
+List&lt;ProductStat&gt; stats();</code></pre><p class="use"><b>Common mistake:</b> Using EnumType.ORDINAL (the default) for enums. Adding or reordering a constant silently changes the meaning of old rows. Always use EnumType.STRING or a converter.</p><h2>Interview questions</h2><h3>Optimistic or pessimistic locking?</h3><p>Start with optimistic locking with @Version. Use pessimistic locks only for hot rows where conflicts are common and retries are not acceptable.</p><h3>How do I add pagination to a Specification query?</h3><p>Pass a Pageable to findAll(spec, pageable). Spring Data adds the count query automatically.</p><h3>Why does soft delete break unique constraints?</h3><p>A deleted row still occupies the unique value. Use a partial unique index (where deleted = false) or include a deleted timestamp in the unique key.</p><div class="np"><a href="/springboot/data/jpa-relationships/">&larr; JPA Relationships and the N+1 Problem</a><a href="/springboot/data/transactions/">Transactions with @Transactional &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

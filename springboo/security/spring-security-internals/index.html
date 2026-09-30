@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="To debug 401 and 403 errors and write custom security you must know what happens inside the filter chain.">
+    <link rel="canonical" href="https://ashokka.com/springboot/security/spring-security-internals/">
+    <meta property="og:title" content="Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/" aria-current="page">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/security/">Security</a> / Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</div>
+<h1>Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</h1><p>To debug 401 and 403 errors and write custom security you must know what happens inside the filter chain. This page follows one request from the network to the controller, then shows a custom filter, several filter chains, CORS, and JSON error responses.</p><h2>Authentication flow step by step (HTTP Basic example)</h2><pre class="dia"><code>1. Request: GET /api/orders   Authorization: Basic cmFtOnJhbTEyMw==
+2. FilterChainProxy picks the first SecurityFilterChain whose securityMatcher matches the URL
+3. BasicAuthenticationFilter reads the header
+      └─ creates UsernamePasswordAuthenticationToken(username, password)   [authenticated = false]
+4. ProviderManager (AuthenticationManager) asks each AuthenticationProvider: &quot;do you support this token?&quot;
+5. DaoAuthenticationProvider
+      ├─ UserDetailsService.loadUserByUsername(&quot;ram&quot;)  ─► UserDetails (hash, roles)
+      ├─ PasswordEncoder.matches(rawPassword, hash)     ─► false ─► BadCredentialsException ─► 401
+      └─ returns a NEW token with authorities            [authenticated = true]
+6. The filter stores it:  SecurityContextHolder.getContext().setAuthentication(token)   (ThreadLocal)
+7. AuthorizationFilter: AuthorizationManager checks rules (hasRole ...)   ─► no access ─► 403
+8. DispatcherServlet ─► controller.  In the controller: @AuthenticationPrincipal / Authentication / Principal
+9. After the request: the SecurityContext is cleared from the thread
+   (with sessions it is saved in the HttpSession by SecurityContextRepository, so step 3 is skipped next time)</code></pre><table><thead><tr><th>Status</th><th>Meaning</th><th>Thrown by</th></tr></thead><tbody><tr><td>401 Unauthorized</td><td>Not authenticated or bad credentials (really means unauthenticated)</td><td>AuthenticationEntryPoint after AuthenticationException</td></tr><tr><td>403 Forbidden</td><td>Authenticated, but not allowed. Also CSRF token failure on POST</td><td>AccessDeniedHandler after AccessDeniedException</td></tr></tbody></table><h2>Custom filter: API key authentication</h2><pre><code class="language-java">public class ApiKeyAuthFilter extends OncePerRequestFilter {
+
+    private final Map&lt;String, String&gt; keyToClient;                 // key -&gt; client name
+
+    public ApiKeyAuthFilter(Map&lt;String, String&gt; keyToClient) { this.keyToClient = keyToClient; }
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response,
+                                    FilterChain chain) throws ServletException, IOException {
+        String key = request.getHeader(&quot;X-API-Key&quot;);
+        String client = key == null ? null : keyToClient.get(key);
+        if (client != null) {
+            Authentication auth = new UsernamePasswordAuthenticationToken(
+                    client, null, List.of(new SimpleGrantedAuthority(&quot;ROLE_SERVICE&quot;)));   // 3 args = authenticated
+            SecurityContextHolder.getContext().setAuthentication(auth);
+        }
+        chain.doFilter(request, response);       // always continue. AuthorizationFilter decides later
+    }
+}</code></pre><h2>Multiple security filter chains</h2><pre><code class="language-java">@Configuration
+@EnableWebSecurity
+public class MultiChainConfig {
+
+    @Bean @Order(1)                                             // checked first
+    SecurityFilterChain api(HttpSecurity http) throws Exception {
+        http.securityMatcher(&quot;/api/**&quot;)
+            .csrf(csrf -&gt; csrf.disable())
+            .sessionManagement(s -&gt; s.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+            .addFilterBefore(new ApiKeyAuthFilter(Map.of(&quot;secret-key-1&quot;, &quot;billing-service&quot;)),
+                             UsernamePasswordAuthenticationFilter.class)
+            .authorizeHttpRequests(a -&gt; a.anyRequest().hasRole(&quot;SERVICE&quot;))
+            .exceptionHandling(e -&gt; e
+                .authenticationEntryPoint((req, res, ex) -&gt; writeJson(res, 401, &quot;Unauthorized&quot;))
+                .accessDeniedHandler((req, res, ex) -&gt; writeJson(res, 403, &quot;Forbidden&quot;)));
+        return http.build();
+    }
+
+    @Bean @Order(2)                                             // everything else: a normal website with login form
+    SecurityFilterChain web(HttpSecurity http) throws Exception {
+        http.authorizeHttpRequests(a -&gt; a.requestMatchers(&quot;/&quot;, &quot;/login&quot;, &quot;/css/**&quot;).permitAll().anyRequest().authenticated())
+            .formLogin(Customizer.withDefaults())
+            .logout(Customizer.withDefaults());
+        return http.build();
+    }
+
+    private static void writeJson(HttpServletResponse res, int status, String message) throws IOException {
+        res.setStatus(status);
+        res.setContentType(&quot;application/json&quot;);
+        res.getWriter().write(&quot;{\&quot;status\&quot;:&quot; + status + &quot;,\&quot;message\&quot;:\&quot;&quot; + message + &quot;\&quot;}&quot;);
+    }
+}</code></pre><h2>CORS for a browser front end</h2><pre><code class="language-java">@Bean
+CorsConfigurationSource corsConfigurationSource() {
+    CorsConfiguration cfg = new CorsConfiguration();
+    cfg.setAllowedOrigins(List.of(&quot;https://app.example.com&quot;));       // never &quot;*&quot; together with credentials
+    cfg.setAllowedMethods(List.of(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;, &quot;OPTIONS&quot;));
+    cfg.setAllowedHeaders(List.of(&quot;Authorization&quot;, &quot;Content-Type&quot;));
+    cfg.setAllowCredentials(true);
+    cfg.setMaxAge(3600L);
+    UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+    source.registerCorsConfiguration(&quot;/api/**&quot;, cfg);
+    return source;
+}
+// in the filter chain: http.cors(Customizer.withDefaults());   (uses the bean above)</code></pre><p>Browsers send an OPTIONS preflight request before a cross-origin call with custom headers. Security must let it pass, and the CORS filter runs before authentication. If preflight gets 401, CORS is not configured in the security chain.</p><h2>Read the current user</h2><pre><code class="language-java">@GetMapping(&quot;/me&quot;)
+public Map&lt;String, Object&gt; me(Authentication auth, @AuthenticationPrincipal UserDetails user) {
+    return Map.of(&quot;name&quot;, auth.getName(), &quot;roles&quot;, auth.getAuthorities().toString(), &quot;username&quot;, user.getUsername());
+}
+// anywhere: SecurityContextHolder.getContext().getAuthentication()
+// In @Async or new threads the context is NOT copied. Use DelegatingSecurityContextExecutor or a context propagating executor.</code></pre><h2>Debug</h2><pre><code class="language-properties">logging.level.org.springframework.security=DEBUG
+# logs each request: which chain matched, which filters ran, why access was denied</code></pre><p class="use"><b>Common mistake:</b> Adding a custom filter as a @Component. Spring Boot then registers it as a servlet filter AND you add it in the security chain, so it runs twice. Create it with new in the chain, or disable the extra registration with a FilterRegistrationBean.</p><h2>Interview questions</h2><h3>Why do I get 403 on POST but GET works?</h3><p>CSRF protection is on and the POST has no CSRF token. Send the token for browser forms, or disable CSRF for a stateless token API.</p><h3>What is the difference between 401 and 403?</h3><p>401 means the caller is not authenticated. 403 means the caller is known but not allowed.</p><h3>How does Spring Security know the current user in a controller?</h3><p>The authenticated token is stored in the SecurityContext, a ThreadLocal, filled by an authentication filter and cleared after the request.</p><div class="np"><a href="/springboot/security/spring-security-basics/">&larr; Spring Security Basics</a><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

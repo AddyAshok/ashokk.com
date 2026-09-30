@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Validation and Exception Handling – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Never trust input.">
+    <link rel="canonical" href="https://ashokka.com/springboot/web/validation-exception-handling/">
+    <meta property="og:title" content="Validation and Exception Handling – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/" aria-current="page">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/web/">Web and REST</a> / Validation and Exception Handling</div>
+<h1>Validation and Exception Handling</h1><p>Never trust input. Bean Validation checks request data with annotations, and a global exception handler turns every error into a clean, consistent JSON response.</p><h2>Common validation annotations</h2><table><thead><tr><th>Annotation</th><th>Checks</th></tr></thead><tbody><tr><td>@NotNull</td><td>Value is not null</td></tr><tr><td>@NotBlank</td><td>String is not null and has a non-space character</td></tr><tr><td>@NotEmpty</td><td>String, collection or array is not empty</td></tr><tr><td>@Size(min, max)</td><td>Length or size range</td></tr><tr><td>@Min / @Max</td><td>Number range</td></tr><tr><td>@Positive</td><td>Number &gt; 0</td></tr><tr><td>@Email</td><td>Valid email format</td></tr><tr><td>@Pattern(regexp)</td><td>Matches a regular expression</td></tr><tr><td>@Past / @Future</td><td>Date in the past or future</td></tr></tbody></table><h2>DTO with validation and controller</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-validation&lt;/artifactId&gt;
+&lt;/dependency&gt;</code></pre><pre><code class="language-java">import jakarta.validation.Valid;
+import jakarta.validation.constraints.*;
+
+public record UserRequest(
+        @NotBlank(message = &quot;name is required&quot;) @Size(max = 50) String name,
+        @NotBlank @Email(message = &quot;email is not valid&quot;) String email,
+        @Min(value = 18, message = &quot;age must be at least 18&quot;) int age) { }
+
+@RestController
+@RequestMapping(&quot;/api/users&quot;)
+public class UserController {
+
+    @PostMapping
+    public ResponseEntity&lt;String&gt; create(@Valid @RequestBody UserRequest request) {
+        return ResponseEntity.status(201).body(&quot;Created &quot; + request.name());
+    }
+}</code></pre><h2>Custom exception and global handler</h2><pre><code class="language-java">public class NotFoundException extends RuntimeException {
+    public NotFoundException(String message) { super(message); }
+}
+
+@RestControllerAdvice
+public class GlobalExceptionHandler {
+
+    @ExceptionHandler(NotFoundException.class)
+    public ProblemDetail handleNotFound(NotFoundException ex) {
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, ex.getMessage());
+        pd.setTitle(&quot;Resource not found&quot;);
+        return pd;
+    }
+
+    @ExceptionHandler(MethodArgumentNotValidException.class)
+    public ProblemDetail handleValidation(MethodArgumentNotValidException ex) {
+        Map&lt;String, String&gt; errors = new LinkedHashMap&lt;&gt;();
+        ex.getBindingResult().getFieldErrors()
+          .forEach(e -&gt; errors.put(e.getField(), e.getDefaultMessage()));
+        ProblemDetail pd = ProblemDetail.forStatusAndDetail(HttpStatus.BAD_REQUEST, &quot;Validation failed&quot;);
+        pd.setProperty(&quot;errors&quot;, errors);
+        return pd;
+    }
+
+    @ExceptionHandler(Exception.class)
+    public ProblemDetail handleAny(Exception ex) {
+        // log the real error, but do not send internal details to the client
+        return ProblemDetail.forStatusAndDetail(HttpStatus.INTERNAL_SERVER_ERROR, &quot;Something went wrong&quot;);
+    }
+}</code></pre><p>A failed validation returns a response in the standard Problem Details format (RFC 9457):</p><pre><code class="language-json">{
+  &quot;type&quot;: &quot;about:blank&quot;,
+  &quot;title&quot;: &quot;Bad Request&quot;,
+  &quot;status&quot;: 400,
+  &quot;detail&quot;: &quot;Validation failed&quot;,
+  &quot;instance&quot;: &quot;/api/users&quot;,
+  &quot;errors&quot;: { &quot;name&quot;: &quot;name is required&quot;, &quot;age&quot;: &quot;age must be at least 18&quot; }
+}</code></pre><h2>Validate path and query parameters</h2><pre><code class="language-java">@RestController
+@Validated
+@RequestMapping(&quot;/api/items&quot;)
+public class ItemController {
+    @GetMapping(&quot;/{id}&quot;)
+    public String get(@PathVariable @Min(1) Long id) { return &quot;item &quot; + id; }
+}
+// Invalid values raise ConstraintViolationException (or HandlerMethodValidationException in
+// Spring 6.1+). Handle them in your @RestControllerAdvice too.</code></pre><h2>Custom constraint</h2><pre><code class="language-java">@Target(ElementType.FIELD)
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = StrongPasswordValidator.class)
+public @interface StrongPassword {
+    String message() default &quot;password must have 8+ characters and a digit&quot;;
+    Class&lt;?&gt;[] groups() default {};
+    Class&lt;? extends Payload&gt;[] payload() default {};
+}
+
+public class StrongPasswordValidator implements ConstraintValidator&lt;StrongPassword, String&gt; {
+    @Override
+    public boolean isValid(String value, ConstraintValidatorContext ctx) {
+        return value != null &amp;&amp; value.length() &gt;= 8 &amp;&amp; value.chars().anyMatch(Character::isDigit);
+    }
+}</code></pre><p class="use"><b>Tip:</b> Add the property spring.mvc.problemdetails.enabled=true to make Spring MVC return Problem Details for its own built-in exceptions as well.</p><p class="use"><b>Common mistake:</b> Catching every exception in each controller method with try-catch. Use one @RestControllerAdvice so error handling is in one place and responses are consistent.</p><h2>Interview questions</h2><h3>@Valid or @Validated?</h3><p>@Valid (Jakarta) validates an object and nested objects. @Validated (Spring) also supports validation groups and method-level validation on beans.</p><h3>How do I avoid leaking stack traces?</h3><p>Return a short message from a global handler, log the details on the server, and keep server.error.include-stacktrace=never.</p><h3>What is ProblemDetail?</h3><p>A Spring 6 class for the standard RFC 9457 error format (type, title, status, detail, instance).</p><div class="np"><a href="/springboot/web/rest-controllers/">&larr; REST Controllers</a><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

@@ -60,7 +60,68 @@ management.endpoint.health.probes.enabled=true</code></pre><pre><code class="lan
   httpGet: { path: /actuator/health/liveness, port: 8080 }
   initialDelaySeconds: 20
 readinessProbe:
-  httpGet: { path: /actuator/health/readiness, port: 8080 }</code></pre><p>Graceful shutdown lets running requests finish before the application stops, so a rolling update does not cut users off.</p><h2>Performance options</h2><ul><li>Virtual threads (Java 21+): spring.threads.virtual.enabled=true lets blocking code scale to many concurrent requests.</li><li>GraalVM native image: ./mvnw -Pnative native:compile gives very fast startup and low memory, but a slower build and some limits with reflection.</li><li>Set the JVM memory for containers with -XX:MaxRAMPercentage instead of a fixed -Xmx.</li><li>Lazy initialization (spring.main.lazy-initialization=true) speeds up startup but moves errors to the first use.</li></ul><p class="use"><b>Common mistake:</b> Baking passwords and environment-specific URLs into the image. Build one image and inject configuration through environment variables or secrets at runtime.</p><h2>Interview questions</h2><h3>Jar or WAR?</h3><p>Use the executable jar for almost every new project. Use WAR only if you must deploy into an existing external application server.</p><h3>How do I reduce the image size?</h3><p>Use a JRE base image, the layered jar, and multi-stage builds. jlink or native images reduce it further.</p><h3>Why does my container get OOM killed?</h3><p>The JVM may size its heap from the host memory. Set a container memory limit and use -XX:MaxRAMPercentage so the JVM respects it.</p><div class="np"><a href="/springboot/production/lombok-mapstruct/">&larr; Lombok and MapStruct: Less Boilerplate</a><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x &rarr;</a></div></article>
+  httpGet: { path: /actuator/health/readiness, port: 8080 }</code></pre><p>Graceful shutdown lets running requests finish before the application stops, so a rolling update does not cut users off.</p><h2>Performance options</h2><ul><li>Virtual threads (Java 21+): spring.threads.virtual.enabled=true lets blocking code scale to many concurrent requests.</li><li>GraalVM native image: ./mvnw -Pnative native:compile gives very fast startup and low memory, but a slower build and some limits with reflection.</li><li>Set the JVM memory for containers with -XX:MaxRAMPercentage instead of a fixed -Xmx.</li><li>Lazy initialization (spring.main.lazy-initialization=true) speeds up startup but moves errors to the first use.</li></ul><h2>From source to running container: the workflow</h2><pre class="dia"><code>git push ─► CI pipeline
+   1. mvn verify              compile, unit tests, integration tests (Testcontainers), dependency scan
+   2. spring-boot:repackage   fat jar with BOOT-INF layers
+   3. docker build            layered image (dependencies layer cached, application layer small)   or   spring-boot:build-image (Buildpacks)
+   4. docker push             registry, tagged with the git commit sha (never only &quot;latest&quot;)
+   5. deploy                  Kubernetes rolling update, readiness probe gates traffic
+   6. observe                 metrics, logs, traces; automatic rollback on failure</code></pre><h2>Complete Kubernetes deployment</h2><pre><code class="language-yaml">apiVersion: v1
+kind: ConfigMap
+metadata: { name: shop-config }
+data:
+  SPRING_PROFILES_ACTIVE: prod
+  SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/shop
+---
+apiVersion: v1
+kind: Secret
+metadata: { name: shop-secret }
+stringData:
+  SPRING_DATASOURCE_USERNAME: app
+  SPRING_DATASOURCE_PASSWORD: change-me
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata: { name: shop }
+spec:
+  replicas: 3
+  strategy: { type: RollingUpdate, rollingUpdate: { maxUnavailable: 0, maxSurge: 1 } }
+  selector: { matchLabels: { app: shop } }
+  template:
+    metadata: { labels: { app: shop } }
+    spec:
+      terminationGracePeriodSeconds: 45
+      containers:
+      - name: shop
+        image: registry.example.com/shop:1.4.2
+        ports: [{ containerPort: 8080 }]
+        envFrom:
+        - configMapRef: { name: shop-config }
+        - secretRef: { name: shop-secret }
+        env:
+        - name: JAVA_TOOL_OPTIONS
+          value: &quot;-XX:MaxRAMPercentage=75 -XX:+ExitOnOutOfMemoryError&quot;
+        resources:
+          requests: { cpu: &quot;500m&quot;, memory: &quot;768Mi&quot; }
+          limits:   { memory: &quot;768Mi&quot; }
+        startupProbe:   { httpGet: { path: /actuator/health/liveness,  port: 8080 }, failureThreshold: 30, periodSeconds: 2 }
+        livenessProbe:  { httpGet: { path: /actuator/health/liveness,  port: 8080 }, periodSeconds: 10 }
+        readinessProbe: { httpGet: { path: /actuator/health/readiness, port: 8080 }, periodSeconds: 5 }
+        lifecycle:
+          preStop: { exec: { command: [&quot;sleep&quot;, &quot;10&quot;] } }        # let the load balancer stop sending traffic before shutdown starts
+---
+apiVersion: v1
+kind: Service
+metadata: { name: shop }
+spec:
+  selector: { app: shop }
+  ports: [{ port: 80, targetPort: 8080 }]</code></pre><h2>Zero-downtime shutdown timeline</h2><pre class="dia"><code>t=0    pod gets SIGTERM (Kubernetes removed it from the Service endpoints; the readiness state changes to REFUSING_TRAFFIC)
+t=0-10 preStop sleep: the load balancer and proxies finish updating so new requests stop arriving
+t=10   Spring starts graceful shutdown (server.shutdown=graceful): the web server stops accepting NEW requests, running requests finish
+       (spring.lifecycle.timeout-per-shutdown-phase=30s is the maximum wait)
+t&lt;=40  lifecycle beans stop, message consumers close, the connection pool closes
+t=45   terminationGracePeriodSeconds ends: SIGKILL if the process is still alive
+Set: terminationGracePeriodSeconds &gt; preStop + Spring timeout. Otherwise requests are cut off during every deployment.</code></pre><h2>JVM in containers: sizing</h2><table><thead><tr><th>Setting</th><th>Recommendation</th></tr></thead><tbody><tr><td>Container memory limit</td><td>Heap + metaspace + thread stacks + direct buffers. Plan about 25 to 40 percent above the heap</td></tr><tr><td>-XX:MaxRAMPercentage</td><td>60 to 75 for the heap. Do not use 100</td></tr><tr><td>CPU limit</td><td>The JVM sizes GC and parallelism threads from CPUs. Very low limits (below 1 CPU) slow startup and GC</td></tr><tr><td>-XX:+ExitOnOutOfMemoryError</td><td>Crash and restart instead of running in a broken state</td></tr><tr><td>Startup probe</td><td>Slow starts (Hibernate, migrations) need a startup probe so liveness does not kill the pod</td></tr></tbody></table><h2>Startup and memory options</h2><ul><li>Class Data Sharing (AppCDS) and the newer AOT cache shorten startup and reduce memory. Boot supports them through the extracted layered jar. Check the packaging documentation of your version for the exact commands.</li><li>GraalVM native image (./mvnw -Pnative native:compile, or buildpacks with BP_NATIVE_IMAGE=true) gives startup in tens of milliseconds and low memory, at the cost of long builds, closed-world limits (reflection needs hints, Spring generates most of them) and different debugging.</li><li>Virtual threads and a small Hikari pool are often enough to solve throughput problems without native images.</li></ul><p class="use"><b>Common mistake:</b> Baking passwords and environment-specific URLs into the image. Build one image and inject configuration through environment variables or secrets at runtime.</p><h2>Interview questions</h2><h3>Jar or WAR?</h3><p>Use the executable jar for almost every new project. Use WAR only if you must deploy into an existing external application server.</p><h3>How do I reduce the image size?</h3><p>Use a JRE base image, the layered jar, and multi-stage builds. jlink or native images reduce it further.</p><h3>Why does my container get OOM killed?</h3><p>The JVM may size its heap from the host memory. Set a container memory limit and use -XX:MaxRAMPercentage so the JVM respects it.</p><h3>Why use a preStop sleep in Kubernetes?</h3><p>Removing a pod from the load balancer takes a few seconds. The sleep keeps the pod serving until no new requests arrive, so graceful shutdown starts on a quiet pod.</p><h3>Why not tag images only as latest?</h3><p>Latest is not reproducible and rollback is unclear. Tag with the version or commit sha so every deployment is traceable and can be rolled back.</p><div class="np"><a href="/springboot/production/lombok-mapstruct/">&larr; Lombok and MapStruct: Less Boilerplate</a><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

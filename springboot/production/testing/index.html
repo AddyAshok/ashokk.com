@@ -91,7 +91,47 @@ class ProductApiIT {
     }
 }</code></pre><p>Testcontainers runs real PostgreSQL, Kafka or Redis in Docker for the test. This finds problems that H2 cannot show, because H2 behaves differently from PostgreSQL.</p><h2>Useful test settings</h2><pre><code class="language-java">@ActiveProfiles(&quot;test&quot;)                                   // loads application-test.yml
 @TestPropertySource(properties = &quot;app.feature.enabled=true&quot;)
-@DirtiesContext                                           // rebuild the context after this test (slow, use rarely)</code></pre><ul><li>Name unit tests *Test and integration tests *IT so Maven can run them separately (surefire and failsafe).</li><li>Test behavior, not implementation. Do not verify every internal call.</li><li>The Spring context is cached between tests with the same configuration. Different @MockitoBean sets create new contexts and slow the build.</li></ul><p class="use"><b>Common mistake:</b> Using @SpringBootTest for every test. The whole application starts each time and the test suite becomes very slow. Prefer unit tests and slice tests.</p><h2>Interview questions</h2><h3>What is a test slice?</h3><p>An annotation such as @WebMvcTest or @DataJpaTest that loads only the part of the application needed for that layer.</p><h3>@Mock or @MockitoBean?</h3><p>@Mock is plain Mockito for unit tests without Spring. @MockitoBean replaces a bean inside the Spring context for slice and integration tests.</p><h3>Why Testcontainers instead of H2?</h3><p>It tests against the same database engine you use in production, so SQL dialect and constraint differences are caught early.</p><div class="np"><a href="/springboot/production/observability-tracing/">&larr; Observability: Logs, Metrics and Distributed Tracing</a><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async &rarr;</a></div></article>
+@DirtiesContext                                           // rebuild the context after this test (slow, use rarely)</code></pre><ul><li>Name unit tests *Test and integration tests *IT so Maven can run them separately (surefire and failsafe).</li><li>Test behavior, not implementation. Do not verify every internal call.</li><li>The Spring context is cached between tests with the same configuration. Different @MockitoBean sets create new contexts and slow the build.</li></ul><h2>How the Spring test context cache works</h2><pre class="dia"><code>Test class A  @SpringBootTest                      ─► context #1 created (slow: 3 to 10 s)     stored in the cache
+Test class B  @SpringBootTest  (same configuration) ─► context #1 REUSED (fast)
+Test class C  @SpringBootTest @ActiveProfiles(&quot;x&quot;)  ─► different key ─► context #2 created
+Test class D  @SpringBootTest + @MockitoBean Foo    ─► different key ─► context #3 created
+Cache key = configuration classes + active profiles + properties (@TestPropertySource, properties=) + context initializers + mock/spy beans + web environment ...
+Every different combination = one more application startup. Many variants make the build slow.</code></pre><ul><li>Put common @MockitoBean declarations in one shared abstract base class or configuration, so many tests share one context.</li><li>@DirtiesContext throws the context away after the test. Use it only when a test really changes global state.</li><li>@DataJpaTest, @WebMvcTest and other slices build small contexts that are cached separately.</li></ul><h2>Dynamic properties for containers</h2><pre><code class="language-java">@SpringBootTest
+@Testcontainers
+class RedisIT {
+    @Container
+    static GenericContainer&lt;?&gt; redis = new GenericContainer&lt;&gt;(&quot;redis:7&quot;).withExposedPorts(6379);
+
+    @DynamicPropertySource
+    static void redisProperties(DynamicPropertyRegistry registry) {
+        registry.add(&quot;spring.data.redis.host&quot;, redis::getHost);
+        registry.add(&quot;spring.data.redis.port&quot;, () -&gt; redis.getMappedPort(6379));
+    }
+}</code></pre><h2>More test slices</h2><table><thead><tr><th>Annotation</th><th>Loads</th><th>Use for</th></tr></thead><tbody><tr><td>@WebMvcTest</td><td>Controllers, advice, filters, converters (no services)</td><td>HTTP behavior with MockMvc</td></tr><tr><td>@DataJpaTest</td><td>Entities, repositories, embedded DB, rollback</td><td>Queries and mappings</td></tr><tr><td>@JdbcTest</td><td>DataSource and JdbcTemplate</td><td>Plain SQL code</td></tr><tr><td>@JsonTest</td><td>Jackson configuration</td><td>JSON shape of DTOs</td></tr><tr><td>@RestClientTest</td><td>RestClient and MockRestServiceServer</td><td>Outgoing HTTP clients</td></tr><tr><td>@DataMongoTest / @DataRedisTest</td><td>Store specific slices</td><td>Data access with Testcontainers</td></tr><tr><td>@SpringBootTest</td><td>Everything</td><td>End-to-end flows, few of them</td></tr></tbody></table><pre><code class="language-java">@JsonTest
+class ProductResponseJsonTest {
+    @Autowired JacksonTester&lt;ProductResponse&gt; json;
+
+    @Test
+    void serializes() throws Exception {
+        JsonContent&lt;ProductResponse&gt; result = json.write(new ProductResponse(1L, &quot;Pen&quot;, new BigDecimal(&quot;10.50&quot;)));
+        assertThat(result).extractingJsonPathStringValue(&quot;$.name&quot;).isEqualTo(&quot;Pen&quot;);
+        assertThat(result).extractingJsonPathNumberValue(&quot;$.price&quot;).isEqualTo(10.50);
+    }
+}</code></pre><h2>Test asynchronous behavior with Awaitility (no Thread.sleep)</h2><pre><code class="language-java">@Test
+void listenerProcessesEvent() {
+    publisher.publish(new OrderPlaced(&quot;o-1&quot;, &quot;c-1&quot;, BigDecimal.TEN));
+
+    await().atMost(Duration.ofSeconds(5)).pollInterval(Duration.ofMillis(100))
+           .untilAsserted(() -&gt; assertThat(invoiceRepository.findByOrderId(&quot;o-1&quot;)).isPresent());
+}</code></pre><h2>Test data builders keep tests readable</h2><pre><code class="language-java">public class ProductBuilder {
+    private String name = &quot;Pen&quot;;
+    private BigDecimal price = BigDecimal.TEN;
+    public static ProductBuilder aProduct() { return new ProductBuilder(); }
+    public ProductBuilder named(String name) { this.name = name; return this; }
+    public ProductBuilder priced(String price) { this.price = new BigDecimal(price); return this; }
+    public Product build() { return new Product(name, price, &quot;general&quot;); }
+}
+// Product laptop = aProduct().named(&quot;Laptop&quot;).priced(&quot;55000&quot;).build();</code></pre><h2>What makes tests flaky, and the fix</h2><table><thead><tr><th>Cause</th><th>Fix</th></tr></thead><tbody><tr><td>Thread.sleep and timing</td><td>Awaitility with a condition</td></tr><tr><td>Shared database state between tests</td><td>Cleanup in @BeforeEach or rollback, unique test data</td></tr><tr><td>Current time and randomness</td><td>Inject a Clock and a random source</td></tr><tr><td>Order dependence</td><td>Each test creates its own data</td></tr><tr><td>Real external services</td><td>WireMock, MockRestServiceServer, Testcontainers</td></tr><tr><td>Ports in use</td><td>RANDOM_PORT</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Using @SpringBootTest for every test. The whole application starts each time and the test suite becomes very slow. Prefer unit tests and slice tests.</p><h2>Interview questions</h2><h3>What is a test slice?</h3><p>An annotation such as @WebMvcTest or @DataJpaTest that loads only the part of the application needed for that layer.</p><h3>@Mock or @MockitoBean?</h3><p>@Mock is plain Mockito for unit tests without Spring. @MockitoBean replaces a bean inside the Spring context for slice and integration tests.</p><h3>Why Testcontainers instead of H2?</h3><p>It tests against the same database engine you use in production, so SQL dialect and constraint differences are caught early.</p><h3>Why are my Spring tests slow?</h3><p>Usually because many different context configurations each start the application (different mocks, profiles, properties) and because @SpringBootTest is used where a slice or a unit test would do.</p><h3>Should I mock the repository or use a real database?</h3><p>Mock it in service unit tests to test logic. Use @DataJpaTest with a real database (Testcontainers) to test queries and mappings.</p><div class="np"><a href="/springboot/production/observability-tracing/">&larr; Observability: Logs, Metrics and Distributed Tracing</a><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

@@ -84,7 +84,69 @@ public class HttpInterfaceConfig {
 Mono&lt;GitHubUser&gt; user = client.get().uri(&quot;/users/{u}&quot;, &quot;octocat&quot;)
         .retrieve()
         .bodyToMono(GitHubUser.class);
-// user.block() waits for the result. Avoid block() inside reactive code.</code></pre><p class="use"><b>Common mistake:</b> Calling another service without timeouts and without error handling. A slow dependency then blocks all your threads. Set timeouts, handle errors and consider a circuit breaker such as Resilience4j.</p><h2>Interview questions</h2><h3>Is RestTemplate deprecated?</h3><p>It is in maintenance mode: it still works but gets no new features. Use RestClient for new code.</p><h3>Can I use WebClient in a Spring MVC application?</h3><p>Yes, but you must call block() to get results, and you need the webflux dependency. RestClient is simpler for blocking code.</p><h3>How do I retry failed calls?</h3><p>Use Spring Framework 7 retry support, Spring Retry, or Resilience4j, and retry only safe (idempotent) requests.</p><div class="np"><a href="/springboot/web/file-upload-download/">&larr; File Upload and Download</a><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI &rarr;</a></div></article>
+// user.block() waits for the result. Avoid block() inside reactive code.</code></pre><h2>What is inside a RestClient call</h2><pre class="dia"><code>client.get().uri(&quot;/users/{u}&quot;, &quot;ram&quot;).retrieve().body(User.class)
+   1. build URI (UriBuilderFactory, encoding of {u})
+   2. ClientHttpRequestInterceptors (your logging, tracing, auth headers) run in order
+   3. ClientHttpRequestFactory creates the request:  JDK HttpClient, Apache HttpClient 5, Jetty, or Reactor Netty (auto-detected from the classpath)
+   4. send, wait for the response
+   5. status handlers (onStatus) decide about errors. Default: 4xx -&gt; RestClientResponseException (HttpClientErrorException), 5xx -&gt; HttpServerErrorException
+   6. HttpMessageConverters read the body (Jackson) into the target type</code></pre><h2>Interceptor: add auth header and log timing</h2><pre><code class="language-java">@Configuration
+public class ClientConfig {
+
+    @Bean
+    RestClient partnerClient(RestClient.Builder builder, @Value(&quot;${partner.token}&quot;) String token) {
+        return builder
+                .baseUrl(&quot;https://partner.example.com&quot;)
+                .requestInterceptor((request, body, execution) -&gt; {
+                    request.getHeaders().setBearerAuth(token);
+                    long start = System.nanoTime();
+                    ClientHttpResponse response = execution.execute(request, body);
+                    System.out.println(request.getMethod() + &quot; &quot; + request.getURI() + &quot; -&gt; &quot;
+                            + response.getStatusCode() + &quot; in &quot; + (System.nanoTime() - start) / 1_000_000 + &quot; ms&quot;);
+                    return response;
+                })
+                .build();
+    }
+}</code></pre><h2>Timeouts per client with the request factory</h2><pre><code class="language-java">@Bean
+RestClient slowPartnerClient(RestClient.Builder builder) {
+    ClientHttpRequestFactorySettings settings = ClientHttpRequestFactorySettings.defaults()
+            .withConnectTimeout(Duration.ofSeconds(2))
+            .withReadTimeout(Duration.ofSeconds(10));
+    return builder.requestFactory(ClientHttpRequestFactoryBuilder.detect().build(settings)).baseUrl(&quot;https://slow.example.com&quot;).build();
+}</code></pre><h2>Error handling patterns</h2><pre><code class="language-java">public Optional&lt;User&gt; find(String id) {
+    try {
+        return Optional.ofNullable(client.get().uri(&quot;/users/{id}&quot;, id).retrieve().body(User.class));
+    } catch (HttpClientErrorException.NotFound e) {
+        return Optional.empty();                                            // 404 is a normal answer here
+    } catch (HttpClientErrorException e) {
+        throw new PartnerBadRequestException(e.getStatusCode(), e.getResponseBodyAsString());
+    } catch (ResourceAccessException e) {
+        throw new PartnerUnavailableException(&quot;timeout or connection problem&quot;, e);   // I/O error: retry candidates
+    }
+}
+
+// exchange() gives the raw response when you need status, headers and body together
+ResponseEntity&lt;User&gt; entity = client.get().uri(&quot;/users/{id}&quot;, id).retrieve().toEntity(User.class);</code></pre><h2>Testing a client without the network</h2><pre><code class="language-java">@RestClientTest(GitHubService.class)
+class GitHubServiceTest {
+
+    @Autowired GitHubService service;
+    @Autowired MockRestServiceServer server;
+
+    @Test
+    void returnsUser() {
+        server.expect(requestTo(&quot;https://api.github.com/users/octocat&quot;))
+              .andRespond(withSuccess(&quot;{\&quot;login\&quot;:\&quot;octocat\&quot;,\&quot;name\&quot;:\&quot;The Octocat\&quot;}&quot;, MediaType.APPLICATION_JSON));
+
+        assertThat(service.getUser(&quot;octocat&quot;).login()).isEqualTo(&quot;octocat&quot;);
+    }
+
+    @Test
+    void mapsNotFound() {
+        server.expect(requestTo(&quot;https://api.github.com/users/nobody&quot;)).andRespond(withStatus(HttpStatus.NOT_FOUND));
+        assertThrows(NotFoundException.class, () -&gt; service.getUser(&quot;nobody&quot;));
+    }
+}
+// For complex scenarios (delays, faults, stateful stubs) use WireMock or a MockWebServer.</code></pre><table><thead><tr><th>Client</th><th>Style</th><th>Best for</th></tr></thead><tbody><tr><td>RestClient</td><td>Blocking, fluent, modern</td><td>Default in MVC apps</td></tr><tr><td>WebClient</td><td>Reactive</td><td>Reactive stacks, streaming</td></tr><tr><td>HTTP interface (@HttpExchange)</td><td>Declarative proxy over RestClient or WebClient</td><td>Typed clients, like Feign</td></tr><tr><td>OpenFeign</td><td>Declarative (Spring Cloud)</td><td>Existing Spring Cloud systems</td></tr><tr><td>JDK HttpClient</td><td>Low level</td><td>Libraries without Spring</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Calling another service without timeouts and without error handling. A slow dependency then blocks all your threads. Set timeouts, handle errors and consider a circuit breaker such as Resilience4j.</p><h2>Interview questions</h2><h3>Is RestTemplate deprecated?</h3><p>It is in maintenance mode: it still works but gets no new features. Use RestClient for new code.</p><h3>Can I use WebClient in a Spring MVC application?</h3><p>Yes, but you must call block() to get results, and you need the webflux dependency. RestClient is simpler for blocking code.</p><h3>How do I retry failed calls?</h3><p>Use Spring Framework 7 retry support, Spring Retry, or Resilience4j, and retry only safe (idempotent) requests.</p><h3>How do I add a correlation id to every outgoing request?</h3><p>Add a ClientHttpRequestInterceptor that copies the MDC value into a header. Boot&#x27;s tracing support does it automatically for builders created by Spring.</p><h3>Which HTTP library does RestClient use under the hood?</h3><p>It auto-detects: Apache HttpClient 5, Jetty client, Reactor Netty, or the JDK HttpClient. You can force one with spring.http.client.factory.</p><div class="np"><a href="/springboot/web/file-upload-download/">&larr; File Upload and Download</a><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

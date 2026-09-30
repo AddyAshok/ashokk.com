@@ -170,7 +170,99 @@ public class ApiExceptionHandler {
 curl &quot;localhost:8080/api/products?page=0&amp;size=5&amp;sort=price,desc&quot;
 curl -X PUT localhost:8080/api/products/1 -H &quot;Content-Type: application/json&quot; \
      -d &#x27;{&quot;name&quot;:&quot;Laptop Pro&quot;,&quot;price&quot;:75000}&#x27;
-curl -X DELETE localhost:8080/api/products/1</code></pre><p class="use"><b>Tip:</b> Pageable responses are serialized as Page objects. In new projects consider returning your own small page DTO (content, page, size, total) so the JSON format does not depend on Spring internals.</p><p class="use"><b>Common mistake:</b> Putting business rules in the controller or using the entity as request body. Keep controllers thin, use DTOs, and keep transactions and rules in the service layer.</p><h2>Interview questions</h2><h3>Why use DTOs when I already have entities?</h3><p>DTOs keep the API stable when the database changes, hide internal fields, prevent over-posting and avoid lazy loading problems.</p><h3>Where should validation live?</h3><p>Input format validation goes on DTOs with Bean Validation. Business rules (for example duplicate names) belong in the service.</p><h3>Why readOnly = true on read methods?</h3><p>It documents intent, lets Hibernate skip dirty checking, and some databases can use read replicas.</p><div class="np"><a href="/springboot/data/datasource-hikari-flyway/">&larr; Connection Pool (HikariCP) and Flyway Migrations</a><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot &rarr;</a></div></article>
+curl -X DELETE localhost:8080/api/products/1</code></pre><p class="use"><b>Tip:</b> Pageable responses are serialized as Page objects. In new projects consider returning your own small page DTO (content, page, size, total) so the JSON format does not depend on Spring internals.</p><h2>Add a search endpoint with paging</h2><pre><code class="language-java">public record PageResponse&lt;T&gt;(List&lt;T&gt; content, int page, int size, long totalElements, int totalPages) {
+    public static &lt;T&gt; PageResponse&lt;T&gt; from(Page&lt;T&gt; page) {
+        return new PageResponse&lt;&gt;(page.getContent(), page.getNumber(), page.getSize(), page.getTotalElements(), page.getTotalPages());
+    }
+}
+
+// repository
+Page&lt;Product&gt; findByNameContainingIgnoreCaseAndPriceBetween(String name, BigDecimal min, BigDecimal max, Pageable pageable);
+
+// service
+@Transactional(readOnly = true)
+public PageResponse&lt;ProductResponse&gt; search(String name, BigDecimal min, BigDecimal max, Pageable pageable) {
+    Pageable safe = PageRequest.of(pageable.getPageNumber(), Math.min(pageable.getPageSize(), 100), pageable.getSort());   // cap the size
+    return PageResponse.from(repository
+            .findByNameContainingIgnoreCaseAndPriceBetween(name == null ? &quot;&quot; : name, min == null ? BigDecimal.ZERO : min,
+                                                           max == null ? new BigDecimal(&quot;999999999&quot;) : max, safe)
+            .map(ProductResponse::from));
+}
+
+// controller
+@GetMapping(&quot;/search&quot;)
+public PageResponse&lt;ProductResponse&gt; search(@RequestParam(required = false) String name,
+                                            @RequestParam(required = false) BigDecimal minPrice,
+                                            @RequestParam(required = false) BigDecimal maxPrice,
+                                            @PageableDefault(size = 20, sort = &quot;id&quot;) Pageable pageable) {
+    return service.search(name, minPrice, maxPrice, pageable);
+}</code></pre><h2>Integration test of the whole API</h2><pre><code class="language-java">@SpringBootTest
+@AutoConfigureMockMvc
+@ActiveProfiles(&quot;test&quot;)
+class ProductApiTest {
+
+    @Autowired MockMvc mvc;
+    @Autowired ObjectMapper mapper;
+
+    @Test
+    void createReadUpdateDelete() throws Exception {
+        String body = mapper.writeValueAsString(new ProductRequest(&quot;Laptop&quot;, new BigDecimal(&quot;55000&quot;)));
+
+        String location = mvc.perform(post(&quot;/api/products&quot;).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated())
+                .andExpect(jsonPath(&quot;$.name&quot;).value(&quot;Laptop&quot;))
+                .andReturn().getResponse().getHeader(&quot;Location&quot;);
+
+        mvc.perform(get(location)).andExpect(status().isOk()).andExpect(jsonPath(&quot;$.price&quot;).value(55000));
+
+        String update = mapper.writeValueAsString(new ProductRequest(&quot;Laptop Pro&quot;, new BigDecimal(&quot;75000&quot;)));
+        mvc.perform(put(location).contentType(MediaType.APPLICATION_JSON).content(update))
+                .andExpect(status().isOk()).andExpect(jsonPath(&quot;$.name&quot;).value(&quot;Laptop Pro&quot;));
+
+        mvc.perform(delete(location)).andExpect(status().isNoContent());
+        mvc.perform(get(location)).andExpect(status().isNotFound());
+    }
+
+    @Test
+    void validationErrorsReturn400() throws Exception {
+        mvc.perform(post(&quot;/api/products&quot;).contentType(MediaType.APPLICATION_JSON).content(&quot;{\&quot;name\&quot;:\&quot;\&quot;,\&quot;price\&quot;:-1}&quot;))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath(&quot;$.errors.name&quot;).exists())
+                .andExpect(jsonPath(&quot;$.errors.price&quot;).exists());
+    }
+
+    @Test
+    void duplicateNameReturns409() throws Exception {
+        String body = mapper.writeValueAsString(new ProductRequest(&quot;Unique&quot;, BigDecimal.TEN));
+        mvc.perform(post(&quot;/api/products&quot;).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isCreated());
+        mvc.perform(post(&quot;/api/products&quot;).contentType(MediaType.APPLICATION_JSON).content(body)).andExpect(status().isConflict());
+    }
+}</code></pre><h2>Package by feature version of the same project</h2><pre><code class="language-text">com.example.shop
+├── ShopApplication.java
+├── product/
+│   ├── Product.java  ProductRepository.java  ProductService.java  ProductController.java
+│   ├── ProductRequest.java  ProductResponse.java             (DTO records)
+│   └── ProductNotFoundException.java
+├── common/
+│   ├── ApiExceptionHandler.java  PageResponse.java
+│   └── config/ (OpenApiConfig, SecurityConfig, JacksonConfig)
+└── resources/ application.yml, db/migration/V1__create_products.sql</code></pre><h2>Run it with a real database using Docker Compose</h2><pre><code class="language-yaml"># compose.yaml
+services:
+  db:
+    image: postgres:16
+    environment: { POSTGRES_DB: shop, POSTGRES_USER: app, POSTGRES_PASSWORD: secret }
+    ports: [&quot;5432:5432&quot;]
+    healthcheck: { test: [&quot;CMD-SHELL&quot;, &quot;pg_isready -U app -d shop&quot;], interval: 5s, retries: 10 }
+# Spring Boot 3.1+ can start it for you: add spring-boot-docker-compose (runtime, optional) and Boot runs `docker compose up` and wires the datasource automatically.</code></pre><pre><code class="language-yaml"># application-postgres.yml
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/shop
+    username: app
+    password: secret
+  jpa:
+    hibernate.ddl-auto: validate
+  flyway:
+    enabled: true</code></pre><h2>What to add next (professional checklist)</h2><ul><li>Security: JWT resource server or sessions, roles per endpoint (see the Spring Security course).</li><li>OpenAPI documentation and a Postman collection generated from it.</li><li>Flyway migrations instead of ddl-auto, plus Testcontainers tests.</li><li>Idempotency-Key support for POST, optimistic locking with @Version and ETag for PUT.</li><li>Structured logging with correlation id, Actuator health, metrics and tracing.</li><li>Dockerfile, health probes, graceful shutdown and CI pipeline with tests and dependency scan.</li></ul><p class="use"><b>Common mistake:</b> Putting business rules in the controller or using the entity as request body. Keep controllers thin, use DTOs, and keep transactions and rules in the service layer.</p><h2>Interview questions</h2><h3>Why use DTOs when I already have entities?</h3><p>DTOs keep the API stable when the database changes, hide internal fields, prevent over-posting and avoid lazy loading problems.</p><h3>Where should validation live?</h3><p>Input format validation goes on DTOs with Bean Validation. Business rules (for example duplicate names) belong in the service.</p><h3>Why readOnly = true on read methods?</h3><p>It documents intent, lets Hibernate skip dirty checking, and some databases can use read replicas.</p><h3>Why cap the page size in the service?</h3><p>A client could request size=1000000 and load the whole table into memory. Cap it on the server, for example at 100.</p><h3>Should the controller call the repository directly for simple CRUD?</h3><p>Prefer the service layer even for simple cases. It gives one place for transactions, business rules and mapping, and the controller stays thin.</p><div class="np"><a href="/springboot/data/datasource-hikari-flyway/">&larr; Connection Pool (HikariCP) and Flyway Migrations</a><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

@@ -60,7 +60,61 @@ try {
     log.info(&quot;Processing&quot;);        // pattern %X{userId} prints ram
 } finally {
     MDC.clear();
-}</code></pre><ul><li>Never log passwords, tokens or personal data.</li><li>Log with meaning: include ids (order id, user id) so you can search.</li><li>Do not log and rethrow the same exception in every layer. That creates duplicate stack traces. Log once, where you handle it.</li></ul><p class="use"><b>Common mistake:</b> Building log messages with string concatenation, for example log.debug(&#x27;User &#x27; + user). The string is created even when DEBUG is off. Use placeholders.</p><h2>Interview questions</h2><h3>Which logging framework does Spring Boot use?</h3><p>SLF4J as the API and Logback as the default implementation.</p><h3>Why put the exception as the last argument?</h3><p>SLF4J then prints its stack trace. If you put it inside the message with {}, only toString is printed.</p><h3>How do I see SQL statements?</h3><p>Set logging.level.org.hibernate.SQL=DEBUG. Avoid spring.jpa.show-sql in production because it prints to standard output without your log format.</p><div class="np"><a href="/springboot/security/jwt-refresh-token-flow/">&larr; JWT Access and Refresh Token Flow (Complete Design)</a><a href="/springboot/production/actuator/">Actuator and Monitoring &rarr;</a></div></article>
+}</code></pre><ul><li>Never log passwords, tokens or personal data.</li><li>Log with meaning: include ids (order id, user id) so you can search.</li><li>Do not log and rethrow the same exception in every layer. That creates duplicate stack traces. Log once, where you handle it.</li></ul><h2>How logging works in Spring Boot (internals)</h2><pre class="dia"><code>your code:   log.info(&quot;...&quot;)                      ─► SLF4J API (facade)
+                                                       ▼
+                                          SLF4J binding on the classpath:  Logback (default)  or Log4j2
+                                                       ▼
+LoggingApplicationListener (an early ApplicationListener) initializes the LoggingSystem during startup:
+   1. before the context: console logging with defaults (so startup problems are visible)
+   2. after the Environment is ready: read logging.* properties, logback-spring.xml, apply levels and patterns
+   3. LoggingSystem abstraction (LogbackLoggingSystem / Log4J2LoggingSystem) lets Actuator change levels at runtime
+Logger hierarchy: com.example.shop.order.OrderService inherits its level from com.example.shop.order, then com.example.shop, com.example, then ROOT</code></pre><h2>Asynchronous appender: do not slow requests with disk I/O</h2><pre><code class="language-xml">&lt;!-- src/main/resources/logback-spring.xml --&gt;
+&lt;configuration&gt;
+    &lt;include resource=&quot;org/springframework/boot/logging/logback/defaults.xml&quot;/&gt;
+    &lt;property name=&quot;LOG_FILE&quot; value=&quot;${LOG_FILE:-logs/app.log}&quot;/&gt;
+
+    &lt;appender name=&quot;FILE&quot; class=&quot;ch.qos.logback.core.rolling.RollingFileAppender&quot;&gt;
+        &lt;file&gt;${LOG_FILE}&lt;/file&gt;
+        &lt;rollingPolicy class=&quot;ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy&quot;&gt;
+            &lt;fileNamePattern&gt;${LOG_FILE}.%d{yyyy-MM-dd}.%i.gz&lt;/fileNamePattern&gt;
+            &lt;maxFileSize&gt;50MB&lt;/maxFileSize&gt;
+            &lt;maxHistory&gt;14&lt;/maxHistory&gt;
+            &lt;totalSizeCap&gt;2GB&lt;/totalSizeCap&gt;
+        &lt;/rollingPolicy&gt;
+        &lt;encoder&gt;&lt;pattern&gt;${FILE_LOG_PATTERN}&lt;/pattern&gt;&lt;/encoder&gt;
+    &lt;/appender&gt;
+
+    &lt;appender name=&quot;ASYNC_FILE&quot; class=&quot;ch.qos.logback.classic.AsyncAppender&quot;&gt;
+        &lt;queueSize&gt;8192&lt;/queueSize&gt;
+        &lt;discardingThreshold&gt;0&lt;/discardingThreshold&gt;      &lt;!-- 0 = never drop INFO and WARN when the queue is nearly full --&gt;
+        &lt;neverBlock&gt;false&lt;/neverBlock&gt;
+        &lt;appender-ref ref=&quot;FILE&quot;/&gt;
+    &lt;/appender&gt;
+
+    &lt;springProfile name=&quot;prod&quot;&gt;&lt;root level=&quot;INFO&quot;&gt;&lt;appender-ref ref=&quot;ASYNC_FILE&quot;/&gt;&lt;/root&gt;&lt;/springProfile&gt;
+    &lt;springProfile name=&quot;!prod&quot;&gt;&lt;include resource=&quot;org/springframework/boot/logging/logback/console-appender.xml&quot;/&gt;&lt;root level=&quot;DEBUG&quot;&gt;&lt;appender-ref ref=&quot;CONSOLE&quot;/&gt;&lt;/root&gt;&lt;/springProfile&gt;
+&lt;/configuration&gt;</code></pre><h2>Keep MDC data in async code</h2><pre><code class="language-java">@Configuration
+public class AsyncLoggingConfig {
+    // Boot applies a TaskDecorator bean to the auto-configured applicationTaskExecutor (@Async and MVC async)
+    @Bean
+    TaskDecorator mdcTaskDecorator() {
+        return runnable -&gt; {
+            Map&lt;String, String&gt; context = MDC.getCopyOfContextMap();          // captured in the CALLER thread
+            return () -&gt; {
+                try {
+                    if (context != null) MDC.setContextMap(context);          // restored in the worker thread
+                    runnable.run();
+                } finally {
+                    MDC.clear();
+                }
+            };
+        };
+    }
+}</code></pre><h2>Structured JSON logs with extra fields</h2><pre><code class="language-java">import static net.logstash.logback.argument.StructuredArguments.kv;   // with logstash-logback-encoder
+
+log.info(&quot;order placed {} {}&quot;, kv(&quot;orderId&quot;, order.id()), kv(&quot;amount&quot;, order.total()));
+// JSON line: {&quot;@timestamp&quot;:&quot;...&quot;,&quot;level&quot;:&quot;INFO&quot;,&quot;message&quot;:&quot;order placed orderId=42 amount=99.5&quot;,&quot;orderId&quot;:42,&quot;amount&quot;:99.5,&quot;traceId&quot;:&quot;...&quot;}
+// Boot 3.4+ native structured logging: logging.structured.format.console=ecs   (no extra library)</code></pre><h2>What to log, what not to log</h2><table><thead><tr><th>Log</th><th>Level</th><th>Example</th></tr></thead><tbody><tr><td>Business events with ids</td><td>INFO</td><td>Order 42 placed for customer 7</td></tr><tr><td>Recoverable problems</td><td>WARN</td><td>Payment gateway timeout, retrying (attempt 2)</td></tr><tr><td>Failures with the exception</td><td>ERROR</td><td>log.error(&quot;Order {} failed&quot;, id, ex)</td></tr><tr><td>Detailed flow for developers</td><td>DEBUG</td><td>Loaded 12 items from cache</td></tr><tr><td>NEVER</td><td>-</td><td>Passwords, tokens, full card numbers, personal data, secrets in URLs</td></tr></tbody></table><ul><li>Log an exception once, where it is handled, not in every layer.</li><li>Logs at request level: method, path, status, duration, user id and trace id.</li><li>Change to DEBUG for one package at runtime via /actuator/loggers instead of redeploying.</li><li>Ship logs to a central place (ELK, Loki, CloudWatch) as JSON, and alert on ERROR rate.</li></ul><p class="use"><b>Common mistake:</b> Building log messages with string concatenation, for example log.debug(&#x27;User &#x27; + user). The string is created even when DEBUG is off. Use placeholders.</p><h2>Interview questions</h2><h3>Which logging framework does Spring Boot use?</h3><p>SLF4J as the API and Logback as the default implementation.</p><h3>Why put the exception as the last argument?</h3><p>SLF4J then prints its stack trace. If you put it inside the message with {}, only toString is printed.</p><h3>How do I see SQL statements?</h3><p>Set logging.level.org.hibernate.SQL=DEBUG. Avoid spring.jpa.show-sql in production because it prints to standard output without your log format.</p><h3>Why does my log level change not apply to a class?</h3><p>A more specific logger configuration wins. For example logging.level.com.example.shop=DEBUG is overridden by logging.level.com.example.shop.order=WARN for classes in that package.</p><h3>Logback or Log4j2?</h3><p>Logback is the default and enough for most systems. Log4j2 offers lower latency async logging (LMAX Disruptor). Switch by excluding spring-boot-starter-logging and adding spring-boot-starter-log4j2.</p><div class="np"><a href="/springboot/security/jwt-refresh-token-flow/">&larr; JWT Access and Refresh Token Flow (Complete Design)</a><a href="/springboot/production/actuator/">Actuator and Monitoring &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

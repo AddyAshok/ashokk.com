@@ -89,7 +89,66 @@ public class WebConfig implements WebMvcConfigurer {
                 .allowedOrigins(&quot;https://myfrontend.com&quot;)
                 .allowedMethods(&quot;GET&quot;, &quot;POST&quot;, &quot;PUT&quot;, &quot;DELETE&quot;);
     }
-}</code></pre><h2>Threading model</h2><ul><li>Tomcat uses one thread per request from a pool (server.tomcat.threads.max, default 200).</li><li>A blocking database call holds the thread until it finishes.</li><li>With Java 21 you can use virtual threads: spring.threads.virtual.enabled=true. Blocking code then scales much better, without reactive programming.</li></ul><h2>HttpMessageConverter</h2><p>Converters translate between HTTP bodies and Java objects. Boot registers a JSON converter (Jackson), a String converter and others. The Accept and Content-Type headers decide which converter is used.</p><p class="use"><b>Common mistake:</b> Doing security or logging work in the controller of every endpoint. Cross-cutting request work belongs in a filter or interceptor.</p><h2>Interview questions</h2><h3>What is the DispatcherServlet?</h3><p>The front controller of Spring MVC. Every request comes to it and it delegates to handler mappings, adapters, converters and view or exception resolvers.</p><h3>Does a filter run before or after an interceptor?</h3><p>Filters run first (before the DispatcherServlet). Interceptors run inside the DispatcherServlet, around the controller.</p><h3>How do I change the JSON format of dates?</h3><p>Configure Jackson through properties, for example spring.jackson.serialization.write-dates-as-timestamps=false (Jackson 2). Boot 4 uses Jackson 3 with similar properties under spring.jackson.*.</p><div class="np"><a href="/springboot/web/validation-exception-handling/">&larr; Validation and Exception Handling</a><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls &rarr;</a></div></article>
+}</code></pre><h2>Threading model</h2><ul><li>Tomcat uses one thread per request from a pool (server.tomcat.threads.max, default 200).</li><li>A blocking database call holds the thread until it finishes.</li><li>With Java 21 you can use virtual threads: spring.threads.virtual.enabled=true. Blocking code then scales much better, without reactive programming.</li></ul><h2>HttpMessageConverter</h2><p>Converters translate between HTTP bodies and Java objects. Boot registers a JSON converter (Jackson), a String converter and others. The Accept and Content-Type headers decide which converter is used.</p><h2>DispatcherServlet.doDispatch() step by step</h2><pre class="dia"><code>doDispatch(request, response)
+ 1. checkMultipart(request)                          wrap multipart requests
+ 2. mappedHandler = getHandler(request)              loop over HandlerMappings: RequestMappingHandlerMapping finds a HandlerMethod
+                                                     (built at startup from all @RequestMapping methods, match by path, HTTP method, params, headers, consumes, produces)
+                                                     nothing found ─► 404 (NoHandlerFoundException / NoResourceFoundException)
+ 3. ha = getHandlerAdapter(handler)                  RequestMappingHandlerAdapter
+ 4. mappedHandler.applyPreHandle()                   HandlerInterceptor.preHandle (false ─► stop)
+ 5. ha.handle(request, response, handler)
+        a. HandlerMethodArgumentResolvers create every argument (@PathVariable, @RequestBody -&gt; HttpMessageConverter ...)
+        b. binder + validator (@Valid) ─► MethodArgumentNotValidException on errors
+        c. invoke your controller method by reflection
+        d. HandlerMethodReturnValueHandlers write the result (@ResponseBody -&gt; HttpMessageConverter, selected by Accept header)
+ 6. applyPostHandle()                                postHandle (not called for @ResponseBody once the response is committed)
+ 7. processDispatchResult: on exception ─► HandlerExceptionResolvers ─► @ExceptionHandler / @ControllerAdvice
+ 8. triggerAfterCompletion()                         HandlerInterceptor.afterCompletion (always, even after exceptions)</code></pre><h2>Custom argument resolver: inject the current tenant</h2><pre><code class="language-java">@Target(ElementType.PARAMETER)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface CurrentTenant { }
+
+public class CurrentTenantArgumentResolver implements HandlerMethodArgumentResolver {
+
+    @Override
+    public boolean supportsParameter(MethodParameter parameter) {
+        return parameter.hasParameterAnnotation(CurrentTenant.class) &amp;&amp; parameter.getParameterType().equals(String.class);
+    }
+
+    @Override
+    public Object resolveArgument(MethodParameter parameter, ModelAndViewContainer mavContainer,
+                                  NativeWebRequest webRequest, WebDataBinderFactory binderFactory) {
+        String tenant = webRequest.getHeader(&quot;X-Tenant-Id&quot;);
+        if (tenant == null) throw new ResponseStatusException(HttpStatus.BAD_REQUEST, &quot;X-Tenant-Id header is required&quot;);
+        return tenant;
+    }
+}
+
+@Configuration
+public class WebConfig implements WebMvcConfigurer {
+    @Override
+    public void addArgumentResolvers(List&lt;HandlerMethodArgumentResolver&gt; resolvers) {
+        resolvers.add(new CurrentTenantArgumentResolver());
+    }
+}
+
+@GetMapping(&quot;/api/invoices&quot;)
+public List&lt;Invoice&gt; invoices(@CurrentTenant String tenant) { return service.findFor(tenant); }</code></pre><h2>Custom converters and formatters for request parameters</h2><pre><code class="language-java">@Component
+public class StringToStatusConverter implements Converter&lt;String, OrderStatus&gt; {
+    @Override
+    public OrderStatus convert(String source) {
+        return OrderStatus.valueOf(source.trim().toUpperCase());       // /orders?status=paid  -&gt;  OrderStatus.PAID
+    }
+}
+// Boot picks up Converter, GenericConverter and Formatter beans automatically and registers them in the ConversionService</code></pre><h2>Async request processing</h2><pre class="dia"><code>1. Request thread http-nio-exec-3 calls the controller, which returns a Callable / DeferredResult / CompletableFuture
+2. Spring starts async mode (request.startAsync()). Thread exec-3 is RELEASED to the pool immediately
+3. The work runs on another thread (MVC async executor or your executor)
+4. When the result is ready, Spring dispatches the request again to the container (a second thread, exec-9),
+   the return value handler writes the response
+Security context, MDC and transactions do NOT move automatically between these threads.</code></pre><h2>Register more message converters (for example CSV)</h2><pre><code class="language-java">@Override
+public void extendMessageConverters(List&lt;HttpMessageConverter&lt;?&gt;&gt; converters) {
+    converters.add(new CsvHttpMessageConverter());       // your AbstractHttpMessageConverter&lt;List&lt;Product&gt;&gt; for text/csv
+}
+// Now @GetMapping(produces = &quot;text/csv&quot;) returns CSV when the client sends Accept: text/csv</code></pre><p class="use"><b>Common mistake:</b> Doing security or logging work in the controller of every endpoint. Cross-cutting request work belongs in a filter or interceptor.</p><h2>Interview questions</h2><h3>What is the DispatcherServlet?</h3><p>The front controller of Spring MVC. Every request comes to it and it delegates to handler mappings, adapters, converters and view or exception resolvers.</p><h3>Does a filter run before or after an interceptor?</h3><p>Filters run first (before the DispatcherServlet). Interceptors run inside the DispatcherServlet, around the controller.</p><h3>How do I change the JSON format of dates?</h3><p>Configure Jackson through properties, for example spring.jackson.serialization.write-dates-as-timestamps=false (Jackson 2). Boot 4 uses Jackson 3 with similar properties under spring.jackson.*.</p><h3>Where are @RequestMapping methods stored?</h3><p>RequestMappingHandlerMapping scans all beans at startup and builds a registry of mapping infos to HandlerMethods. You can see it at /actuator/mappings.</p><h3>Why is postHandle not useful with @ResponseBody?</h3><p>The body is written to the response inside the handler adapter, and the response may be committed before postHandle runs, so you can no longer change headers or body there.</p><div class="np"><a href="/springboot/web/validation-exception-handling/">&larr; Validation and Exception Handling</a><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

@@ -96,7 +96,69 @@ public class StrongPasswordValidator implements ConstraintValidator&lt;StrongPas
     public boolean isValid(String value, ConstraintValidatorContext ctx) {
         return value != null &amp;&amp; value.length() &gt;= 8 &amp;&amp; value.chars().anyMatch(Character::isDigit);
     }
-}</code></pre><p class="use"><b>Tip:</b> Add the property spring.mvc.problemdetails.enabled=true to make Spring MVC return Problem Details for its own built-in exceptions as well.</p><p class="use"><b>Common mistake:</b> Catching every exception in each controller method with try-catch. Use one @RestControllerAdvice so error handling is in one place and responses are consistent.</p><h2>Interview questions</h2><h3>@Valid or @Validated?</h3><p>@Valid (Jakarta) validates an object and nested objects. @Validated (Spring) also supports validation groups and method-level validation on beans.</p><h3>How do I avoid leaking stack traces?</h3><p>Return a short message from a global handler, log the details on the server, and keep server.error.include-stacktrace=never.</p><h3>What is ProblemDetail?</h3><p>A Spring 6 class for the standard RFC 9457 error format (type, title, status, detail, instance).</p><div class="np"><a href="/springboot/web/rest-controllers/">&larr; REST Controllers</a><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals &rarr;</a></div></article>
+}</code></pre><p class="use"><b>Tip:</b> Add the property spring.mvc.problemdetails.enabled=true to make Spring MVC return Problem Details for its own built-in exceptions as well.</p><h2>Validation groups: different rules for create and update</h2><pre><code class="language-java">public interface OnCreate { }
+public interface OnUpdate { }
+
+public record ProductDto(
+        @Null(groups = OnCreate.class) @NotNull(groups = OnUpdate.class) Long id,        // id must be absent on create, present on update
+        @NotBlank(groups = { OnCreate.class, OnUpdate.class }) String name,
+        @Positive(groups = { OnCreate.class, OnUpdate.class }) BigDecimal price) { }
+
+@PostMapping public ProductDto create(@Validated(OnCreate.class) @RequestBody ProductDto dto) { return dto; }
+@PutMapping(&quot;/{id}&quot;) public ProductDto update(@PathVariable Long id, @Validated(OnUpdate.class) @RequestBody ProductDto dto) { return dto; }</code></pre><h2>Cross-field validation with a class-level constraint</h2><pre><code class="language-java">@Target(ElementType.TYPE)
+@Retention(RetentionPolicy.RUNTIME)
+@Constraint(validatedBy = PasswordsMatchValidator.class)
+public @interface PasswordsMatch {
+    String message() default &quot;passwords do not match&quot;;
+    Class&lt;?&gt;[] groups() default {};
+    Class&lt;? extends Payload&gt;[] payload() default {};
+}
+
+public class PasswordsMatchValidator implements ConstraintValidator&lt;PasswordsMatch, RegisterRequest&gt; {
+    @Override
+    public boolean isValid(RegisterRequest r, ConstraintValidatorContext ctx) {
+        boolean ok = r.password() != null &amp;&amp; r.password().equals(r.confirmPassword());
+        if (!ok) {
+            ctx.disableDefaultConstraintViolation();
+            ctx.buildConstraintViolationWithTemplate(&quot;passwords do not match&quot;)
+               .addPropertyNode(&quot;confirmPassword&quot;).addConstraintViolation();          // error is reported on this field
+        }
+        return ok;
+    }
+}
+
+@PasswordsMatch
+public record RegisterRequest(@Email String email, @Size(min = 12) String password, String confirmPassword) { }</code></pre><h2>Nested objects and collections</h2><pre><code class="language-java">public record OrderRequest(
+        @NotBlank String customerId,
+        @Valid @NotNull Address shippingAddress,                          // @Valid is REQUIRED to validate the nested object
+        @NotEmpty @Size(max = 50) List&lt;@Valid OrderLine&gt; lines) { }       // and each element of the list
+
+public record OrderLine(@NotBlank String sku, @Min(1) @Max(100) int quantity) { }
+public record Address(@NotBlank String street, @Pattern(regexp = &quot;\\d{6}&quot;) String pincode) { }</code></pre><h2>Messages and internationalization</h2><pre><code class="language-properties"># src/main/resources/ValidationMessages.properties
+user.name.required=Name is required
+user.age.min=Age must be at least {value}
+
+# ValidationMessages_hi.properties  for Hindi ... the Accept-Language header selects the file</code></pre><pre><code class="language-java">public record UserRequest(
+        @NotBlank(message = &quot;{user.name.required}&quot;) String name,
+        @Min(value = 18, message = &quot;{user.age.min}&quot;) int age) { }</code></pre><h2>Validate programmatically and read all errors</h2><pre><code class="language-java">@Service
+class ImportService {
+    private final Validator validator;                 // jakarta.validation.Validator, a Spring bean
+    ImportService(Validator validator) { this.validator = validator; }
+
+    List&lt;String&gt; check(ProductDto dto) {
+        return validator.validate(dto).stream()
+                .map(v -&gt; v.getPropertyPath() + &quot; &quot; + v.getMessage())
+                .sorted().toList();                    // useful in batch imports: collect errors instead of failing on the first
+    }
+}</code></pre><h2>Order in which Spring resolves an exception</h2><pre class="dia"><code>Controller throws exception
+  └─ HandlerExceptionResolverComposite tries in order:
+       1. ExceptionHandlerExceptionResolver   @ExceptionHandler in the controller, then in @ControllerAdvice
+       2. ResponseStatusExceptionResolver     @ResponseStatus on the exception class, or ResponseStatusException
+       3. DefaultHandlerExceptionResolver     Spring MVC&#x27;s own (HttpRequestMethodNotSupported -&gt; 405, TypeMismatch -&gt; 400 ...)
+  none handled ─► exception goes to the servlet container ─► /error (BasicErrorController) ─► JSON error body of Boot</code></pre><pre><code class="language-java">@ResponseStatus(HttpStatus.CONFLICT)                                   // simplest way for a custom exception
+public class DuplicateEmailException extends RuntimeException { }
+
+throw new ResponseStatusException(HttpStatus.NOT_FOUND, &quot;Product 5 not found&quot;);    // ad-hoc, no class needed</code></pre><p class="use"><b>Common mistake:</b> Catching every exception in each controller method with try-catch. Use one @RestControllerAdvice so error handling is in one place and responses are consistent.</p><h2>Interview questions</h2><h3>@Valid or @Validated?</h3><p>@Valid (Jakarta) validates an object and nested objects. @Validated (Spring) also supports validation groups and method-level validation on beans.</p><h3>How do I avoid leaking stack traces?</h3><p>Return a short message from a global handler, log the details on the server, and keep server.error.include-stacktrace=never.</p><h3>What is ProblemDetail?</h3><p>A Spring 6 class for the standard RFC 9457 error format (type, title, status, detail, instance).</p><h3>Why are my nested object fields not validated?</h3><p>You must put @Valid on the nested field or collection element. Bean Validation does not cascade by default.</p><h3>Where does Boot&#x27;s default JSON error body come from?</h3><p>From BasicErrorController on /error, filled by DefaultErrorAttributes. Control what it shows with server.error.* properties or replace it with your own @RestControllerAdvice.</p><div class="np"><a href="/springboot/web/rest-controllers/">&larr; REST Controllers</a><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

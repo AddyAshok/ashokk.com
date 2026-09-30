@@ -60,7 +60,85 @@ com.example.greeting.GreetingAutoConfiguration</code></pre><p>Put these classes 
 # Positive matches:   DataSourceAutoConfiguration matched: @ConditionalOnClass found ...
 # Negative matches:   MongoAutoConfiguration did not match: @ConditionalOnClass did not find ...</code></pre><h2>Exclude an auto-configuration</h2><pre><code class="language-java">@SpringBootApplication(exclude = DataSourceAutoConfiguration.class)
 public class DemoApplication { }
-// or: spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration</code></pre><p class="use"><b>Tip:</b> Back-off rule: if you define your own bean of the same type (for example your own ObjectMapper or DataSource), the matching auto-configuration is skipped because of @ConditionalOnMissingBean. You never have to fight auto-configuration.</p><p class="use"><b>Common mistake:</b> Putting the auto-configuration class inside a component-scanned package and also in the imports file. Auto-configuration classes should live outside the scanned packages and be registered only in the imports file.</p><h2>Interview questions</h2><h3>Where is the list of auto-configuration classes?</h3><p>In META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports inside spring-boot-autoconfigure and in other starters. Older versions used spring.factories.</p><h3>How do I know why a bean was or was not created?</h3><p>Start the app with --debug or debug=true, or use the Actuator conditions endpoint.</p><h3>How can I disable one auto-configuration?</h3><p>Use exclude in @SpringBootApplication or the property spring.autoconfigure.exclude.</p><div class="np"><a href="/springboot/getting-started/first-application/">&larr; Create Your First Spring Boot Project</a><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management &rarr;</a></div></article>
+// or: spring.autoconfigure.exclude=org.springframework.boot.autoconfigure.jdbc.DataSourceAutoConfiguration</code></pre><p class="use"><b>Tip:</b> Back-off rule: if you define your own bean of the same type (for example your own ObjectMapper or DataSource), the matching auto-configuration is skipped because of @ConditionalOnMissingBean. You never have to fight auto-configuration.</p><h2>Internal workflow: from the imports file to registered beans</h2><pre class="dia"><code>@EnableAutoConfiguration
+   └─ @Import(AutoConfigurationImportSelector)      a DeferredImportSelector (runs AFTER all your own @Configuration classes)
+        1. getCandidateConfigurations(): read META-INF/spring/...AutoConfiguration.imports from EVERY jar on the classpath
+        2. removeDuplicates()
+        3. getExclusions(): @SpringBootApplication(exclude=...), spring.autoconfigure.exclude
+        4. filter(): AutoConfigurationImportFilter (OnClassCondition, OnBeanCondition, OnWebApplicationCondition)
+              a FAST pre-check using the metadata file spring-autoconfigure-metadata.properties
+              (drops hundreds of classes without loading them: no class loading = fast startup)
+        5. fireAutoConfigurationImportEvents()  ─► the ConditionEvaluationReport is filled
+        6. sort by @AutoConfiguration(before=, after=) and @AutoConfigureOrder
+   ▼
+ConfigurationClassPostProcessor parses each remaining class like a normal @Configuration:
+        class-level conditions (@ConditionalOnClass ...)  ─► then each @Bean method&#x27;s own conditions (@ConditionalOnMissingBean ...)
+   ▼
+Bean definitions for the surviving @Bean methods are registered ─► beans are created later in refresh() step 11</code></pre><p>Important: @ConditionalOnBean and @ConditionalOnMissingBean depend on registration ORDER. Auto-configurations run after your own configuration, so your beans are already registered and win. That is why the &#x27;back off&#x27; principle works and why these conditions are only reliable in auto-configuration classes, not in normal @Configuration classes.</p><h2>Ordering auto-configurations</h2><pre><code class="language-java">@AutoConfiguration(after = DataSourceAutoConfiguration.class, before = HibernateJpaAutoConfiguration.class)
+@ConditionalOnClass(DataSource.class)
+public class AuditAutoConfiguration {
+    @Bean
+    @ConditionalOnBean(DataSource.class)           // safe here: DataSourceAutoConfiguration ran before
+    AuditRepository auditRepository(DataSource dataSource) { return new AuditRepository(dataSource); }
+}</code></pre><h2>@ConditionalOnProperty in detail</h2><pre><code class="language-java">@Bean
+@ConditionalOnProperty(prefix = &quot;app.cache&quot;, name = &quot;enabled&quot;, havingValue = &quot;true&quot;, matchIfMissing = false)
+CacheWarmer cacheWarmer() { return new CacheWarmer(); }
+// app.cache.enabled=true  -&gt; bean exists
+// property missing        -&gt; bean does NOT exist (matchIfMissing=false). With true it would exist by default.
+
+@Bean
+@ConditionalOnProperty(name = &quot;app.mode&quot;, havingValue = &quot;fast&quot;)
+Engine fastEngine() { return new FastEngine(); }
+@Bean
+@ConditionalOnProperty(name = &quot;app.mode&quot;, havingValue = &quot;safe&quot;, matchIfMissing = true)
+Engine safeEngine() { return new SafeEngine(); }        // the default engine when nothing is configured</code></pre><h2>Your own Condition</h2><pre><code class="language-java">public class OnLinuxCondition implements Condition {
+    @Override
+    public boolean matches(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        return context.getEnvironment().getProperty(&quot;os.name&quot;, &quot;&quot;).toLowerCase().contains(&quot;linux&quot;);
+    }
+}
+
+@Bean
+@Conditional(OnLinuxCondition.class)
+NativeIo linuxIo() { return new EpollIo(); }
+
+// Or extend SpringBootCondition to give a readable reason in the --debug report
+public class OnFeatureFlagCondition extends SpringBootCondition {
+    @Override
+    public ConditionOutcome getMatchOutcome(ConditionContext context, AnnotatedTypeMetadata metadata) {
+        boolean on = context.getEnvironment().getProperty(&quot;feature.x&quot;, Boolean.class, false);
+        return on ? ConditionOutcome.match(&quot;feature.x is on&quot;) : ConditionOutcome.noMatch(&quot;feature.x is off&quot;);
+    }
+}</code></pre><h2>A real auto-configuration, simplified (how DataSource gets created)</h2><pre><code class="language-java">@AutoConfiguration(before = SqlInitializationAutoConfiguration.class)
+@ConditionalOnClass({ DataSource.class, EmbeddedDatabaseType.class })          // a JDBC API is on the classpath
+@ConditionalOnMissingBean(type = &quot;io.r2dbc.spi.ConnectionFactory&quot;)
+@EnableConfigurationProperties(DataSourceProperties.class)                     // binds spring.datasource.*
+public class DataSourceAutoConfiguration {
+
+    @Configuration(proxyBeanMethods = false)
+    @Conditional(PooledDataSourceCondition.class)                              // url or embedded DB + a pool library present
+    @ConditionalOnMissingBean({ DataSource.class, XADataSource.class })        // BACK OFF if the user defined a DataSource
+    @Import({ DataSourceConfiguration.Hikari.class, DataSourceConfiguration.Tomcat.class, DataSourceConfiguration.Dbcp2.class })
+    protected static class PooledDataSourceConfiguration { }                    // Hikari first, if its class is present
+}</code></pre><p>Read real auto-configuration classes in your IDE (Ctrl+click WebMvcAutoConfiguration). The same handful of annotations repeat in all of them, and the source explains every default better than any tutorial.</p><h2>Tools to inspect and test auto-configuration</h2><pre><code class="language-shell">java -jar app.jar --debug                                   # conditions report at startup
+curl localhost:8080/actuator/conditions | jq &#x27;.contexts[].positiveMatches | keys&#x27;   # needs actuator
+# Unit test for an auto-configuration:
+#   new ApplicationContextRunner().withConfiguration(AutoConfigurations.of(GreetingAutoConfiguration.class))
+#        .withPropertyValues(&quot;greeting.message=Hi&quot;).run(ctx -&gt; assertThat(ctx).hasSingleBean(GreetingService.class));</code></pre><pre><code class="language-java">class GreetingAutoConfigurationTest {
+    private final ApplicationContextRunner runner = new ApplicationContextRunner()
+            .withConfiguration(AutoConfigurations.of(GreetingAutoConfiguration.class));
+
+    @Test
+    void createsDefaultBean() {
+        runner.run(ctx -&gt; assertThat(ctx).hasSingleBean(GreetingService.class));
+    }
+
+    @Test
+    void backsOffWhenUserDefinesOwnBean() {
+        runner.withBean(&quot;myGreeting&quot;, GreetingService.class, () -&gt; new GreetingService(&quot;Own&quot;))
+              .run(ctx -&gt; assertThat(ctx.getBean(GreetingService.class).greet(&quot;x&quot;)).startsWith(&quot;Own&quot;));
+    }
+}</code></pre><p class="use"><b>Common mistake:</b> Putting the auto-configuration class inside a component-scanned package and also in the imports file. Auto-configuration classes should live outside the scanned packages and be registered only in the imports file.</p><h2>Interview questions</h2><h3>Where is the list of auto-configuration classes?</h3><p>In META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports inside spring-boot-autoconfigure and in other starters. Older versions used spring.factories.</p><h3>How do I know why a bean was or was not created?</h3><p>Start the app with --debug or debug=true, or use the Actuator conditions endpoint.</p><h3>How can I disable one auto-configuration?</h3><p>Use exclude in @SpringBootApplication or the property spring.autoconfigure.exclude.</p><h3>Why is @ConditionalOnBean unreliable in my own @Configuration?</h3><p>Bean definitions are registered in configuration parsing order. A condition evaluated before the referenced bean is registered gives a wrong answer. Use these conditions in auto-configuration classes, which are ordered after user configuration.</p><h3>How does Boot avoid loading hundreds of classes at startup?</h3><p>A metadata file lets the import filter check @ConditionalOnClass cheaply without loading the class, so most auto-configurations are dropped before they are parsed.</p><h3>How do I test my own auto-configuration?</h3><p>With ApplicationContextRunner: it starts a tiny context per test, so you can assert which beans exist with which properties and user beans.</p><div class="np"><a href="/springboot/getting-started/first-application/">&larr; Create Your First Spring Boot Project</a><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

@@ -96,7 +96,67 @@ System.out.println(page.getTotalElements() + &quot; total, &quot; + page.getTota
 List&lt;ProductSummary&gt; findByCategory(String category);     // in the repository
 
 public record ProductView(String name, BigDecimal price) { }   // class-based (DTO) projection
-List&lt;ProductView&gt; findViewByCategory(String category);</code></pre><p class="use"><b>Common mistake:</b> Using spring.jpa.hibernate.ddl-auto=update in production. It can change your schema unexpectedly. Use validate together with migrations such as Flyway.</p><h2>Interview questions</h2><h3>What is the difference between CrudRepository and JpaRepository?</h3><p>JpaRepository extends the CRUD and paging repositories and adds JPA-specific methods such as flush() and saveAllAndFlush().</p><h3>When does save() insert and when does it update?</h3><p>If the entity is new (id is null) it inserts. If it has an id that exists, it merges and updates.</p><h3>Derived query or @Query?</h3><p>Use derived methods for simple queries. Use @Query when the method name would be too long or the query is complex.</p><div class="np"><a href="/springboot/web/webflux-reactive/">&larr; Reactive Programming with Spring WebFlux</a><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush &rarr;</a></div></article>
+List&lt;ProductView&gt; findViewByCategory(String category);</code></pre><h2>How an interface becomes a working repository (internal workflow)</h2><pre class="dia"><code>@EnableJpaRepositories (auto-enabled by Boot)
+   └─ JpaRepositoriesRegistrar scans for interfaces extending Repository
+        for each ProductRepository: register a bean definition of type JpaRepositoryFactoryBean
+   ▼ at bean creation:
+   JpaRepositoryFactory.getRepository(ProductRepository.class)
+      1. target object     = SimpleJpaRepository&lt;Product, Long&gt;   (implements save, findById, findAll, delete ... with EntityManager)
+      2. custom fragments  = your *RepositoryImpl classes (if any)
+      3. proxy             = ProxyFactory (JDK proxy of the interface) with interceptors:
+            ├─ TransactionalRepositoryProxyPostProcessor   @Transactional(readOnly=true) on reads
+            ├─ PersistenceExceptionTranslationInterceptor  JPA exceptions -&gt; DataAccessException
+            ├─ QueryExecutorMethodInterceptor              for query methods (findByName, @Query)
+            └─ ImplementationMethodExecutionInterceptor    delegates CRUD calls to SimpleJpaRepository
+   ▼ query method lookup at startup (QueryLookupStrategy CREATE_IF_NOT_FOUND):
+      @Query present?   ─► use it      named query (Product.findByName) exists? ─► use it
+      otherwise: parse the method name with PartTree:  findBy Name And PriceGreaterThan ─► subject / predicate parts ─► JPA Criteria query
+      a method name that cannot be parsed ─► the application FAILS AT STARTUP (&quot;No property xyz found for type Product&quot;)</code></pre><p>Because query methods are validated at startup, typos in property names fail fast. @Query strings are checked when the application starts too (JPQL syntax is validated by Hibernate).</p><h2>Custom repository behavior (fragments)</h2><pre><code class="language-java">public interface ProductRepositoryCustom {
+    List&lt;Product&gt; searchByTerms(List&lt;String&gt; terms);
+}
+
+// The name must be &lt;FragmentInterface&gt;Impl
+public class ProductRepositoryCustomImpl implements ProductRepositoryCustom {
+
+    @PersistenceContext
+    private EntityManager em;
+
+    @Override
+    public List&lt;Product&gt; searchByTerms(List&lt;String&gt; terms) {
+        CriteriaBuilder cb = em.getCriteriaBuilder();
+        CriteriaQuery&lt;Product&gt; query = cb.createQuery(Product.class);
+        Root&lt;Product&gt; root = query.from(Product.class);
+        Predicate[] predicates = terms.stream()
+                .map(t -&gt; cb.like(cb.lower(root.get(&quot;name&quot;)), &quot;%&quot; + t.toLowerCase() + &quot;%&quot;))
+                .toArray(Predicate[]::new);
+        query.select(root).where(cb.or(predicates));
+        return em.createQuery(query).getResultList();
+    }
+}
+
+public interface ProductRepository extends JpaRepository&lt;Product, Long&gt;, ProductRepositoryCustom { }
+// productRepository.searchByTerms(List.of(&quot;pen&quot;, &quot;book&quot;))  now works next to all generated methods</code></pre><h2>Stream large results without loading everything</h2><pre><code class="language-java">public interface ProductRepository extends JpaRepository&lt;Product, Long&gt; {
+    @QueryHints(@QueryHint(name = HINT_FETCH_SIZE, value = &quot;500&quot;))
+    @Query(&quot;select p from Product p&quot;)
+    Stream&lt;Product&gt; streamAll();
+}
+
+@Transactional(readOnly = true)                                   // the stream needs an open transaction
+public void export(Writer out) {
+    try (Stream&lt;Product&gt; products = repository.streamAll()) {     // ALWAYS close: try-with-resources
+        products.forEach(p -&gt; write(out, p));
+    }
+}</code></pre><h2>Query methods by name: the grammar</h2><table><thead><tr><th>Keyword</th><th>JPQL result</th><th>Example</th></tr></thead><tbody><tr><td>And / Or</td><td>and / or</td><td>findByNameAndCategory</td></tr><tr><td>Between</td><td>between ?1 and ?2</td><td>findByPriceBetween(min, max)</td></tr><tr><td>LessThan, GreaterThanEqual</td><td>&lt; , &gt;=</td><td>findByStockLessThan(5)</td></tr><tr><td>IsNull / IsNotNull</td><td>is null</td><td>findByDeletedAtIsNull()</td></tr><tr><td>In / NotIn</td><td>in (?1)</td><td>findByCategoryIn(List&lt;String&gt;)</td></tr><tr><td>Like / Containing / StartingWith / EndingWith</td><td>like</td><td>findByNameStartingWithIgnoreCase</td></tr><tr><td>True / False</td><td>= true</td><td>findByActiveTrue()</td></tr><tr><td>OrderBy...Asc/Desc</td><td>order by</td><td>findByCategoryOrderByPriceDesc</td></tr><tr><td>Top / First / Distinct</td><td>limit / distinct</td><td>findTop5ByCategoryOrderByPriceAsc</td></tr><tr><td>Nested property</td><td>join on a relation</td><td>findByCustomerAddressCity(String city)</td></tr></tbody></table><h2>Typical exceptions</h2><table><thead><tr><th>Exception</th><th>Meaning</th></tr></thead><tbody><tr><td>DataIntegrityViolationException</td><td>Constraint failed: unique key, not null, foreign key. Map it to 409 or 400</td></tr><tr><td>EmptyResultDataAccessException</td><td>deleteById or single result method found nothing</td></tr><tr><td>IncorrectResultSizeDataAccessException</td><td>A method returning one item found several</td></tr><tr><td>ObjectOptimisticLockingFailureException</td><td>Version conflict with @Version</td></tr><tr><td>InvalidDataAccessApiUsageException</td><td>Wrong API usage, for example a modifying query without @Modifying or a transaction</td></tr><tr><td>PropertyReferenceException</td><td>Query method name refers to a property that does not exist (startup failure)</td></tr></tbody></table><pre><code class="language-java">@DataJpaTest                                                // slice: only JPA, embedded database, rolls back after each test
+class ProductRepositoryTest {
+    @Autowired ProductRepository repository;
+
+    @Test
+    void findsTopThreeByPrice() {
+        repository.saveAll(List.of(new Product(&quot;A&quot;, new BigDecimal(&quot;10&quot;), &quot;x&quot;), new Product(&quot;B&quot;, new BigDecimal(&quot;30&quot;), &quot;x&quot;),
+                                   new Product(&quot;C&quot;, new BigDecimal(&quot;20&quot;), &quot;x&quot;), new Product(&quot;D&quot;, new BigDecimal(&quot;5&quot;), &quot;x&quot;)));
+        assertThat(repository.findTop3ByOrderByPriceDesc()).extracting(Product::getName).containsExactly(&quot;B&quot;, &quot;C&quot;, &quot;A&quot;);
+    }
+}</code></pre><p class="use"><b>Common mistake:</b> Using spring.jpa.hibernate.ddl-auto=update in production. It can change your schema unexpectedly. Use validate together with migrations such as Flyway.</p><h2>Interview questions</h2><h3>What is the difference between CrudRepository and JpaRepository?</h3><p>JpaRepository extends the CRUD and paging repositories and adds JPA-specific methods such as flush() and saveAllAndFlush().</p><h3>When does save() insert and when does it update?</h3><p>If the entity is new (id is null) it inserts. If it has an id that exists, it merges and updates.</p><h3>Derived query or @Query?</h3><p>Use derived methods for simple queries. Use @Query when the method name would be too long or the query is complex.</p><h3>Why does my application fail at startup with &#x27;No property xyz found&#x27;?</h3><p>A derived query method uses a name that does not match an entity property. Spring Data parses method names at startup and fails fast.</p><h3>Do repository methods run inside a transaction?</h3><p>Yes. Read methods use readOnly transactions and write methods use normal ones (from SimpleJpaRepository). Your service @Transactional usually wraps them into one bigger transaction.</p><div class="np"><a href="/springboot/web/webflux-reactive/">&larr; Reactive Programming with Spring WebFlux</a><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

@@ -100,7 +100,55 @@ public class OrderService {
 public class OrderListener {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)   // only after a successful commit
     public void on(OrderPlacedEvent event) { System.out.println(&quot;Send email for &quot; + event.orderId()); }
-}</code></pre><p class="use"><b>Common mistake:</b> Caching mutable entities that are changed later or caching without expiry. Users see old data, and memory grows. Cache immutable, frequently read data with a time-to-live.</p><h2>Interview questions</h2><h3>fixedRate or fixedDelay?</h3><p>fixedRate starts a run at fixed intervals regardless of the last run. fixedDelay waits the given time after the previous run finished.</p><h3>Why does @Cacheable not work?</h3><p>Common reasons: @EnableCaching is missing, the method is called from the same class, the method is private, or the key is different than expected.</p><h3>Can @Async and @Transactional be combined?</h3><p>Yes, but the async method starts its own transaction on a new thread. It does not join the caller&#x27;s transaction.</p><div class="np"><a href="/springboot/production/testing/">&larr; Testing Spring Boot Applications</a><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method &rarr;</a></div></article>
+}</code></pre><h2>Cache internals: what happens on a @Cacheable call</h2><pre class="dia"><code>caller ─► proxy ─► CacheInterceptor
+   1. resolve the caches (cacheNames) with CacheResolver / CacheManager   (ConcurrentMapCacheManager, CaffeineCacheManager, RedisCacheManager)
+   2. compute the KEY: your SpEL key, or KeyGenerator (default SimpleKeyGenerator: no args = SimpleKey.EMPTY, one arg = the arg, many = SimpleKey of all)
+   3. condition (SpEL) false ─► skip caching entirely
+   4. cache.get(key) found ─► return the cached value, method is NOT called
+   5. miss ─► call the method ─► unless (SpEL on #result) true ─► do not store ─► else cache.put(key, result)
+   @CacheEvict / @CachePut run before or after as configured (beforeInvocation)</code></pre><h2>Stampede: many threads miss at the same time</h2><pre><code class="language-java">@Cacheable(cacheNames = &quot;prices&quot;, key = &quot;#sku&quot;, sync = true)      // only ONE thread computes, the others wait for the result
+public Price loadPrice(String sku) { return slowPricingApi.fetch(sku); }
+
+@Cacheable(cacheNames = &quot;users&quot;, key = &quot;#id&quot;, unless = &quot;#result == null&quot;, condition = &quot;#id &gt; 0&quot;)
+public User findUser(long id) { return repository.findById(id).orElse(null); }     // do not cache null results</code></pre><h2>Different TTL per cache (Caffeine)</h2><pre><code class="language-java">@Configuration
+@EnableCaching
+public class CacheConfig {
+    @Bean
+    CacheManager cacheManager() {
+        SimpleCacheManager manager = new SimpleCacheManager();
+        manager.setCaches(List.of(
+            new CaffeineCache(&quot;prices&quot;, Caffeine.newBuilder().maximumSize(10_000).expireAfterWrite(Duration.ofMinutes(5)).recordStats().build()),
+            new CaffeineCache(&quot;countries&quot;, Caffeine.newBuilder().maximumSize(300).expireAfterWrite(Duration.ofHours(24)).build())));
+        return manager;
+    }
+
+    @Bean
+    KeyGenerator tenantKeyGenerator() {
+        return (target, method, params) -&gt; TenantContext.current() + &quot;:&quot; + method.getName() + &quot;:&quot; + Arrays.deepToString(params);
+    }
+}</code></pre><table><thead><tr><th>Cache rule</th><th>Why</th></tr></thead><tbody><tr><td>Cache immutable or slowly changing data</td><td>Stale data is the main cache bug</td></tr><tr><td>Always set maximum size and TTL</td><td>Otherwise memory grows and data never refreshes</td></tr><tr><td>Design the key: include tenant, locale, user when the result depends on them</td><td>Wrong keys leak data between users</td></tr><tr><td>Evict on update or use a short TTL</td><td>Keep it consistent</td></tr><tr><td>Remember: local cache per instance</td><td>Instances can show different values. Use Redis for shared state</td></tr></tbody></table><h2>Scheduling internals and cluster safety</h2><pre class="dia"><code>@EnableScheduling ─► ScheduledAnnotationBeanPostProcessor finds @Scheduled methods ─► registers them in a TaskScheduler
+Boot&#x27;s default scheduler has ONE thread (spring.task.scheduling.pool.size=1): a job that runs long delays all the others.
+Three instances of your app = every job runs THREE times (there is no coordination).</code></pre><pre><code class="language-java">// ShedLock: only one instance runs the job at a time (lock stored in a database table or Redis)
+@Component
+public class NightlyJobs {
+
+    @Scheduled(cron = &quot;0 0 2 * * *&quot;, zone = &quot;Asia/Kolkata&quot;)
+    @SchedulerLock(name = &quot;nightlyReport&quot;, lockAtMostFor = &quot;PT30M&quot;, lockAtLeastFor = &quot;PT1M&quot;)
+    public void nightlyReport() { /* runs on ONE instance */ }
+}
+// needs @EnableSchedulerLock(defaultLockAtMostFor = &quot;PT10M&quot;) and a LockProvider bean (JdbcTemplateLockProvider or RedisLockProvider)
+// On Kubernetes an alternative is a CronJob that starts a separate short-lived pod or a call to an internal endpoint.</code></pre><h2>Async internals</h2><ul><li>@EnableAsync adds an AsyncAnnotationBeanPostProcessor that wraps beans with @Async methods in a proxy (self invocation does not work).</li><li>The proxy submits the call to an Executor. Boot provides applicationTaskExecutor (spring.task.execution.pool.core-size, max-size, queue-capacity). If the queue is full and max-size is reached, RejectedExecutionException is thrown.</li><li>With virtual threads enabled (spring.threads.virtual.enabled=true) the auto-configured executor uses virtual threads.</li><li>Exceptions in void @Async methods go to an AsyncUncaughtExceptionHandler. Methods returning CompletableFuture deliver the exception through the future.</li></ul><pre><code class="language-java">@Configuration
+@EnableAsync
+public class AsyncConfig implements AsyncConfigurer {
+
+    @Override
+    public AsyncUncaughtExceptionHandler getAsyncUncaughtExceptionHandler() {
+        return (ex, method, params) -&gt; log.error(&quot;Async method {} failed with args {}&quot;, method.getName(), Arrays.toString(params), ex);
+    }
+}
+
+@Async(&quot;reportExecutor&quot;)                                   // choose a specific executor bean by name
+public CompletableFuture&lt;Report&gt; buildReport(long id) { return CompletableFuture.completedFuture(generate(id)); }</code></pre><p class="use"><b>Common mistake:</b> Caching mutable entities that are changed later or caching without expiry. Users see old data, and memory grows. Cache immutable, frequently read data with a time-to-live.</p><h2>Interview questions</h2><h3>fixedRate or fixedDelay?</h3><p>fixedRate starts a run at fixed intervals regardless of the last run. fixedDelay waits the given time after the previous run finished.</p><h3>Why does @Cacheable not work?</h3><p>Common reasons: @EnableCaching is missing, the method is called from the same class, the method is private, or the key is different than expected.</p><h3>Can @Async and @Transactional be combined?</h3><p>Yes, but the async method starts its own transaction on a new thread. It does not join the caller&#x27;s transaction.</p><h3>Why does @Cacheable(sync = true) matter?</h3><p>Without it, when a popular entry expires, many threads call the slow method at once (cache stampede). With sync=true, one thread loads the value and the others wait.</p><h3>How do I run a @Scheduled job only once in a cluster?</h3><p>Use a distributed lock such as ShedLock, a Quartz cluster, or run the job as a separate Kubernetes CronJob.</p><div class="np"><a href="/springboot/production/testing/">&larr; Testing Spring Boot Applications</a><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

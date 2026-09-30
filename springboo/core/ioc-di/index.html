@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>IoC Container and Dependency Injection – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="Inversion of Control (IoC) means you do not create your objects with new.">
+    <link rel="canonical" href="https://ashokka.com/springboot/core/ioc-di/">
+    <meta property="og:title" content="IoC Container and Dependency Injection – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/" aria-current="page">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/core/">Core Concepts</a> / IoC Container and Dependency Injection</div>
+<h1>IoC Container and Dependency Injection</h1><p>Inversion of Control (IoC) means you do not create your objects with new. The Spring container creates them (called beans), keeps them and gives them to the classes that need them. Giving a bean its dependencies is called Dependency Injection (DI).</p><h2>The idea</h2><pre class="dia"><code>WITHOUT DI                              WITH DI (Spring)
+class OrderService {                     class OrderService {
+    PaymentService p = new PaymentService();     private final PaymentService p;
+}                                                OrderService(PaymentService p) { this.p = p; }
+ tightly coupled, hard to test           }   Spring creates and injects PaymentService</code></pre><h2>Stereotype annotations</h2><table><thead><tr><th>Annotation</th><th>Use for</th><th>Extra</th></tr></thead><tbody><tr><td>@Component</td><td>Any generic bean</td><td>Base annotation</td></tr><tr><td>@Service</td><td>Business logic</td><td>Only a naming meaning</td></tr><tr><td>@Repository</td><td>Database access classes</td><td>Translates database exceptions to Spring DataAccessException</td></tr><tr><td>@Controller / @RestController</td><td>Web layer</td><td>@RestController = @Controller + @ResponseBody</td></tr><tr><td>@Configuration</td><td>Classes with @Bean methods</td><td>Processed specially (proxied)</td></tr></tbody></table><h2>Three ways to inject</h2><pre><code class="language-java">@Service
+public class OrderService {
+
+    private final PaymentService paymentService;       // final = cannot be changed
+
+    // 1. Constructor injection (recommended). @Autowired is optional with one constructor
+    public OrderService(PaymentService paymentService) {
+        this.paymentService = paymentService;
+    }
+}
+
+// 2. Setter injection (for optional dependencies)
+//    @Autowired public void setX(X x) { this.x = x; }
+// 3. Field injection (avoid: hard to test, hides dependencies)
+//    @Autowired private X x;</code></pre><p>Why constructor injection? The dependencies are required and visible, fields can be final (immutable), and you can create the class in a unit test with plain new and mock objects, without Spring.</p><h2>Two implementations of one interface</h2><pre><code class="language-java">public interface PaymentService { String pay(int amount); }
+
+@Service
+@Primary                                  // chosen when nothing else is specified
+public class UpiPaymentService implements PaymentService {
+    public String pay(int amount) { return &quot;Paid &quot; + amount + &quot; by UPI&quot;; }
+}
+
+@Service(&quot;card&quot;)                          // bean name
+public class CardPaymentService implements PaymentService {
+    public String pay(int amount) { return &quot;Paid &quot; + amount + &quot; by card&quot;; }
+}
+
+@Service
+public class CheckoutService {
+    private final PaymentService defaultPayment;
+    private final PaymentService cardPayment;
+    private final Map&lt;String, PaymentService&gt; all;          // all beans by name
+    private final List&lt;PaymentService&gt; list;                // all beans as a list
+
+    public CheckoutService(PaymentService defaultPayment,
+                           @Qualifier(&quot;card&quot;) PaymentService cardPayment,
+                           Map&lt;String, PaymentService&gt; all,
+                           List&lt;PaymentService&gt; list) {
+        this.defaultPayment = defaultPayment;
+        this.cardPayment = cardPayment;
+        this.all = all;
+        this.list = list;
+    }
+}</code></pre><h2>Optional and lazy dependencies</h2><pre><code class="language-java">@Service
+public class ReportService {
+    private final ObjectProvider&lt;EmailService&gt; emailProvider;
+
+    public ReportService(ObjectProvider&lt;EmailService&gt; emailProvider) {
+        this.emailProvider = emailProvider;
+    }
+
+    public void send() {
+        emailProvider.ifAvailable(EmailService::sendReport);   // no error if the bean is missing
+    }
+}</code></pre><h2>Circular dependencies</h2><p>If A needs B and B needs A, Spring cannot create them with constructor injection. Since Spring Boot 2.6 circular references are not allowed by default and the application fails to start with a clear message. The correct fix is to change the design (move shared logic to a third bean). @Lazy on one parameter is only a workaround.</p><p class="use"><b>Common mistake:</b> Using field injection with @Autowired everywhere. The class cannot be created without Spring in a unit test and the number of dependencies is hidden. Use constructor injection.</p><h2>Interview questions</h2><h3>What is the difference between @Component, @Service and @Repository?</h3><p>All three register a bean. @Service and @Controller are for readability. @Repository additionally translates persistence exceptions.</p><h3>What happens when two beans match the type?</h3><p>You get NoUniqueBeanDefinitionException. Fix it with @Primary, @Qualifier, or by injecting a List or Map.</p><h3>What is the ApplicationContext?</h3><p>It is the IoC container. It creates beans, injects dependencies, publishes events and reads configuration.</p><div class="np"><a href="/springboot/getting-started/starters-and-dependencies/">&larr; Starters and Dependency Management</a><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

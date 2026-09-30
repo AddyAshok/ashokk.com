@@ -74,7 +74,91 @@ scrape_configs:
     static_configs:
       - targets: [&#x27;localhost:9090&#x27;]</code></pre><p>Prometheus collects the metrics and Grafana draws dashboards. Alert on error rate, response time (p95, p99), JVM memory, and database pool usage (hikaricp.connections.active).</p><h2>Info endpoint</h2><pre><code class="language-properties">management.info.env.enabled=true
 info.app.name=shop
-info.app.version=1.0.0</code></pre><p class="use"><b>Common mistake:</b> Exposing all Actuator endpoints (include=*) on the public internet. env, heapdump and beans can leak secrets and internals. Expose only what you need and secure them.</p><h2>Interview questions</h2><h3>What is the difference between liveness and readiness?</h3><p>Liveness tells whether the application should be restarted. Readiness tells whether it can receive traffic right now, for example after startup or during a database outage.</p><h3>What is Micrometer?</h3><p>The metrics facade used by Spring Boot, like SLF4J for metrics. It sends the same metrics to Prometheus, Datadog, CloudWatch and others.</p><h3>How do I trace a request across services?</h3><p>Add Micrometer Tracing with OpenTelemetry. Every request gets a trace id that is passed between services and shown in the logs.</p><div class="np"><a href="/springboot/production/logging/">&larr; Logging</a><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing &rarr;</a></div></article>
+info.app.version=1.0.0</code></pre><h2>How endpoints work internally</h2><pre class="dia"><code>@Endpoint(id = &quot;features&quot;)  ─►  technology neutral endpoint model (operations: read, write, delete)
+                                       ├─ web exposure:  WebEndpointDiscoverer  ─► /actuator/features   (HTTP, when exposed via management.endpoints.web.exposure.include)
+                                       └─ JMX exposure:  JmxEndpointDiscoverer  ─► MBean
+Two switches per endpoint: ENABLED (exists) and EXPOSED (reachable over HTTP or JMX). Only health is exposed over HTTP by default.</code></pre><h2>Write your own endpoint</h2><pre><code class="language-java">@Component
+@Endpoint(id = &quot;features&quot;)
+public class FeaturesEndpoint {
+
+    private final Map&lt;String, Boolean&gt; flags = new ConcurrentHashMap&lt;&gt;(Map.of(&quot;new-checkout&quot;, true, &quot;beta-search&quot;, false));
+
+    @ReadOperation                                                      // GET /actuator/features
+    public Map&lt;String, Boolean&gt; all() { return flags; }
+
+    @ReadOperation                                                      // GET /actuator/features/new-checkout
+    public Boolean one(@Selector String name) { return flags.get(name); }
+
+    @WriteOperation                                                     // POST /actuator/features/new-checkout  {&quot;enabled&quot;: false}
+    public void set(@Selector String name, boolean enabled) { flags.put(name, enabled); }
+}
+// management.endpoints.web.exposure.include=health,info,features</code></pre><h2>Health groups and probes</h2><pre><code class="language-properties">management.endpoint.health.probes.enabled=true
+management.endpoint.health.group.readiness.include=readinessState,db,redis      # what makes the app &quot;not ready&quot;
+management.endpoint.health.group.liveness.include=livenessState                 # keep liveness simple: only &quot;the process works&quot;
+management.endpoint.health.show-components=always
+management.health.diskspace.enabled=true</code></pre><p>Never put the database in the liveness group. A database outage would make Kubernetes restart every pod, which only makes things worse. Put it in readiness so traffic stops but pods stay alive.</p><h2>Info: build and git data</h2><pre><code class="language-xml">&lt;plugin&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-maven-plugin&lt;/artifactId&gt;
+    &lt;executions&gt;&lt;execution&gt;&lt;goals&gt;&lt;goal&gt;build-info&lt;/goal&gt;&lt;/goals&gt;&lt;/execution&gt;&lt;/executions&gt;   &lt;!-- META-INF/build-info.properties --&gt;
+&lt;/plugin&gt;
+&lt;plugin&gt;
+    &lt;groupId&gt;io.github.git-commit-id&lt;/groupId&gt;
+    &lt;artifactId&gt;git-commit-id-maven-plugin&lt;/artifactId&gt;                                     &lt;!-- git.properties --&gt;
+&lt;/plugin&gt;</code></pre><pre><code class="language-properties">management.info.git.mode=full
+management.info.build.enabled=true
+management.info.env.enabled=true
+info.team=payments</code></pre><h2>Micrometer meter types</h2><pre><code class="language-java">@Component
+public class QueueMetrics {
+
+    public QueueMetrics(MeterRegistry registry, BlockingQueue&lt;Job&gt; queue) {
+        Gauge.builder(&quot;jobs.queue.size&quot;, queue, BlockingQueue::size).description(&quot;Jobs waiting&quot;).register(registry);   // current value, goes up and down
+    }
+}
+
+@Service
+public class PaymentService {
+    private final Counter failures;
+    private final Timer latency;
+    private final DistributionSummary amounts;
+
+    public PaymentService(MeterRegistry registry) {
+        this.failures = Counter.builder(&quot;payments.failed&quot;).tag(&quot;gateway&quot;, &quot;razorpay&quot;).register(registry);           // only increases
+        this.latency = Timer.builder(&quot;payments.latency&quot;).publishPercentileHistogram().register(registry);          // duration and count, percentiles
+        this.amounts = DistributionSummary.builder(&quot;payments.amount&quot;).baseUnit(&quot;inr&quot;).register(registry);          // size distribution
+    }
+
+    public void pay(BigDecimal amount) {
+        latency.record(() -&gt; {
+            try { /* call gateway */ amounts.record(amount.doubleValue()); }
+            catch (RuntimeException e) { failures.increment(); throw e; }
+        });
+    }
+}</code></pre><pre><code class="language-properties">management.metrics.distribution.percentiles-histogram.http.server.requests=true    # enables histogram buckets for p95/p99 in Prometheus
+management.metrics.tags.application=${spring.application.name}                         # tag on every metric</code></pre><h2>Secure Actuator with Spring Security</h2><pre><code class="language-java">@Bean
+@Order(1)
+SecurityFilterChain actuator(HttpSecurity http) throws Exception {
+    http.securityMatcher(EndpointRequest.toAnyEndpoint())
+        .authorizeHttpRequests(a -&gt; a
+            .requestMatchers(EndpointRequest.to(&quot;health&quot;, &quot;info&quot;)).permitAll()
+            .requestMatchers(EndpointRequest.to(&quot;prometheus&quot;)).hasRole(&quot;MONITORING&quot;)
+            .anyRequest().hasRole(&quot;ADMIN&quot;))
+        .httpBasic(Customizer.withDefaults());
+    return http.build();
+}</code></pre><h2>Alert rules that matter (Prometheus)</h2><pre><code class="language-yaml">groups:
+- name: shop
+  rules:
+  - alert: HighErrorRate
+    expr: sum(rate(http_server_requests_seconds_count{status=~&quot;5..&quot;}[5m])) / sum(rate(http_server_requests_seconds_count[5m])) &gt; 0.02
+    for: 5m
+  - alert: SlowRequestsP99
+    expr: histogram_quantile(0.99, sum(rate(http_server_requests_seconds_bucket[5m])) by (le)) &gt; 1
+    for: 10m
+  - alert: DbPoolWaiting
+    expr: hikaricp_connections_pending &gt; 0
+    for: 2m
+  - alert: HeapAlmostFull
+    expr: sum(jvm_memory_used_bytes{area=&quot;heap&quot;}) / sum(jvm_memory_max_bytes{area=&quot;heap&quot;}) &gt; 0.9
+    for: 10m</code></pre><p class="use"><b>Common mistake:</b> Exposing all Actuator endpoints (include=*) on the public internet. env, heapdump and beans can leak secrets and internals. Expose only what you need and secure them.</p><h2>Interview questions</h2><h3>What is the difference between liveness and readiness?</h3><p>Liveness tells whether the application should be restarted. Readiness tells whether it can receive traffic right now, for example after startup or during a database outage.</p><h3>What is Micrometer?</h3><p>The metrics facade used by Spring Boot, like SLF4J for metrics. It sends the same metrics to Prometheus, Datadog, CloudWatch and others.</p><h3>How do I trace a request across services?</h3><p>Add Micrometer Tracing with OpenTelemetry. Every request gets a trace id that is passed between services and shown in the logs.</p><h3>Why should the readiness group contain the database but liveness not?</h3><p>If liveness fails, the platform restarts the pod. A database outage would restart all pods without fixing anything. Readiness only removes the pod from load balancing.</p><h3>Is /actuator/prometheus safe to expose?</h3><p>It leaks internal names and traffic data. Expose it only on a private management port or protect it with authentication.</p><div class="np"><a href="/springboot/production/logging/">&larr; Logging</a><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

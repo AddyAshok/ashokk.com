@@ -72,7 +72,58 @@ public class ReportService {
             // status.setRollbackOnly();   // roll back manually
         });
     }
-}</code></pre><p class="use"><b>Common mistake:</b> Calling a @Transactional method from another method of the same class. The proxy is bypassed, so no transaction is started. Move it to a separate bean.</p><h2>Interview questions</h2><h3>What is the default rollback behavior?</h3><p>Rollback for RuntimeException and Error. Checked exceptions commit unless you set rollbackFor.</p><h3>What is the difference between REQUIRED and REQUIRES_NEW?</h3><p>REQUIRED joins the existing transaction. REQUIRES_NEW suspends it and creates a separate one that commits or rolls back independently.</p><h3>Why does @Transactional not work on private methods?</h3><p>The proxy can only intercept calls that come from outside through public (or protected) methods.</p><div class="np"><a href="/springboot/data/jpa-advanced/">&larr; Advanced JPA: Specifications, Auditing, Locking and Mapping</a><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot &rarr;</a></div></article>
+}</code></pre><h2>Internal workflow of a @Transactional call</h2><pre class="dia"><code>caller ─► proxy of TransferService.transfer()
+   TransactionInterceptor.invokeWithinTransaction
+     1. TransactionAttributeSource: read @Transactional (propagation, isolation, readOnly, rollbackFor, timeout) from method or class
+     2. choose the PlatformTransactionManager  (JpaTransactionManager for JPA, DataSourceTransactionManager for JDBC)
+     3. tm.getTransaction(definition)
+          ├─ existing transaction bound to this thread?  yes ─► apply PROPAGATION rules (join, suspend, create new)
+          └─ no ─► create: get a JDBC Connection from the pool, setAutoCommit(false), set isolation / read-only,
+                   create the EntityManager, and BIND both to the thread with TransactionSynchronizationManager (ThreadLocal maps)
+     4. invoke your method
+          └─ every repository / JdbcTemplate call asks TransactionSynchronizationManager for the bound Connection / EntityManager
+             ─► ALL calls in the method use the SAME connection = the same database transaction
+     5a. normal return  ─► tm.commit(): flush the persistence context (INSERT/UPDATE statements), COMMIT, run afterCommit callbacks, release the connection
+     5b. exception      ─► rollbackOn(ex)? (RuntimeException/Error or rollbackFor) yes ─► ROLLBACK, else COMMIT
+     6. unbind resources, return the connection to the Hikari pool</code></pre><p>The transaction is tied to the THREAD. New threads (@Async, parallel streams, CompletableFuture) do not share it. Each of them gets its own connection and its own transaction, or none.</p><h2>The rollback-only trap</h2><pre><code class="language-java">@Service
+class OrderService {
+    private final PaymentService payments;      // has @Transactional too (propagation REQUIRED)
+    OrderService(PaymentService payments) { this.payments = payments; }
+
+    @Transactional
+    public void place(Order order) {
+        try {
+            payments.charge(order);             // throws RuntimeException: the inner proxy marks the SHARED transaction rollback-only
+        } catch (RuntimeException e) {
+            log.warn(&quot;payment failed, continuing&quot;, e);      // you swallowed it, but the transaction is already doomed
+        }
+        saveOrder(order);
+    }   // commit fails with UnexpectedRollbackException: Transaction silently rolled back because it has been marked as rollback-only
+}
+// Fixes: let the exception propagate, OR give charge() propagation = REQUIRES_NEW (own transaction that can fail alone),
+//        OR do not use a shared transaction for that step.</code></pre><h2>Run code after commit (emails, messages)</h2><pre><code class="language-java">@Transactional
+public void register(String email) {
+    userRepository.save(new AppUser(email));
+    TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronization() {
+        @Override
+        public void afterCommit() {
+            mailSender.sendWelcome(email);      // only if the transaction really committed
+        }
+    });
+}
+// Simpler and testable: publish an event and use @TransactionalEventListener(phase = AFTER_COMMIT)</code></pre><h2>Isolation demo: lost update and how to avoid it</h2><pre class="dia"><code>Two transactions, balance = 100, both do:  read balance ─► balance - 30 ─► write
+
+ T1: read 100                      T2: read 100
+ T1: write 70   COMMIT             T2: write 70   COMMIT      ◄── result 70, should be 40  (LOST UPDATE)
+
+Solutions:
+ 1. Atomic SQL:       update account set balance = balance - 30 where id = ? and balance &gt;= 30       (no read-modify-write in Java)
+ 2. Optimistic lock:  @Version column ─► the second commit fails with ObjectOptimisticLockingFailureException ─► retry
+ 3. Pessimistic lock: select ... for update ─► T2 waits until T1 commits
+ 4. SERIALIZABLE isolation (last resort: retries on serialization failures needed)</code></pre><pre><code class="language-java">// Option 1 in Spring Data
+@Modifying
+@Query(&quot;update Account a set a.balance = a.balance - :amount where a.id = :id and a.balance &gt;= :amount&quot;)
+int withdraw(@Param(&quot;id&quot;) Long id, @Param(&quot;amount&quot;) BigDecimal amount);      // returns 0 if the balance was too low</code></pre><h2>Transactions and testing</h2><ul><li>@Transactional on a test method rolls back after the test. It keeps tests independent, but it also hides commit-time problems (constraint checks, afterCommit listeners, flush errors). Call repository.flush() to force SQL, and write some tests without @Transactional (use cleanup) for real commit behavior.</li><li>With @SpringBootTest(webEnvironment = RANDOM_PORT) the test client runs on another thread, so the test transaction does NOT cover the server side.</li></ul><h2>Distributed transactions</h2><p>A database transaction covers one database. Saving to your database AND sending a Kafka message is two systems. Do not rely on XA/2PC for this. Use the transactional outbox pattern: write the event to an outbox table in the same database transaction, and let a poller or Debezium publish it. Consumers must be idempotent.</p><p class="use"><b>Common mistake:</b> Calling a @Transactional method from another method of the same class. The proxy is bypassed, so no transaction is started. Move it to a separate bean.</p><h2>Interview questions</h2><h3>What is the default rollback behavior?</h3><p>Rollback for RuntimeException and Error. Checked exceptions commit unless you set rollbackFor.</p><h3>What is the difference between REQUIRED and REQUIRES_NEW?</h3><p>REQUIRED joins the existing transaction. REQUIRES_NEW suspends it and creates a separate one that commits or rolls back independently.</p><h3>Why does @Transactional not work on private methods?</h3><p>The proxy can only intercept calls that come from outside through public (or protected) methods.</p><h3>Why does @Transactional not roll back on a checked exception?</h3><p>By default only RuntimeException and Error trigger rollback. Use rollbackFor = Exception.class, or throw unchecked exceptions.</p><h3>What is UnexpectedRollbackException?</h3><p>The transaction was marked rollback-only by an inner call or a caught exception, and the outer method tried to commit. Let the exception propagate or isolate the inner step with REQUIRES_NEW.</p><div class="np"><a href="/springboot/data/jpa-advanced/">&larr; Advanced JPA: Specifications, Auditing, Locking and Mapping</a><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

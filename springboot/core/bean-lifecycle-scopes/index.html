@@ -79,7 +79,49 @@ public class StartupRunner implements ApplicationRunner {
 public class ReadyListener {
     @EventListener(ApplicationReadyEvent.class)
     public void onReady() { System.out.println(&quot;Ready to accept requests&quot;); }
-}</code></pre><p class="use"><b>Common mistake:</b> Keeping user-specific state in fields of a singleton bean (for example the current user name). All requests share the same instance, so data mixes between users. Keep singletons stateless.</p><h2>Interview questions</h2><h3>Is a Spring singleton the same as the singleton design pattern?</h3><p>No. A Spring singleton is one instance per container. The design pattern is one instance per JVM/class loader.</p><h3>When should I use @PostConstruct?</h3><p>For initialization that needs injected dependencies, for example loading data into a cache. The constructor runs before injection is finished.</p><h3>What is the difference between @Bean and @Component?</h3><p>@Component is put on your own class and found by scanning. @Bean is a method in a configuration class, useful for third-party classes you cannot annotate.</p><div class="np"><a href="/springboot/core/ioc-di/">&larr; IoC Container and Dependency Injection</a><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles &rarr;</a></div></article>
+}</code></pre><h2>See the lifecycle order in a log</h2><pre><code class="language-java">@Component
+public class LifecycleDemo implements BeanNameAware, ApplicationContextAware, InitializingBean, DisposableBean, SmartInitializingSingleton {
+
+    public LifecycleDemo() { System.out.println(&quot;1 constructor&quot;); }
+    @Autowired public void setEnvironment(Environment env) { System.out.println(&quot;2 dependency injected&quot;); }
+    @Override public void setBeanName(String name) { System.out.println(&quot;3 BeanNameAware: &quot; + name); }
+    @Override public void setApplicationContext(ApplicationContext ctx) { System.out.println(&quot;4 ApplicationContextAware&quot;); }
+    @PostConstruct public void postConstruct() { System.out.println(&quot;5 @PostConstruct&quot;); }
+    @Override public void afterPropertiesSet() { System.out.println(&quot;6 afterPropertiesSet&quot;); }
+    @Override public void afterSingletonsInstantiated() { System.out.println(&quot;7 all singletons ready&quot;); }
+    @PreDestroy public void preDestroy() { System.out.println(&quot;8 @PreDestroy&quot;); }
+    @Override public void destroy() { System.out.println(&quot;9 DisposableBean.destroy&quot;); }
+}</code></pre><pre><code class="language-text">1 constructor
+2 dependency injected
+3 BeanNameAware: lifecycleDemo
+4 ApplicationContextAware
+5 @PostConstruct
+6 afterPropertiesSet
+7 all singletons ready          (after ALL singleton beans are created)
+... application runs ...
+8 @PreDestroy                   (on shutdown: destruction happens in the reverse order of creation)
+9 DisposableBean.destroy</code></pre><table><thead><tr><th>Aware interface</th><th>Gives your bean</th></tr></thead><tbody><tr><td>BeanNameAware</td><td>Its own bean name</td></tr><tr><td>BeanFactoryAware / ApplicationContextAware</td><td>The container (use rarely: it couples you to Spring)</td></tr><tr><td>EnvironmentAware</td><td>Properties and profiles</td></tr><tr><td>ResourceLoaderAware</td><td>Load classpath: and file: resources</td></tr><tr><td>ApplicationEventPublisherAware</td><td>Publish events</td></tr></tbody></table><h2>Request scope inside a singleton: scoped proxies</h2><pre><code class="language-java">@Component
+@RequestScope                                   // = @Scope(value = &quot;request&quot;, proxyMode = ScopedProxyMode.TARGET_CLASS)
+public class RequestContext {
+    private String correlationId = UUID.randomUUID().toString();
+    public String getCorrelationId() { return correlationId; }
+}
+
+@Service                                        // singleton
+public class AuditService {
+    private final RequestContext context;       // a PROXY is injected once. Each call is routed to the bean of the CURRENT request
+    public AuditService(RequestContext context) { this.context = context; }
+    public void log(String msg) { System.out.println(context.getCorrelationId() + &quot; &quot; + msg); }
+}</code></pre><h2>Ordered start and stop: SmartLifecycle</h2><pre><code class="language-java">@Component
+public class QueueConsumerLifecycle implements SmartLifecycle {
+
+    private volatile boolean running;
+
+    @Override public void start() { running = true; /* start consuming */ }
+    @Override public void stop() { running = false; /* finish current work, close resources */ }
+    @Override public boolean isRunning() { return running; }
+    @Override public int getPhase() { return Integer.MAX_VALUE - 100; }      // start late, stop EARLY (reverse order on shutdown)
+}</code></pre><p>On shutdown the order is: web server stops accepting requests (graceful shutdown), lifecycle beans stop from the highest phase to the lowest, then singleton beans are destroyed in reverse creation order. This is why a consumer with a high phase stops before the database pool closes.</p><h2>Choosing the right scope</h2><table><thead><tr><th>Need</th><th>Use</th></tr></thead><tbody><tr><td>Stateless service, repository, controller</td><td>singleton (default). No mutable instance state</td></tr><tr><td>Object with per-use state that Spring should create</td><td>prototype via ObjectProvider or @Lookup</td></tr><tr><td>Data of one HTTP request</td><td>@RequestScope</td></tr><tr><td>User data across requests</td><td>@SessionScope (or, better, keep it in a database or cache)</td></tr><tr><td>Thread-confined data</td><td>Avoid ThreadLocal in singletons with thread pools, or clear it in a finally block</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Keeping user-specific state in fields of a singleton bean (for example the current user name). All requests share the same instance, so data mixes between users. Keep singletons stateless.</p><h2>Interview questions</h2><h3>Is a Spring singleton the same as the singleton design pattern?</h3><p>No. A Spring singleton is one instance per container. The design pattern is one instance per JVM/class loader.</p><h3>When should I use @PostConstruct?</h3><p>For initialization that needs injected dependencies, for example loading data into a cache. The constructor runs before injection is finished.</p><h3>What is the difference between @Bean and @Component?</h3><p>@Component is put on your own class and found by scanning. @Bean is a method in a configuration class, useful for third-party classes you cannot annotate.</p><h3>Does Spring call @PreDestroy for prototype beans?</h3><p>No. Spring creates the prototype and hands it over. The caller owns it and must release its resources.</p><h3>In what order are beans destroyed?</h3><p>In the reverse order of their creation, so a bean is destroyed before the beans it depends on.</p><div class="np"><a href="/springboot/core/ioc-di/">&larr; IoC Container and Dependency Injection</a><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

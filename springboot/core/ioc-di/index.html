@@ -77,7 +77,63 @@ public class ReportService {
     public void send() {
         emailProvider.ifAvailable(EmailService::sendReport);   // no error if the bean is missing
     }
-}</code></pre><h2>Circular dependencies</h2><p>If A needs B and B needs A, Spring cannot create them with constructor injection. Since Spring Boot 2.6 circular references are not allowed by default and the application fails to start with a clear message. The correct fix is to change the design (move shared logic to a third bean). @Lazy on one parameter is only a workaround.</p><p class="use"><b>Common mistake:</b> Using field injection with @Autowired everywhere. The class cannot be created without Spring in a unit test and the number of dependencies is hidden. Use constructor injection.</p><h2>Interview questions</h2><h3>What is the difference between @Component, @Service and @Repository?</h3><p>All three register a bean. @Service and @Controller are for readability. @Repository additionally translates persistence exceptions.</p><h3>What happens when two beans match the type?</h3><p>You get NoUniqueBeanDefinitionException. Fix it with @Primary, @Qualifier, or by injecting a List or Map.</p><h3>What is the ApplicationContext?</h3><p>It is the IoC container. It creates beans, injects dependencies, publishes events and reads configuration.</p><div class="np"><a href="/springboot/getting-started/starters-and-dependencies/">&larr; Starters and Dependency Management</a><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes &rarr;</a></div></article>
+}</code></pre><h2>Circular dependencies</h2><p>If A needs B and B needs A, Spring cannot create them with constructor injection. Since Spring Boot 2.6 circular references are not allowed by default and the application fails to start with a clear message. The correct fix is to change the design (move shared logic to a third bean). @Lazy on one parameter is only a workaround.</p><h2>How Spring resolves one @Autowired dependency (internal algorithm)</h2><pre class="dia"><code>DefaultListableBeanFactory.resolveDependency(type = PaymentService, name = &quot;checkoutPayment&quot;)
+ 1. find ALL bean names that are assignable to the type                 [upiPaymentService, cardPaymentService]
+ 2. remove candidates that are not autowire-candidates or fail a @Qualifier match
+ 3. exactly one left?                                        ─► inject it
+ 4. several left, pick by:
+       a. @Primary on one of them                            ─► inject it
+       b. @Priority (javax/jakarta.annotation.Priority)      ─► highest priority
+       c. field name / parameter name equals a bean name     ─► inject that bean   (needs -parameters compiler flag, Boot adds it)
+ 5. still ambiguous ─► NoUniqueBeanDefinitionException     none found ─► NoSuchBeanDefinitionException (unless required=false / Optional)
+Collections (List&lt;T&gt;, Map&lt;String,T&gt;, Set&lt;T&gt;) get ALL candidates, ordered by @Order / Ordered.</code></pre><h2>Injection by generic type</h2><pre><code class="language-java">public interface Handler&lt;T&gt; { void handle(T event); }
+
+@Component class OrderHandler implements Handler&lt;OrderPlaced&gt; { public void handle(OrderPlaced e) { } }
+@Component class UserHandler implements Handler&lt;UserRegistered&gt; { public void handle(UserRegistered e) { } }
+
+@Service
+class Dispatcher {
+    private final Handler&lt;OrderPlaced&gt; orderHandler;                 // resolves by the generic type argument
+    private final List&lt;Handler&lt;?&gt;&gt; all;                              // all handlers
+
+    Dispatcher(Handler&lt;OrderPlaced&gt; orderHandler, List&lt;Handler&lt;?&gt;&gt; all) { this.orderHandler = orderHandler; this.all = all; }
+}</code></pre><h2>Ordering, dependencies and laziness</h2><pre><code class="language-java">@Component @Order(1) class ValidationStep implements PipelineStep { }
+@Component @Order(2) class PricingStep implements PipelineStep { }
+@Component @Order(3) class AuditStep implements PipelineStep { }
+
+@Service
+class Pipeline {
+    Pipeline(List&lt;PipelineStep&gt; steps) { /* injected in @Order sequence */ }
+}
+
+@Component
+@DependsOn(&quot;databaseMigrator&quot;)               // create databaseMigrator FIRST even without a direct reference
+class CacheLoader { }
+
+@Service
+class ReportService {
+    ReportService(@Lazy HeavyClient client) { }    // a lazy proxy is injected. The real bean is created at first use
+}</code></pre><h2>Injecting values and non-bean objects</h2><pre><code class="language-java">@Service
+class MailService {
+    private final String from;
+    private final ResourceLoader loader;
+    private final Environment env;
+
+    MailService(@Value(&quot;${app.mail.from}&quot;) String from,           // property
+                @Value(&quot;#{systemProperties[&#x27;user.name&#x27;]}&quot;) String user,   // SpEL expression
+                ResourceLoader loader,                              // framework objects can be injected too
+                Environment env) {
+        this.from = from; this.loader = loader; this.env = env;
+    }
+}</code></pre><h2>Injection problems and fixes</h2><table><thead><tr><th>Problem</th><th>Cause</th><th>Fix</th></tr></thead><tbody><tr><td>NoUniqueBeanDefinitionException</td><td>Two beans of the type</td><td>@Primary, @Qualifier, inject List or Map</td></tr><tr><td>NoSuchBeanDefinitionException</td><td>Not scanned, not annotated, or condition false</td><td>Check package, annotations, profiles and @Conditional</td></tr><tr><td>Bean created twice</td><td>Class annotated @Component AND declared with @Bean, or scanned in two contexts</td><td>Keep one definition</td></tr><tr><td>Field is null</td><td>Object created with new, not by Spring</td><td>Let Spring create it and inject it</td></tr><tr><td>Prototype bean behaves like singleton</td><td>Injected into a singleton once</td><td>ObjectProvider or scoped proxy</td></tr><tr><td>Proxy class cast error</td><td>Injecting the concrete class while a JDK proxy exists</td><td>Inject the interface, or use proxy-target-class (Boot default is CGLIB)</td></tr></tbody></table><pre><code class="language-java">// Unit test WITHOUT Spring: the reason to prefer constructor injection
+class CheckoutServiceTest {
+    @Test
+    void chargesWithGivenPayment() {
+        PaymentService fake = amount -&gt; &quot;paid &quot; + amount;
+        CheckoutService service = new CheckoutService(fake);           // plain new, no container
+        assertEquals(&quot;paid 10&quot;, service.checkout(10));
+    }
+}</code></pre><p class="use"><b>Common mistake:</b> Using field injection with @Autowired everywhere. The class cannot be created without Spring in a unit test and the number of dependencies is hidden. Use constructor injection.</p><h2>Interview questions</h2><h3>What is the difference between @Component, @Service and @Repository?</h3><p>All three register a bean. @Service and @Controller are for readability. @Repository additionally translates persistence exceptions.</p><h3>What happens when two beans match the type?</h3><p>You get NoUniqueBeanDefinitionException. Fix it with @Primary, @Qualifier, or by injecting a List or Map.</p><h3>What is the ApplicationContext?</h3><p>It is the IoC container. It creates beans, injects dependencies, publishes events and reads configuration.</p><h3>What is the difference between @Autowired, @Resource and @Inject?</h3><p>@Autowired is Spring&#x27;s, matches by type first. @Resource (JSR-250) matches by name first. @Inject (JSR-330) behaves like @Autowired without a required flag. In Spring Boot code use constructor injection and skip the annotation.</p><h3>Can I inject a List of all implementations in a given order?</h3><p>Yes: inject List&lt;Interface&gt; and put @Order or implement Ordered on the beans. Map&lt;String, Interface&gt; gives them by bean name.</p><div class="np"><a href="/springboot/getting-started/starters-and-dependencies/">&larr; Starters and Dependency Management</a><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

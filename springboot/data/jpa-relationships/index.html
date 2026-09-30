@@ -81,7 +81,59 @@ select * from orders where customer_id = 3;
 }</code></pre><pre><code class="language-properties"># 3. Batch fetching: load lazy collections in groups (1 query for 50 customers)
 spring.jpa.properties.hibernate.default_batch_fetch_size=50
 # 4. Do not keep the session open during the view rendering
-spring.jpa.open-in-view=false</code></pre><ul><li>4. Use DTO projections when you only need a few columns.</li><li>Do not JOIN FETCH two collections in one query. It creates a huge cartesian product and Hibernate may fail with MultipleBagFetchException.</li></ul><h2>LazyInitializationException</h2><p>It happens when you touch a lazy field after the transaction (session) is closed, typically in the controller. Fix it by loading the data inside the service method (join fetch, entity graph) and returning a DTO. Do not fix it by making everything EAGER.</p><p class="use"><b>Common mistake:</b> Making associations EAGER to avoid LazyInitializationException. This loads far more data than needed and creates N+1 problems everywhere. Keep LAZY and fetch what each use case needs.</p><h2>Interview questions</h2><h3>What does mappedBy mean?</h3><p>It marks the inverse (non-owning) side of the relationship. The other side, with @JoinColumn, owns the foreign key.</p><h3>Why should I avoid returning entities from REST controllers?</h3><p>Lazy fields can throw exceptions, bidirectional relations cause infinite JSON recursion, and you expose internal structure. Use DTOs.</p><h3>What is open-in-view?</h3><p>A Spring Boot default that keeps the JPA session open until the response is written. It hides lazy loading problems and holds connections longer, so many teams switch it off.</p><div class="np"><a href="/springboot/data/hibernate-persistence-context/">&larr; Hibernate Internals: Persistence Context, Dirty Checking and Flush</a><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping &rarr;</a></div></article>
+spring.jpa.open-in-view=false</code></pre><ul><li>4. Use DTO projections when you only need a few columns.</li><li>Do not JOIN FETCH two collections in one query. It creates a huge cartesian product and Hibernate may fail with MultipleBagFetchException.</li></ul><h2>LazyInitializationException</h2><p>It happens when you touch a lazy field after the transaction (session) is closed, typically in the controller. Fix it by loading the data inside the service method (join fetch, entity graph) and returning a DTO. Do not fix it by making everything EAGER.</p><h2>Bidirectional relationship: the rules</h2><ul><li>The side WITHOUT mappedBy is the owner and writes the foreign key. Changing only the inverse side (the list) does not update the database.</li><li>Always keep both sides in sync with helper methods (addOrder, removeOrder).</li><li>Use Set for @ManyToMany. A List (bag) with several fetch joins causes MultipleBagFetchException and duplicate rows.</li><li>Use orphanRemoval=true only for real parent-child ownership (order and its lines). Never for shared entities.</li></ul><h2>equals and hashCode for entities</h2><pre><code class="language-java">@Entity
+public class OrderLine {
+    @Id @GeneratedValue(strategy = GenerationType.SEQUENCE) private Long id;
+    private String sku;
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof OrderLine other)) return false;             // instanceof works with Hibernate proxies (getClass would not)
+        return id != null &amp;&amp; id.equals(other.id);                      // two NEW objects (id null) are never equal
+    }
+
+    @Override
+    public int hashCode() { return getClass().hashCode(); }            // constant: stable before and after persist, safe in HashSets
+}</code></pre><h2>One-to-one with a shared primary key (@MapsId)</h2><pre><code class="language-java">@Entity
+public class UserProfile {
+    @Id private Long id;                                // same value as the user id, no separate id generation
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @MapsId
+    @JoinColumn(name = &quot;id&quot;)
+    private AppUser user;
+
+    private String bio;
+}
+// table user_profile(id primary key references app_users(id)). Loading profile by user id is one primary key lookup.</code></pre><p>Lazy @OneToOne on the inverse side (mappedBy) cannot really be lazy in Hibernate because it must check whether the row exists. Put the foreign key or @MapsId on the side you load most, or use a projection.</p><h2>Many-to-many with extra columns: an association entity</h2><pre><code class="language-java">@Embeddable
+public class EnrollmentId implements Serializable {
+    private Long studentId;
+    private Long courseId;
+    protected EnrollmentId() { }
+    public EnrollmentId(Long studentId, Long courseId) { this.studentId = studentId; this.courseId = courseId; }
+    @Override public boolean equals(Object o) { return o instanceof EnrollmentId e &amp;&amp; Objects.equals(studentId, e.studentId) &amp;&amp; Objects.equals(courseId, e.courseId); }
+    @Override public int hashCode() { return Objects.hash(studentId, courseId); }
+}
+
+@Entity
+public class Enrollment {
+    @EmbeddedId private EnrollmentId id;
+
+    @ManyToOne(fetch = FetchType.LAZY) @MapsId(&quot;studentId&quot;) private Student student;
+    @ManyToOne(fetch = FetchType.LAZY) @MapsId(&quot;courseId&quot;) private Course course;
+
+    private LocalDate enrolledOn;          // extra data on the relationship
+    private Integer grade;
+}
+// Student has @OneToMany(mappedBy = &quot;student&quot;) Set&lt;Enrollment&gt;. A plain @ManyToMany cannot hold enrolledOn or grade.</code></pre><h2>Ordering and collection mapping</h2><pre><code class="language-java">@OneToMany(mappedBy = &quot;order&quot;, cascade = CascadeType.ALL, orphanRemoval = true)
+@OrderBy(&quot;position ASC&quot;)                       // SQL order by when loading
+private List&lt;OrderLine&gt; lines = new ArrayList&lt;&gt;();
+
+@ElementCollection
+@CollectionTable(name = &quot;customer_tags&quot;, joinColumns = @JoinColumn(name = &quot;customer_id&quot;))
+@Column(name = &quot;tag&quot;)
+private Set&lt;String&gt; tags = new HashSet&lt;&gt;();     // simple values, no entity needed</code></pre><h2>Cascade and delete behavior: what really happens</h2><table><thead><tr><th>Action</th><th>Result</th></tr></thead><tbody><tr><td>repository.delete(customer) with CascadeType.REMOVE on orders</td><td>Hibernate loads the orders, deletes each one, then the customer (many statements)</td></tr><tr><td>Bulk JPQL delete: delete from Order o where o.customer.id = :id</td><td>One statement. Bypasses cascades, lifecycle callbacks and the persistence context</td></tr><tr><td>Database ON DELETE CASCADE with @OnDelete(action = CASCADE)</td><td>One statement and the database removes the children. Fastest for large children sets</td></tr><tr><td>orphanRemoval=true and list.remove(child)</td><td>The removed child row is deleted at flush</td></tr></tbody></table><h2>Performance rules for relations</h2><table><thead><tr><th>Rule</th><th>Reason</th></tr></thead><tbody><tr><td>ToOne associations LAZY</td><td>Default EAGER loads owners with every query and creates N+1</td></tr><tr><td>Fetch collections in the use case (join fetch or entity graph)</td><td>Load exactly what the screen or API needs</td></tr><tr><td>Never join fetch two collections at once</td><td>Cartesian product. Use Set, or two queries, or batch fetch size</td></tr><tr><td>Return DTO projections for read-only lists</td><td>No entity tracking, one flat query</td></tr><tr><td>Count with a count query, not size() on a lazy collection</td><td>size() loads the whole collection unless @LazyCollection(EXTRA)</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Making associations EAGER to avoid LazyInitializationException. This loads far more data than needed and creates N+1 problems everywhere. Keep LAZY and fetch what each use case needs.</p><h2>Interview questions</h2><h3>What does mappedBy mean?</h3><p>It marks the inverse (non-owning) side of the relationship. The other side, with @JoinColumn, owns the foreign key.</p><h3>Why should I avoid returning entities from REST controllers?</h3><p>Lazy fields can throw exceptions, bidirectional relations cause infinite JSON recursion, and you expose internal structure. Use DTOs.</p><h3>What is open-in-view?</h3><p>A Spring Boot default that keeps the JPA session open until the response is written. It hides lazy loading problems and holds connections longer, so many teams switch it off.</p><h3>Why is my child row not saved when I add it to the parent&#x27;s list?</h3><p>Cascade PERSIST or ALL is missing, or you changed only the inverse side and the owning side (the @ManyToOne) was not set.</p><h3>Should entities have equals and hashCode based on all fields?</h3><p>No. Fields change and lazy fields trigger loading. Use the id (with a constant hashCode) or a stable business key.</p><div class="np"><a href="/springboot/data/hibernate-persistence-context/">&larr; Hibernate Internals: Persistence Context, Dirty Checking and Flush</a><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

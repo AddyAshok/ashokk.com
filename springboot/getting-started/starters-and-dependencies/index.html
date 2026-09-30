@@ -55,7 +55,41 @@ dependencies {
     &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
     &lt;artifactId&gt;spring-boot-starter-jetty&lt;/artifactId&gt;
 &lt;/dependency&gt;</code></pre><h2>See the dependency tree</h2><pre><code class="language-shell">./mvnw dependency:tree
-./gradlew dependencies</code></pre><p class="use"><b>Common mistake:</b> Writing version numbers for libraries that Spring Boot already manages. This can create version conflicts. Remove the version and let the BOM decide, or override it with a property.</p><h2>Interview questions</h2><h3>What is the difference between a starter and a normal library?</h3><p>A starter has almost no code. It is a pom that brings a group of compatible libraries, and auto-configuration then wires them.</p><h3>How do I write my own starter?</h3><p>Create an autoconfigure module with the auto-configuration and the imports file, and a starter module named xyz-spring-boot-starter that depends on it.</p><h3>Why do I get a version conflict?</h3><p>Usually because a version is set manually. Check with dependency:tree and remove the manual version.</p><div class="np"><a href="/springboot/getting-started/auto-configuration/">&larr; Auto-Configuration Internals</a><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection &rarr;</a></div></article>
+./gradlew dependencies</code></pre><h2>Build your own starter (two modules)</h2><pre class="dia"><code>greeting-spring-boot/
+├── greeting-spring-boot-autoconfigure/        the real code
+│   ├── pom.xml                                (depends on spring-boot-autoconfigure, optional spring-boot-configuration-processor)
+│   └── src/main/java/com/example/greeting/
+│   │       ├── GreetingService.java
+│   │       ├── GreetingProperties.java        @ConfigurationProperties(&quot;greeting&quot;)
+│   │       └── GreetingAutoConfiguration.java @AutoConfiguration
+│   └── src/main/resources/META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports
+└── greeting-spring-boot-starter/              only a pom: depends on the autoconfigure module + needed libraries
+Naming: your own starters are  &lt;name&gt;-spring-boot-starter.   spring-boot-starter-&lt;name&gt; is reserved for the Spring team.</code></pre><pre><code class="language-xml">&lt;!-- greeting-spring-boot-starter/pom.xml : no code at all --&gt;
+&lt;dependencies&gt;
+    &lt;dependency&gt;
+        &lt;groupId&gt;com.example&lt;/groupId&gt;
+        &lt;artifactId&gt;greeting-spring-boot-autoconfigure&lt;/artifactId&gt;
+        &lt;version&gt;${project.version}&lt;/version&gt;
+    &lt;/dependency&gt;
+&lt;/dependencies&gt;
+
+&lt;!-- autoconfigure module: generate IDE help for the properties --&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-configuration-processor&lt;/artifactId&gt;
+    &lt;optional&gt;true&lt;/optional&gt;
+&lt;/dependency&gt;</code></pre><p>The configuration processor creates META-INF/spring-configuration-metadata.json from your @ConfigurationProperties classes, so IntelliJ and VS Code show auto-completion and descriptions for greeting.message in application.properties.</p><pre><code class="language-json">// src/main/resources/META-INF/additional-spring-configuration-metadata.json : hand-written extras
+{ &quot;properties&quot;: [ {
+    &quot;name&quot;: &quot;greeting.message&quot;,
+    &quot;type&quot;: &quot;java.lang.String&quot;,
+    &quot;description&quot;: &quot;Text used at the start of every greeting.&quot;,
+    &quot;defaultValue&quot;: &quot;Hello&quot;
+} ] }</code></pre><h2>Dependency scopes that matter</h2><table><thead><tr><th>Scope</th><th>On compile classpath</th><th>In the final jar</th><th>Example</th></tr></thead><tbody><tr><td>compile (default)</td><td>Yes</td><td>Yes</td><td>spring-boot-starter-web</td></tr><tr><td>runtime</td><td>No</td><td>Yes</td><td>PostgreSQL JDBC driver, Prometheus registry</td></tr><tr><td>provided</td><td>Yes</td><td>No (server supplies it)</td><td>Servlet API when deploying a WAR</td></tr><tr><td>test</td><td>Only for tests</td><td>No</td><td>spring-boot-starter-test</td></tr><tr><td>optional</td><td>Yes</td><td>Not passed on transitively</td><td>DevTools, configuration processor, Lombok</td></tr></tbody></table><h2>Find and fix version conflicts</h2><pre><code class="language-shell">./mvnw dependency:tree -Dincludes=com.fasterxml.jackson.core     # who brings Jackson and which version
+./mvnw dependency:tree -Dverbose | grep -i &quot;omitted for conflict&quot;
+./mvnw enforcer:enforce                                          # with maven-enforcer-plugin rules dependencyConvergence, banDuplicateClasses</code></pre><pre><code class="language-xml">&lt;!-- Override a managed version only for a real reason (security fix), and write down why --&gt;
+&lt;properties&gt;
+    &lt;jackson-bom.version&gt;2.18.2&lt;/jackson-bom.version&gt;   &lt;!-- example: newer security patch than the Boot BOM --&gt;
+&lt;/properties&gt;</code></pre><ul><li>Use the Boot BOM and avoid version numbers. Every override is a future upgrade problem.</li><li>Keep unused starters out: each one adds auto-configurations, startup time and attack surface.</li><li>Run a dependency vulnerability scan (OWASP Dependency-Check, Dependabot, Snyk) in CI.</li><li>Prefer starters over adding single libraries by hand, because starters bring the tested combination.</li></ul><p class="use"><b>Common mistake:</b> Writing version numbers for libraries that Spring Boot already manages. This can create version conflicts. Remove the version and let the BOM decide, or override it with a property.</p><h2>Interview questions</h2><h3>What is the difference between a starter and a normal library?</h3><p>A starter has almost no code. It is a pom that brings a group of compatible libraries, and auto-configuration then wires them.</p><h3>How do I write my own starter?</h3><p>Create an autoconfigure module with the auto-configuration and the imports file, and a starter module named xyz-spring-boot-starter that depends on it.</p><h3>Why do I get a version conflict?</h3><p>Usually because a version is set manually. Check with dependency:tree and remove the manual version.</p><h3>What is the difference between spring-boot-starter and spring-boot-autoconfigure?</h3><p>The autoconfigure jar contains the auto-configuration code for all supported libraries. A starter is only a pom that brings the libraries for one feature; the auto-configuration activates when those libraries are on the classpath.</p><h3>Why is optional true on the configuration processor?</h3><p>It is only needed at compile time to generate metadata. Optional prevents it from being passed to projects that use your library.</p><div class="np"><a href="/springboot/getting-started/auto-configuration/">&larr; Auto-Configuration Internals</a><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>

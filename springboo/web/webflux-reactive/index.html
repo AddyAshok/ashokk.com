@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Reactive Programming with Spring WebFlux – Spring Boot – Ashokka Tech</title>
+    <meta name="description" content="WebFlux is the non-blocking web stack of Spring.">
+    <link rel="canonical" href="https://ashokka.com/springboot/web/webflux-reactive/">
+    <meta property="og:title" content="Reactive Programming with Spring WebFlux – Spring Boot – Ashokka Tech">
+    <meta property="og:type" content="article">
+    <link rel="stylesheet" href="/springboot/css/springboot.css">
+    <script src="/component/components.js" defer></script>
+    <script src="/component/header.js" defer></script>
+    <script src="/springboot/js/springboot.js" defer></script>
+</head>
+    <body>
+<app-header></app-header>
+<div class="layout">
+<nav class="toc" aria-label="Spring Boot menu"><h2><a href="/springboot/">Spring Boot</a></h2><h3><a href="/springboot/getting-started/">Getting Started</a></h3><ul><li><a href="/springboot/getting-started/what-is-spring-boot/">What is Spring Boot?</a></li><li><a href="/springboot/getting-started/first-application/">Create Your First Spring Boot Project</a></li><li><a href="/springboot/getting-started/auto-configuration/">Auto-Configuration Internals</a></li><li><a href="/springboot/getting-started/starters-and-dependencies/">Starters and Dependency Management</a></li></ul><h3><a href="/springboot/core/">Core Concepts</a></h3><ul><li><a href="/springboot/core/ioc-di/">IoC Container and Dependency Injection</a></li><li><a href="/springboot/core/bean-lifecycle-scopes/">Bean Lifecycle and Scopes</a></li><li><a href="/springboot/core/configuration-profiles/">Configuration, Properties and Profiles</a></li><li><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP)</a></li></ul><h3><a href="/springboot/internals/">Spring Boot Internals</a></h3><ul><li><a href="/springboot/internals/startup-internals/">How Spring Boot Starts: SpringApplication.run() Step by Step</a></li><li><a href="/springboot/internals/context-refresh-bean-creation/">Inside the ApplicationContext: refresh() and Bean Creation</a></li><li><a href="/springboot/internals/design-patterns-in-spring/">Design Patterns Used Inside Spring</a></li><li><a href="/springboot/internals/embedded-server-internals/">Embedded Tomcat Internals and Tuning</a></li></ul><h3><a href="/springboot/web/">Web and REST</a></h3><ul><li><a href="/springboot/web/rest-controllers/">REST Controllers</a></li><li><a href="/springboot/web/validation-exception-handling/">Validation and Exception Handling</a></li><li><a href="/springboot/web/spring-mvc-internals/">Spring MVC Internals</a></li><li><a href="/springboot/web/jackson-customization/">JSON with Jackson: Customization and Pitfalls</a></li><li><a href="/springboot/web/file-upload-download/">File Upload and Download</a></li><li><a href="/springboot/web/rest-client/">Calling Other APIs: RestClient and WebClient</a></li><li><a href="/springboot/web/openapi-swagger/">API Documentation with OpenAPI and Swagger UI</a></li><li><a href="/springboot/web/webflux-reactive/" aria-current="page">Reactive Programming with Spring WebFlux</a></li></ul><h3><a href="/springboot/data/">Data and Transactions</a></h3><ul><li><a href="/springboot/data/spring-data-jpa/">Spring Data JPA</a></li><li><a href="/springboot/data/hibernate-persistence-context/">Hibernate Internals: Persistence Context, Dirty Checking and Flush</a></li><li><a href="/springboot/data/jpa-relationships/">JPA Relationships and the N+1 Problem</a></li><li><a href="/springboot/data/jpa-advanced/">Advanced JPA: Specifications, Auditing, Locking and Mapping</a></li><li><a href="/springboot/data/transactions/">Transactions with @Transactional</a></li><li><a href="/springboot/data/other-data-stores/">JdbcTemplate, MongoDB and Redis with Spring Boot</a></li><li><a href="/springboot/data/datasource-hikari-flyway/">Connection Pool (HikariCP) and Flyway Migrations</a></li><li><a href="/springboot/data/complete-crud-project/">Complete CRUD REST API (All Layers)</a></li></ul><h3><a href="/springboot/messaging/">Messaging and Microservices</a></h3><ul><li><a href="/springboot/messaging/kafka-with-spring-boot/">Apache Kafka with Spring Boot</a></li><li><a href="/springboot/messaging/rabbitmq-with-spring-boot/">RabbitMQ with Spring Boot (AMQP)</a></li><li><a href="/springboot/messaging/resilience4j-circuit-breaker/">Resilience4j: Circuit Breaker, Retry, Rate Limiter and Bulkhead</a></li><li><a href="/springboot/messaging/spring-cloud-microservices/">Microservices with Spring Cloud</a></li><li><a href="/springboot/messaging/spring-batch/">Spring Batch: Processing Large Data Reliably</a></li></ul><h3><a href="/springboot/security/">Security</a></h3><ul><li><a href="/springboot/security/spring-security-basics/">Spring Security Basics</a></li><li><a href="/springboot/security/spring-security-internals/">Spring Security Internals: Authentication Flow, Custom Filters, Multiple Chains</a></li><li><a href="/springboot/security/jwt-oauth2/">JWT and OAuth2 Resource Server</a></li><li><a href="/springboot/security/jwt-refresh-token-flow/">JWT Access and Refresh Token Flow (Complete Design)</a></li></ul><h3><a href="/springboot/production/">Production and Testing</a></h3><ul><li><a href="/springboot/production/logging/">Logging</a></li><li><a href="/springboot/production/actuator/">Actuator and Monitoring</a></li><li><a href="/springboot/production/observability-tracing/">Observability: Logs, Metrics and Distributed Tracing</a></li><li><a href="/springboot/production/testing/">Testing Spring Boot Applications</a></li><li><a href="/springboot/production/caching-scheduling-async/">Caching, Scheduling and Async</a></li><li><a href="/springboot/production/performance-tuning/">Performance Tuning: A Practical Method</a></li><li><a href="/springboot/production/lombok-mapstruct/">Lombok and MapStruct: Less Boilerplate</a></li><li><a href="/springboot/production/packaging-docker/">Packaging, Docker and Deployment</a></li><li><a href="/springboot/production/migration-guide/">Upgrading Spring Boot: 2.x to 3.x to 4.x</a></li><li><a href="/springboot/production/interview-questions/">Spring Boot Interview Questions and Answers</a></li></ul></nav>
+<article class="pg">
+<div class="crumbs"><a href="/">Home</a> / <a href="/springboot/">Spring Boot</a> / <a href="/springboot/web/">Web and REST</a> / Reactive Programming with Spring WebFlux</div>
+<h1>Reactive Programming with Spring WebFlux</h1><p>WebFlux is the non-blocking web stack of Spring. It handles many concurrent connections with a small number of threads, using Project Reactor types Mono (0 or 1 element) and Flux (0 to N elements). Understand when it helps and when virtual threads are simpler.</p><h2>Thread per request vs event loop</h2><pre class="dia"><code>SPRING MVC (blocking)                              SPRING WEBFLUX (non-blocking)
+ request 1 ─► thread 1 ── waits for DB ──►           request 1 ┐
+ request 2 ─► thread 2 ── waits for API ─►           request 2 ├─► few event-loop threads (about CPU count)
+ request 3 ─► thread 3 ── waits ─────────►           request 3 ┘   never wait: they register a callback and move on
+ 1000 waiting requests = 1000 threads                1000 waiting requests = still a few threads</code></pre><h2>Mono and Flux</h2><p>A Mono or Flux is a description of work (a pipeline). Nothing happens until someone subscribes. WebFlux subscribes for you when you return the Mono or Flux from a controller.</p><pre><code class="language-java">Mono&lt;String&gt; one = Mono.just(&quot;Hello&quot;);
+Flux&lt;Integer&gt; many = Flux.range(1, 5);
+
+Flux&lt;String&gt; result = Flux.just(&quot;ram&quot;, &quot;sita&quot;, &quot;amit&quot;)
+        .filter(n -&gt; n.length() &gt; 3)
+        .map(String::toUpperCase)
+        .doOnNext(n -&gt; System.out.println(&quot;processing &quot; + n));   // nothing printed yet
+
+result.subscribe(System.out::println);                            // now it runs: SITA, AMIT</code></pre><table><thead><tr><th>Operator</th><th>Meaning</th></tr></thead><tbody><tr><td>map</td><td>Transform each element (synchronous)</td></tr><tr><td>flatMap</td><td>Transform each element into a Mono or Flux (asynchronous), and merge the results</td></tr><tr><td>filter, take, skip</td><td>Select elements</td></tr><tr><td>zip / Mono.zip</td><td>Combine results of independent calls (run in parallel)</td></tr><tr><td>onErrorResume, onErrorReturn</td><td>Recover from errors</td></tr><tr><td>switchIfEmpty</td><td>Provide an alternative when empty</td></tr><tr><td>timeout, retryWhen</td><td>Resilience</td></tr><tr><td>collectList</td><td>Turn a Flux into a Mono of a list</td></tr></tbody></table><h2>A WebFlux controller with WebClient</h2><pre><code class="language-xml">&lt;dependency&gt;
+    &lt;groupId&gt;org.springframework.boot&lt;/groupId&gt;
+    &lt;artifactId&gt;spring-boot-starter-webflux&lt;/artifactId&gt;
+&lt;/dependency&gt;
+&lt;dependency&gt;
+    &lt;groupId&gt;io.projectreactor&lt;/groupId&gt;
+    &lt;artifactId&gt;reactor-test&lt;/artifactId&gt;
+    &lt;scope&gt;test&lt;/scope&gt;
+&lt;/dependency&gt;</code></pre><pre><code class="language-java">@RestController
+@RequestMapping(&quot;/api/dashboard&quot;)
+public class DashboardController {
+
+    private final WebClient users = WebClient.create(&quot;http://user-service&quot;);
+    private final WebClient orders = WebClient.create(&quot;http://order-service&quot;);
+
+    public record Dashboard(User user, List&lt;Order&gt; orders) { }
+
+    @GetMapping(&quot;/{userId}&quot;)
+    public Mono&lt;Dashboard&gt; dashboard(@PathVariable String userId) {
+        Mono&lt;User&gt; user = users.get().uri(&quot;/users/{id}&quot;, userId).retrieve().bodyToMono(User.class);
+        Mono&lt;List&lt;Order&gt;&gt; list = orders.get().uri(&quot;/orders?user={id}&quot;, userId)
+                .retrieve().bodyToFlux(Order.class).collectList();
+
+        return Mono.zip(user, list)                                        // both calls run at the same time
+                .map(t -&gt; new Dashboard(t.getT1(), t.getT2()))
+                .timeout(Duration.ofSeconds(3))
+                .onErrorResume(TimeoutException.class, e -&gt; Mono.error(new ResponseStatusException(HttpStatus.GATEWAY_TIMEOUT)));
+    }
+
+    @GetMapping(value = &quot;/ticker&quot;, produces = MediaType.TEXT_EVENT_STREAM_VALUE)   // Server-Sent Events
+    public Flux&lt;String&gt; ticker() {
+        return Flux.interval(Duration.ofSeconds(1)).map(i -&gt; &quot;tick &quot; + i);
+    }
+}</code></pre><h2>Functional endpoints (alternative to annotations)</h2><pre><code class="language-java">@Configuration
+public class Routes {
+    @Bean
+    RouterFunction&lt;ServerResponse&gt; routes() {
+        return RouterFunctions.route()
+                .GET(&quot;/hello/{name}&quot;, req -&gt; ServerResponse.ok().bodyValue(&quot;Hello &quot; + req.pathVariable(&quot;name&quot;)))
+                .build();
+    }
+}</code></pre><h2>Testing with StepVerifier</h2><pre><code class="language-java">@Test
+void upperCase() {
+    Flux&lt;String&gt; flux = Flux.just(&quot;a&quot;, &quot;b&quot;).map(String::toUpperCase);
+    StepVerifier.create(flux).expectNext(&quot;A&quot;).expectNext(&quot;B&quot;).verifyComplete();
+}</code></pre><h2>Rules of reactive code</h2><ul><li>Never block inside a reactive pipeline (Thread.sleep, JDBC, block()). Blocking an event-loop thread freezes many requests. If you must call blocking code, wrap it with Mono.fromCallable(...).subscribeOn(Schedulers.boundedElastic()).</li><li>Use reactive drivers end to end: R2DBC (SQL), reactive MongoDB, reactive Redis. JPA and JDBC are blocking.</li><li>Errors travel as signals. A thrown exception inside map becomes an error signal, not a normal throw.</li><li>Debugging is harder. Use Hooks.onOperatorDebug() while developing or checkpoint().</li></ul><h2>WebFlux or virtual threads?</h2><table><thead><tr><th>Situation</th><th>Choice</th></tr></thead><tbody><tr><td>Normal CRUD with JDBC or JPA</td><td>Spring MVC with virtual threads (simple code, scales well)</td></tr><tr><td>Streaming, backpressure, SSE, very many open connections</td><td>WebFlux</td></tr><tr><td>API gateway that only forwards requests (Spring Cloud Gateway)</td><td>WebFlux (it is built on it)</td></tr><tr><td>Team new to reactive, blocking libraries</td><td>MVC. Reactive has a learning cost</td></tr></tbody></table><p class="use"><b>Common mistake:</b> Calling a blocking database or HTTP client inside a WebFlux pipeline. It blocks the few event-loop threads, and the whole service becomes slower than a normal MVC application. Stay non-blocking end to end, or use MVC.</p><h2>Interview questions</h2><h3>What is backpressure?</h3><p>The consumer tells the producer how many elements it can handle (request(n)), so a fast producer does not overflow a slow consumer. Reactive Streams defines this.</p><h3>map or flatMap?</h3><p>map is for a simple synchronous transformation. flatMap is when the transformation itself returns a Mono or Flux (for example another remote call).</p><h3>Why does nothing happen if I do not subscribe?</h3><p>Reactive pipelines are lazy. They describe work and execute only when subscribed. WebFlux subscribes when you return the value from a controller.</p><div class="np"><a href="/springboot/web/openapi-swagger/">&larr; API Documentation with OpenAPI and Swagger UI</a><a href="/springboot/data/spring-data-jpa/">Spring Data JPA &rarr;</a></div></article>
+</div>
+<app-footer></app-footer>
+</body>
+</html>

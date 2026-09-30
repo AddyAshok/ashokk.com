@@ -85,7 +85,59 @@ public class MailConfig {
     public MailClient smtpMailClient() { return new SmtpMailClient(); }
 }</code></pre><pre><code class="language-shell">java -jar app.jar --spring.profiles.active=prod
 SPRING_PROFILES_ACTIVE=prod java -jar app.jar
-./mvnw spring-boot:run -Dspring-boot.run.profiles=dev</code></pre><h2>Secrets</h2><ul><li>Never commit passwords or API keys to Git.</li><li>Pass them through environment variables or a secret manager (Kubernetes Secrets, HashiCorp Vault, cloud secret services).</li><li>Use spring.config.import to load extra config files, for example optional:file:./secrets.properties.</li></ul><p class="use"><b>Common mistake:</b> Putting production passwords in application.properties inside the jar. Use environment variables or a secret store, and keep the jar the same for all environments.</p><h2>Interview questions</h2><h3>What is the difference between application.properties and bootstrap.properties?</h3><p>application.properties is the normal configuration file. bootstrap.properties was used by Spring Cloud in older versions and is replaced by spring.config.import in new versions.</p><h3>How do I set the active profile?</h3><p>Use spring.profiles.active in a file, the SPRING_PROFILES_ACTIVE environment variable or the --spring.profiles.active argument.</p><h3>Can I have more than one active profile?</h3><p>Yes. Give a comma separated list, for example spring.profiles.active=prod,metrics.</p><div class="np"><a href="/springboot/core/bean-lifecycle-scopes/">&larr; Bean Lifecycle and Scopes</a><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP) &rarr;</a></div></article>
+./mvnw spring-boot:run -Dspring-boot.run.profiles=dev</code></pre><h2>Secrets</h2><ul><li>Never commit passwords or API keys to Git.</li><li>Pass them through environment variables or a secret manager (Kubernetes Secrets, HashiCorp Vault, cloud secret services).</li><li>Use spring.config.import to load extra config files, for example optional:file:./secrets.properties.</li></ul><h2>Inside the Environment: property sources chain</h2><pre class="dia"><code>Environment
+  └─ MutablePropertySources  (an ordered list. The FIRST source that has the key wins)
+       1. commandLineArgs                    --server.port=9000
+       2. servletConfigInitParams / servletContextInitParams
+       3. systemProperties                   -Dserver.port=9000
+       4. systemEnvironment                  SERVER_PORT=9000
+       5. random                             ${random.int}, ${random.uuid}
+       6. applicationConfig: [file:./config/application-prod.yml]
+       7. applicationConfig: [file:./application.yml]
+       8. applicationConfig: [classpath:/config/application.yml]
+       9. applicationConfig: [classpath:/application.yml]
+      10. @PropertySource sources, defaultProperties
+env.getProperty(&quot;server.port&quot;)  ─► asks the sources one by one, then converts the String to the requested type
+${...} placeholders are resolved when values are injected, so one property can refer to another:  app.url=http://${app.host}:${server.port}</code></pre><h2>Where Boot looks for application.yml (later wins)</h2><ul><li>classpath: root, then classpath: /config</li><li>current directory: ./application.yml, then ./config/application.yml, then ./config/*/application.yml</li><li>Profile files application-prod.yml at the same places win over the base file</li><li>spring.config.location replaces the search locations. spring.config.additional-location adds to them.</li><li>spring.config.import loads more files or external sources: optional:file:./secrets.properties, configtree:/run/secrets/ (Docker and Kubernetes secrets as files), optional:configserver:...</li></ul><pre><code class="language-yaml">spring:
+  config:
+    import:
+      - optional:file:./local-overrides.yml        # not an error if missing
+      - optional:configtree:/run/secrets/          # each file name = a property name, file content = value
+  profiles:
+    group:
+      prod: [prod-db, metrics, security-hardening]   # activating &quot;prod&quot; activates all three
+    active: ${APP_PROFILE:dev}                       # from an environment variable with a default</code></pre><h2>Type-safe configuration with nested objects, lists, maps, Duration and DataSize</h2><pre><code class="language-yaml">app:
+  storage:
+    root: /data/uploads
+    max-file-size: 10MB               # DataSize
+    retention: 30d                    # Duration
+  clients:
+    - name: billing
+      url: https://billing.internal
+      timeout: 2s
+    - name: crm
+      url: https://crm.internal
+      timeout: 5s
+  feature-flags:
+    new-checkout: true
+    beta-search: false</code></pre><pre><code class="language-java">@ConfigurationProperties(prefix = &quot;app&quot;)
+@Validated
+public record AppProperties(Storage storage, List&lt;@Valid Client&gt; clients, Map&lt;String, Boolean&gt; featureFlags) {
+
+    public record Storage(@NotBlank String root, DataSize maxFileSize, Duration retention) { }
+    public record Client(@NotBlank String name, @NotBlank String url, @DefaultValue(&quot;3s&quot;) Duration timeout) { }
+}
+
+@Service
+public class FlagService {
+    private final AppProperties props;
+    public FlagService(AppProperties props) { this.props = props; }
+    public boolean enabled(String flag) { return props.featureFlags().getOrDefault(flag, false); }
+    public long maxBytes() { return props.storage().maxFileSize().toBytes(); }
+}</code></pre><table><thead><tr><th>Value in YAML</th><th>Java type</th><th>Notes</th></tr></thead><tbody><tr><td>10MB, 512KB</td><td>DataSize</td><td>toBytes(), toMegabytes()</td></tr><tr><td>30d, 2h, 500ms, PT15M</td><td>Duration</td><td>Default unit can be set with @DurationUnit</td></tr><tr><td>a,b,c or a YAML list</td><td>List&lt;String&gt;, Set&lt;String&gt;</td><td>Comma separated works in properties files</td></tr><tr><td>key: value block</td><td>Map&lt;String, X&gt;</td><td>Keys keep their case inside quotes</td></tr><tr><td>nested block</td><td>Nested record or class</td><td>Validated with @Valid on the field</td></tr></tbody></table><h2>Profiles in tests and deployments</h2><pre><code class="language-java">@SpringBootTest
+@ActiveProfiles(&quot;test&quot;)                                        // loads application-test.yml
+@TestPropertySource(properties = &quot;app.feature-flags.new-checkout=true&quot;)
+class CheckoutTest { }</code></pre><ul><li>Do not use profiles to hide behavior differences that tests never see. Test the prod profile combination in CI at least once.</li><li>Environment variables are the standard way to change configuration in containers: SPRING_DATASOURCE_URL, APP_MAIL_FROM, SPRING_PROFILES_ACTIVE.</li><li>Actuator env and configprops endpoints mask sensitive values by default (management.endpoint.env.show-values controls it in Boot 3.1 and newer). Keep them secured.</li></ul><p class="use"><b>Common mistake:</b> Putting production passwords in application.properties inside the jar. Use environment variables or a secret store, and keep the jar the same for all environments.</p><h2>Interview questions</h2><h3>What is the difference between application.properties and bootstrap.properties?</h3><p>application.properties is the normal configuration file. bootstrap.properties was used by Spring Cloud in older versions and is replaced by spring.config.import in new versions.</p><h3>How do I set the active profile?</h3><p>Use spring.profiles.active in a file, the SPRING_PROFILES_ACTIVE environment variable or the --spring.profiles.active argument.</p><h3>Can I have more than one active profile?</h3><p>Yes. Give a comma separated list, for example spring.profiles.active=prod,metrics.</p><h3>Which wins: application.yml or an environment variable?</h3><p>The environment variable. Higher sources in the chain override lower ones, and the packaged application.yml is one of the lowest.</p><h3>How do I read Docker or Kubernetes secrets that are mounted as files?</h3><p>Use spring.config.import=optional:configtree:/run/secrets/ so every file becomes a property.</p><div class="np"><a href="/springboot/core/bean-lifecycle-scopes/">&larr; Bean Lifecycle and Scopes</a><a href="/springboot/core/aop/">Aspect-Oriented Programming (AOP) &rarr;</a></div></article>
 </div>
 <app-footer></app-footer>
 </body>
